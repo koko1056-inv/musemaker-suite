@@ -212,3 +212,33 @@
     radial-gradient(circle, hsl(var(--muted-foreground) / 0.1) 1px, transparent 1px);
   background-size: 24px 24px;
 }
+
+/* Mobile optimizations */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-area-mb {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Touch-friendly targets */
+@media (pointer: coarse) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Mobile bottom padding for pages with bottom nav */
+.mobile-safe-bottom {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 1rem);
+}
+
+@media (min-width: 1024px) {
+  .mobile-safe-bottom {
+    padding-bottom: 2rem;
+  }
+}

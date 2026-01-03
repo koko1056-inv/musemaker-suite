@@ -107,22 +107,20 @@ export default function Agents() {
   return (
     <AppLayout>
       <TooltipProvider>
-        <div className="p-6 md:p-8 max-w-7xl mx-auto">
+        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto mobile-safe-bottom">
           {/* Header with welcome message */}
-          <div className="mb-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                    <Bot className="h-5 w-5 text-primary" />
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-bold text-foreground">エージェント</h1>
+          <div className="mb-6 md:mb-8">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Bot className="h-5 w-5 text-primary" />
                 </div>
-                <p className="text-muted-foreground">
-                  あなたの音声AIアシスタントを作成・管理しましょう
-                </p>
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
               </div>
-              <Button asChild size="lg" className="gap-2 shadow-lg">
+              <p className="text-sm md:text-base text-muted-foreground">
+                あなたの音声AIアシスタントを作成・管理しましょう
+              </p>
+              <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto">
                 <Link to="/agents/new">
                   <Sparkles className="h-4 w-4" />
                   新しいエージェントを作成

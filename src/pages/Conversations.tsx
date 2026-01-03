@@ -211,11 +211,11 @@ export default function Conversations() {
 
   return (
     <AppLayout>
-      <div className="p-8">
+      <div className="p-4 md:p-8 mobile-safe-bottom">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">会話履歴</h1>
-          <p className="mt-1 text-muted-foreground">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">会話履歴</h1>
+          <p className="mt-1 text-sm md:text-base text-muted-foreground">
             すべての音声エージェントの会話を表示・分析
           </p>
         </div>
@@ -298,40 +298,21 @@ export default function Conversations() {
               会話履歴がありません
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead>電話番号</TableHead>
-                  <TableHead>エージェント</TableHead>
-                  <TableHead>通話時間</TableHead>
-                  <TableHead>ステータス</TableHead>
-                  <TableHead>AI要約</TableHead>
-                  <TableHead>日時</TableHead>
-                  <TableHead className="w-[100px]">操作</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            <>
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
                 {filteredConversations.map((conv, index) => (
-                  <TableRow
+                  <div
                     key={conv.id}
-                    className="border-border/50 animate-fade-in cursor-pointer hover:bg-accent/50"
+                    className="glass rounded-xl p-4 card-shadow animate-fade-in cursor-pointer active:scale-[0.98] transition-transform"
                     style={{ animationDelay: `${index * 30}ms` }}
                     onClick={() => setSelectedConversation(conv)}
                   >
-                    <TableCell>
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
                         <span className="font-medium">{conv.phone}</span>
                       </div>
-                    </TableCell>
-                    <TableCell>{conv.agent}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        {conv.duration}
-                      </div>
-                    </TableCell>
-                    <TableCell>
                       <Badge
                         variant={conv.status === "completed" ? "default" : conv.status === "in_progress" ? "secondary" : "destructive"}
                         className="gap-1"
@@ -345,36 +326,107 @@ export default function Conversations() {
                         )}
                         {conv.status === "completed" ? "完了" : conv.status === "in_progress" ? "進行中" : "失敗"}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {conv.summary ? (
-                        <div className="flex items-center gap-2 max-w-[200px]">
-                          <FileText className="h-4 w-4 text-primary shrink-0" />
-                          <span className="text-sm truncate">{conv.summary}</span>
-                        </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">{conv.date}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedConversation(conv);
-                        }}
-                      >
-                        <Play className="h-4 w-4" />
-                        表示
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                    </div>
+                    
+                    <div className="text-sm text-muted-foreground mb-2">{conv.agent}</div>
+                    
+                    {conv.summary && (
+                      <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-primary/5">
+                        <FileText className="h-4 w-4 text-primary shrink-0" />
+                        <span className="text-sm line-clamp-2">{conv.summary}</span>
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {conv.duration}
+                      </div>
+                      <span>{conv.date}</span>
+                    </div>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+
+              {/* Desktop Table View */}
+              <Table className="hidden md:table">
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead>電話番号</TableHead>
+                    <TableHead>エージェント</TableHead>
+                    <TableHead>通話時間</TableHead>
+                    <TableHead>ステータス</TableHead>
+                    <TableHead>AI要約</TableHead>
+                    <TableHead>日時</TableHead>
+                    <TableHead className="w-[100px]">操作</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredConversations.map((conv, index) => (
+                    <TableRow
+                      key={conv.id}
+                      className="border-border/50 animate-fade-in cursor-pointer hover:bg-accent/50"
+                      style={{ animationDelay: `${index * 30}ms` }}
+                      onClick={() => setSelectedConversation(conv)}
+                    >
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">{conv.phone}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>{conv.agent}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          {conv.duration}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={conv.status === "completed" ? "default" : conv.status === "in_progress" ? "secondary" : "destructive"}
+                          className="gap-1"
+                        >
+                          {conv.status === "completed" ? (
+                            <CheckCircle className="h-3 w-3" />
+                          ) : conv.status === "in_progress" ? (
+                            <Clock className="h-3 w-3" />
+                          ) : (
+                            <XCircle className="h-3 w-3" />
+                          )}
+                          {conv.status === "completed" ? "完了" : conv.status === "in_progress" ? "進行中" : "失敗"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {conv.summary ? (
+                          <div className="flex items-center gap-2 max-w-[200px]">
+                            <FileText className="h-4 w-4 text-primary shrink-0" />
+                            <span className="text-sm truncate">{conv.summary}</span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{conv.date}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="gap-1"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedConversation(conv);
+                          }}
+                        >
+                          <Play className="h-4 w-4" />
+                          表示
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </>
           )}
         </div>
 
