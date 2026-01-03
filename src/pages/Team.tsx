@@ -31,39 +31,39 @@ import { Plus, MoreVertical, Mail, Shield, UserX, Search } from "lucide-react";
 const members = [
   {
     id: "1",
-    name: "John Doe",
-    email: "john@acme.com",
+    name: "山田 太郎",
+    email: "yamada@example.com",
     role: "owner",
     status: "active",
-    initials: "JD",
-    joinedAt: "Dec 2023",
+    initials: "山田",
+    joinedAt: "2023年12月",
   },
   {
     id: "2",
-    name: "Sarah Smith",
-    email: "sarah@acme.com",
+    name: "佐藤 花子",
+    email: "sato@example.com",
     role: "admin",
     status: "active",
-    initials: "SS",
-    joinedAt: "Jan 2024",
+    initials: "佐藤",
+    joinedAt: "2024年1月",
   },
   {
     id: "3",
-    name: "Mike Johnson",
-    email: "mike@acme.com",
+    name: "鈴木 一郎",
+    email: "suzuki@example.com",
     role: "member",
     status: "active",
-    initials: "MJ",
-    joinedAt: "Jan 2024",
+    initials: "鈴木",
+    joinedAt: "2024年1月",
   },
   {
     id: "4",
-    name: "Emily Brown",
-    email: "emily@acme.com",
+    name: "田中 美咲",
+    email: "tanaka@example.com",
     role: "member",
     status: "pending",
-    initials: "EB",
-    joinedAt: "Pending",
+    initials: "田中",
+    joinedAt: "保留中",
   },
 ];
 
@@ -71,6 +71,12 @@ const roleColors: Record<string, string> = {
   owner: "bg-primary/10 text-primary",
   admin: "bg-yellow-500/10 text-yellow-500",
   member: "bg-muted text-muted-foreground",
+};
+
+const roleLabels: Record<string, string> = {
+  owner: "オーナー",
+  admin: "管理者",
+  member: "メンバー",
 };
 
 export default function Team() {
@@ -89,48 +95,48 @@ export default function Team() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Team</h1>
+            <h1 className="text-3xl font-bold text-foreground">チーム</h1>
             <p className="mt-1 text-muted-foreground">
-              Manage workspace members and permissions
+              ワークスペースのメンバーと権限を管理
             </p>
           </div>
           <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
                 <Plus className="h-4 w-4" />
-                Invite Member
+                メンバーを招待
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Invite Team Member</DialogTitle>
+                <DialogTitle>チームメンバーを招待</DialogTitle>
                 <DialogDescription>
-                  Send an invitation to join your workspace
+                  ワークスペースへの招待を送信
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
+                  <Label htmlFor="email">メールアドレス</Label>
                   <Input id="email" type="email" placeholder="colleague@company.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Role</Label>
+                  <Label>役割</Label>
                   <Select defaultValue="member">
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="member">Member</SelectItem>
+                      <SelectItem value="admin">管理者</SelectItem>
+                      <SelectItem value="member">メンバー</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Admins can manage team members and settings
+                    管理者はチームメンバーと設定を管理できます
                   </p>
                 </div>
                 <Button className="w-full" onClick={() => setInviteDialogOpen(false)}>
                   <Mail className="mr-2 h-4 w-4" />
-                  Send Invitation
+                  招待を送信
                 </Button>
               </div>
             </DialogContent>
@@ -142,7 +148,7 @@ export default function Team() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search members..."
+              placeholder="メンバーを検索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -170,7 +176,7 @@ export default function Team() {
                       <p className="font-medium text-foreground">{member.name}</p>
                       {member.status === "pending" && (
                         <Badge variant="outline" className="text-xs">
-                          Pending
+                          保留中
                         </Badge>
                       )}
                     </div>
@@ -180,7 +186,7 @@ export default function Team() {
 
                 <div className="flex items-center gap-4">
                   <Badge className={roleColors[member.role]} variant="secondary">
-                    {member.role}
+                    {roleLabels[member.role]}
                   </Badge>
                   <span className="text-sm text-muted-foreground hidden sm:block">
                     {member.joinedAt}
@@ -196,11 +202,11 @@ export default function Team() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Shield className="mr-2 h-4 w-4" />
-                          Change Role
+                          役割を変更
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           <UserX className="mr-2 h-4 w-4" />
-                          Remove
+                          削除
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -213,36 +219,36 @@ export default function Team() {
 
         {/* Permissions Info */}
         <div className="mt-8 glass rounded-xl card-shadow p-6">
-          <h3 className="font-semibold text-foreground mb-4">Role Permissions</h3>
+          <h3 className="font-semibold text-foreground mb-4">役割の権限</h3>
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className={roleColors.owner} variant="secondary">Owner</Badge>
+                <Badge className={roleColors.owner} variant="secondary">オーナー</Badge>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Full workspace access</li>
-                <li>• Manage billing & subscription</li>
-                <li>• Delete workspace</li>
+                <li>• ワークスペースへの完全なアクセス</li>
+                <li>• 請求とサブスクリプションの管理</li>
+                <li>• ワークスペースの削除</li>
               </ul>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className={roleColors.admin} variant="secondary">Admin</Badge>
+                <Badge className={roleColors.admin} variant="secondary">管理者</Badge>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Manage team members</li>
-                <li>• Configure integrations</li>
-                <li>• Publish agents</li>
+                <li>• チームメンバーの管理</li>
+                <li>• 連携機能の設定</li>
+                <li>• エージェントの公開</li>
               </ul>
             </div>
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <Badge className={roleColors.member} variant="secondary">Member</Badge>
+                <Badge className={roleColors.member} variant="secondary">メンバー</Badge>
               </div>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Create & edit agents</li>
-                <li>• View analytics</li>
-                <li>• Access conversations</li>
+                <li>• エージェントの作成と編集</li>
+                <li>• 分析の閲覧</li>
+                <li>• 会話へのアクセス</li>
               </ul>
             </div>
           </div>

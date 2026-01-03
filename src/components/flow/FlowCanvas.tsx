@@ -24,20 +24,20 @@ interface FlowNodeData {
 }
 
 const nodeOptions = [
-  { type: "speak" as const, icon: MessageSquare, label: "Speak", description: "Say something to the user" },
-  { type: "ask" as const, icon: HelpCircle, label: "Ask", description: "Ask user a question" },
-  { type: "condition" as const, icon: GitBranch, label: "Condition", description: "Branch based on logic" },
-  { type: "webhook" as const, icon: Webhook, label: "Webhook", description: "Call external API" },
-  { type: "end" as const, icon: StopCircle, label: "End", description: "End conversation" },
+  { type: "speak" as const, icon: MessageSquare, label: "発話", description: "ユーザーにメッセージを伝える" },
+  { type: "ask" as const, icon: HelpCircle, label: "質問", description: "ユーザーに質問する" },
+  { type: "condition" as const, icon: GitBranch, label: "条件分岐", description: "ロジックに基づいて分岐" },
+  { type: "webhook" as const, icon: Webhook, label: "Webhook", description: "外部APIを呼び出す" },
+  { type: "end" as const, icon: StopCircle, label: "終了", description: "会話を終了" },
 ];
 
 const initialNodes: FlowNodeData[] = [
-  { id: "1", type: "speak", title: "Welcome Message", description: "Greet the user" },
-  { id: "2", type: "ask", title: "Get Intent", description: "What can I help you with?" },
-  { id: "3", type: "condition", title: "Route by Intent", description: "sales / support / other" },
-  { id: "4", type: "webhook", title: "Lookup Customer", description: "Fetch from CRM" },
-  { id: "5", type: "speak", title: "Provide Answer", description: "Give response" },
-  { id: "6", type: "end", title: "End Call", description: "Say goodbye" },
+  { id: "1", type: "speak", title: "ウェルカムメッセージ", description: "ユーザーに挨拶" },
+  { id: "2", type: "ask", title: "意図を取得", description: "本日はどのようなご用件でしょうか？" },
+  { id: "3", type: "condition", title: "意図による分岐", description: "営業 / サポート / その他" },
+  { id: "4", type: "webhook", title: "顧客検索", description: "CRMから取得" },
+  { id: "5", type: "speak", title: "回答を提供", description: "返答を伝える" },
+  { id: "6", type: "end", title: "通話終了", description: "お別れを言う" },
 ];
 
 interface FlowCanvasProps {
@@ -54,11 +54,18 @@ export function FlowCanvas({ onNodeSelect }: FlowCanvasProps) {
   };
 
   const addNode = (type: NodeType) => {
+    const typeLabels: Record<NodeType, string> = {
+      speak: "発話",
+      ask: "質問",
+      condition: "条件分岐",
+      webhook: "Webhook",
+      end: "終了",
+    };
     const newNode: FlowNodeData = {
       id: `node-${Date.now()}`,
       type,
-      title: `New ${type.charAt(0).toUpperCase() + type.slice(1)} Node`,
-      description: "Configure this node",
+      title: `新規${typeLabels[type]}ノード`,
+      description: "このノードを設定してください",
     };
     setNodes([...nodes, newNode]);
   };
@@ -71,7 +78,7 @@ export function FlowCanvas({ onNodeSelect }: FlowCanvasProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="secondary" size="sm" className="gap-2">
               <Plus className="h-4 w-4" />
-              Add Node
+              ノードを追加
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">

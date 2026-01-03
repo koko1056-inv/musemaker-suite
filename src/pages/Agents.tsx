@@ -25,50 +25,50 @@ import { Badge } from "@/components/ui/badge";
 const agents = [
   {
     id: "1",
-    name: "Customer Support",
-    description: "Handle customer inquiries and support tickets",
+    name: "カスタマーサポート",
+    description: "お客様のお問い合わせやサポートチケットに対応",
     status: "published",
-    voice: "Rachel",
+    voice: "レイチェル",
     conversations: 1234,
     successRate: 94,
     createdAt: "2024-01-15",
   },
   {
     id: "2",
-    name: "Sales Assistant",
-    description: "Qualify leads and schedule demos",
+    name: "営業アシスタント",
+    description: "リード獲得とデモのスケジュール調整",
     status: "draft",
-    voice: "Josh",
+    voice: "ジョシュ",
     conversations: 0,
     successRate: 0,
     createdAt: "2024-01-18",
   },
   {
     id: "3",
-    name: "Booking Agent",
-    description: "Manage appointments and reservations",
+    name: "予約エージェント",
+    description: "予約と予約管理を担当",
     status: "published",
-    voice: "Sarah",
+    voice: "サラ",
     conversations: 567,
     successRate: 89,
     createdAt: "2024-01-10",
   },
   {
     id: "4",
-    name: "FAQ Helper",
-    description: "Answer frequently asked questions",
+    name: "FAQヘルパー",
+    description: "よくある質問に回答",
     status: "published",
-    voice: "Adam",
+    voice: "アダム",
     conversations: 890,
     successRate: 97,
     createdAt: "2024-01-08",
   },
   {
     id: "5",
-    name: "Onboarding Guide",
-    description: "Help new users get started",
+    name: "オンボーディングガイド",
+    description: "新規ユーザーの利用開始をサポート",
     status: "draft",
-    voice: "Emily",
+    voice: "エミリー",
     conversations: 0,
     successRate: 0,
     createdAt: "2024-01-20",
@@ -90,15 +90,15 @@ export default function Agents() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Agents</h1>
+            <h1 className="text-3xl font-bold text-foreground">エージェント</h1>
             <p className="mt-1 text-muted-foreground">
-              Create and manage your voice AI agents
+              音声AIエージェントを作成・管理
             </p>
           </div>
           <Button asChild className="gap-2">
             <Link to="/agents/new">
               <Plus className="h-4 w-4" />
-              Create Agent
+              エージェント作成
             </Link>
           </Button>
         </div>
@@ -108,7 +108,7 @@ export default function Agents() {
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search agents..."
+              placeholder="エージェントを検索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -141,7 +141,7 @@ export default function Agents() {
                             : "fill-muted-foreground"
                         }`}
                       />
-                      {agent.status}
+                      {agent.status === "published" ? "公開中" : "下書き"}
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -153,20 +153,20 @@ export default function Agents() {
                         <DropdownMenuItem asChild>
                           <Link to={`/agents/${agent.id}`} className="flex items-center">
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            編集
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <Copy className="mr-2 h-4 w-4" />
-                          Duplicate
+                          複製
                         </DropdownMenuItem>
                         <DropdownMenuItem>
                           <ExternalLink className="mr-2 h-4 w-4" />
-                          Get Embed Code
+                          埋め込みコード取得
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive">
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          削除
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -185,7 +185,7 @@ export default function Agents() {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-4">
                     <div>
-                      <span className="text-muted-foreground">Voice: </span>
+                      <span className="text-muted-foreground">音声: </span>
                       <span className="font-medium text-foreground">{agent.voice}</span>
                     </div>
                   </div>
@@ -197,13 +197,13 @@ export default function Agents() {
                       <p className="text-lg font-semibold text-foreground">
                         {agent.conversations.toLocaleString()}
                       </p>
-                      <p className="text-xs text-muted-foreground">Conversations</p>
+                      <p className="text-xs text-muted-foreground">会話数</p>
                     </div>
                     <div>
                       <p className="text-lg font-semibold text-foreground">
                         {agent.successRate}%
                       </p>
-                      <p className="text-xs text-muted-foreground">Success Rate</p>
+                      <p className="text-xs text-muted-foreground">成功率</p>
                     </div>
                   </div>
                 )}
@@ -221,8 +221,8 @@ export default function Agents() {
               <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
                 <Plus className="h-6 w-6" />
               </div>
-              <p className="font-medium text-foreground">Create New Agent</p>
-              <p className="text-sm text-muted-foreground">Build a voice AI in minutes</p>
+              <p className="font-medium text-foreground">新規エージェント作成</p>
+              <p className="text-sm text-muted-foreground">数分で音声AIを構築</p>
             </div>
           </Link>
         </div>

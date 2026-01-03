@@ -37,17 +37,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 
 const voices = [
-  { id: "rachel", name: "Rachel", language: "English (US)", gender: "Female" },
-  { id: "josh", name: "Josh", language: "English (US)", gender: "Male" },
-  { id: "sarah", name: "Sarah", language: "English (UK)", gender: "Female" },
-  { id: "adam", name: "Adam", language: "English (UK)", gender: "Male" },
-  { id: "emily", name: "Emily", language: "English (AU)", gender: "Female" },
+  { id: "rachel", name: "レイチェル", language: "英語 (US)", gender: "女性" },
+  { id: "josh", name: "ジョシュ", language: "英語 (US)", gender: "男性" },
+  { id: "sarah", name: "サラ", language: "英語 (UK)", gender: "女性" },
+  { id: "adam", name: "アダム", language: "英語 (UK)", gender: "男性" },
+  { id: "emily", name: "エミリー", language: "英語 (AU)", gender: "女性" },
 ];
 
 export default function AgentEditor() {
   const { id } = useParams();
   const isNew = id === "new";
-  const [agentName, setAgentName] = useState(isNew ? "" : "Customer Support");
+  const [agentName, setAgentName] = useState(isNew ? "" : "カスタマーサポート");
   const [selectedVoice, setSelectedVoice] = useState("rachel");
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [selectedNode, setSelectedNode] = useState<{
@@ -76,7 +76,7 @@ export default function AgentEditor() {
             <Input
               value={agentName}
               onChange={(e) => setAgentName(e.target.value)}
-              placeholder="Agent Name"
+              placeholder="エージェント名"
               className="w-64 border-0 bg-transparent text-lg font-semibold focus-visible:ring-0"
             />
             <Badge
@@ -90,36 +90,36 @@ export default function AgentEditor() {
                     : "fill-muted-foreground"
                 }`}
               />
-              {status}
+              {status === "published" ? "公開中" : "下書き"}
             </Badge>
           </div>
 
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-2">
               <Play className="h-4 w-4" />
-              Test
+              テスト
             </Button>
             <Button variant="outline" size="sm" className="gap-2">
               <Save className="h-4 w-4" />
-              Save Draft
+              下書き保存
             </Button>
             <Dialog>
               <DialogTrigger asChild>
                 <Button size="sm" className="gap-2">
                   <Upload className="h-4 w-4" />
-                  Publish
+                  公開
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Publish Agent</DialogTitle>
+                  <DialogTitle>エージェントを公開</DialogTitle>
                   <DialogDescription>
-                    Make this agent available for production use.
+                    このエージェントを本番環境で利用可能にします。
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label>Embed Code</Label>
+                    <Label>埋め込みコード</Label>
                     <Textarea
                       readOnly
                       value={embedCode}
@@ -128,18 +128,18 @@ export default function AgentEditor() {
                     />
                     <Button variant="outline" size="sm" className="gap-2">
                       <Code className="h-4 w-4" />
-                      Copy Code
+                      コードをコピー
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    <Label>API Endpoint</Label>
+                    <Label>APIエンドポイント</Label>
                     <Input readOnly value={apiEndpoint} className="font-mono text-sm" />
                   </div>
                   <Button
                     className="w-full"
                     onClick={() => setStatus("published")}
                   >
-                    Publish Now
+                    今すぐ公開
                   </Button>
                 </div>
               </DialogContent>
@@ -157,19 +157,19 @@ export default function AgentEditor() {
                   value="voice"
                   className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  Voice
+                  音声
                 </TabsTrigger>
                 <TabsTrigger
                   value="settings"
                   className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
-                  Settings
+                  設定
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="voice" className="p-4 space-y-4 mt-0">
                 <div className="space-y-2">
-                  <Label>Select Voice</Label>
+                  <Label>音声を選択</Label>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger>
                       <SelectValue />
@@ -190,43 +190,43 @@ export default function AgentEditor() {
                 </div>
 
                 <div className="glass rounded-lg p-4 space-y-3">
-                  <h4 className="font-medium text-foreground">Voice Preview</h4>
+                  <h4 className="font-medium text-foreground">音声プレビュー</h4>
                   <p className="text-sm text-muted-foreground">
-                    Listen to a sample of the selected voice
+                    選択した音声のサンプルを聴く
                   </p>
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="gap-2 flex-1">
                       <Volume2 className="h-4 w-4" />
-                      Play Sample
+                      サンプル再生
                     </Button>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Speaking Style</Label>
+                  <Label>話し方スタイル</Label>
                   <Select defaultValue="conversational">
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="conversational">Conversational</SelectItem>
-                      <SelectItem value="professional">Professional</SelectItem>
-                      <SelectItem value="friendly">Friendly</SelectItem>
-                      <SelectItem value="calm">Calm</SelectItem>
+                      <SelectItem value="conversational">会話的</SelectItem>
+                      <SelectItem value="professional">プロフェッショナル</SelectItem>
+                      <SelectItem value="friendly">フレンドリー</SelectItem>
+                      <SelectItem value="calm">落ち着いた</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Speaking Speed</Label>
+                  <Label>話す速度</Label>
                   <Select defaultValue="normal">
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="slow">Slow</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="fast">Fast</SelectItem>
+                      <SelectItem value="slow">ゆっくり</SelectItem>
+                      <SelectItem value="normal">普通</SelectItem>
+                      <SelectItem value="fast">速い</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -234,34 +234,34 @@ export default function AgentEditor() {
 
               <TabsContent value="settings" className="p-4 space-y-4 mt-0">
                 <div className="space-y-2">
-                  <Label>Agent Description</Label>
+                  <Label>エージェントの説明</Label>
                   <Textarea
-                    placeholder="Describe what this agent does..."
+                    placeholder="このエージェントの役割を説明..."
                     rows={3}
-                    defaultValue="Handles customer inquiries and support tickets"
+                    defaultValue="お客様のお問い合わせやサポートチケットに対応"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Welcome Timeout (seconds)</Label>
+                  <Label>ウェルカムタイムアウト（秒）</Label>
                   <Input type="number" defaultValue="5" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Max Call Duration (minutes)</Label>
+                  <Label>最大通話時間（分）</Label>
                   <Input type="number" defaultValue="10" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Fallback Behavior</Label>
+                  <Label>フォールバック動作</Label>
                   <Select defaultValue="transfer">
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="transfer">Transfer to Human</SelectItem>
-                      <SelectItem value="retry">Retry 3 Times</SelectItem>
-                      <SelectItem value="end">End Call</SelectItem>
+                      <SelectItem value="transfer">オペレーターに転送</SelectItem>
+                      <SelectItem value="retry">3回リトライ</SelectItem>
+                      <SelectItem value="end">通話終了</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

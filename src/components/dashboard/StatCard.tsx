@@ -42,7 +42,7 @@ export function StatCard({
               >
                 {change}
               </span>
-              <span className="text-sm text-muted-foreground">vs last month</span>
+              <span className="text-sm text-muted-foreground">先月比</span>
             </div>
           )}
         </div>

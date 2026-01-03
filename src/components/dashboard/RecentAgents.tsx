@@ -5,31 +5,31 @@ import { Button } from "@/components/ui/button";
 const agents = [
   {
     id: "1",
-    name: "Customer Support",
+    name: "カスタマーサポート",
     status: "published",
     conversations: 1234,
-    lastActive: "2 min ago",
+    lastActive: "2分前",
   },
   {
     id: "2",
-    name: "Sales Assistant",
+    name: "営業アシスタント",
     status: "draft",
     conversations: 0,
-    lastActive: "1 hour ago",
+    lastActive: "1時間前",
   },
   {
     id: "3",
-    name: "Booking Agent",
+    name: "予約エージェント",
     status: "published",
     conversations: 567,
-    lastActive: "5 min ago",
+    lastActive: "5分前",
   },
   {
     id: "4",
-    name: "FAQ Helper",
+    name: "FAQヘルパー",
     status: "published",
     conversations: 890,
-    lastActive: "12 min ago",
+    lastActive: "12分前",
   },
 ];
 
@@ -37,10 +37,10 @@ export function RecentAgents() {
   return (
     <div className="glass rounded-xl card-shadow animate-fade-in">
       <div className="flex items-center justify-between border-b border-border/50 px-6 py-4">
-        <h3 className="font-semibold text-foreground">Recent Agents</h3>
+        <h3 className="font-semibold text-foreground">最近のエージェント</h3>
         <Button variant="ghost" size="sm" asChild>
           <Link to="/agents" className="flex items-center gap-1">
-            View all
+            すべて表示
             <ArrowRight className="h-4 w-4" />
           </Link>
         </Button>
@@ -68,15 +68,15 @@ export function RecentAgents() {
                     : "fill-muted-foreground text-muted-foreground"
                 }`}
               />
-              <span className="text-sm capitalize text-muted-foreground">
-                {agent.status}
+              <span className="text-sm text-muted-foreground">
+                {agent.status === "published" ? "公開中" : "下書き"}
               </span>
             </div>
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">
                 {agent.conversations.toLocaleString()}
               </p>
-              <p className="text-xs text-muted-foreground">conversations</p>
+              <p className="text-xs text-muted-foreground">会話数</p>
             </div>
           </Link>
         ))}

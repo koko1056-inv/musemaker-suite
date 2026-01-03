@@ -26,7 +26,7 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
-        <h3 className="font-semibold text-foreground">Edit Node</h3>
+        <h3 className="font-semibold text-foreground">ノードを編集</h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -34,39 +34,39 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
 
       <div className="flex-1 overflow-auto p-4 space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="node-title">Node Name</Label>
+          <Label htmlFor="node-title">ノード名</Label>
           <Input id="node-title" defaultValue={node.title} />
         </div>
 
         {node.type === "speak" && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="speak-text">Message</Label>
+              <Label htmlFor="speak-text">メッセージ</Label>
               <Textarea
                 id="speak-text"
-                placeholder="Enter the message to speak..."
+                placeholder="伝えるメッセージを入力..."
                 rows={4}
-                defaultValue="Hello! How can I help you today?"
+                defaultValue="こんにちは！本日はどのようなご用件でしょうか？"
               />
             </div>
             <div className="space-y-2">
-              <Label>Voice</Label>
+              <Label>音声</Label>
               <Select defaultValue="rachel">
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rachel">Rachel</SelectItem>
-                  <SelectItem value="josh">Josh</SelectItem>
-                  <SelectItem value="sarah">Sarah</SelectItem>
-                  <SelectItem value="adam">Adam</SelectItem>
-                  <SelectItem value="emily">Emily</SelectItem>
+                  <SelectItem value="rachel">レイチェル</SelectItem>
+                  <SelectItem value="josh">ジョシュ</SelectItem>
+                  <SelectItem value="sarah">サラ</SelectItem>
+                  <SelectItem value="adam">アダム</SelectItem>
+                  <SelectItem value="emily">エミリー</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <Button variant="outline" className="w-full gap-2">
               <Play className="h-4 w-4" />
-              Preview Voice
+              音声をプレビュー
             </Button>
           </>
         )}
@@ -74,26 +74,26 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
         {node.type === "ask" && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="ask-prompt">Question</Label>
+              <Label htmlFor="ask-prompt">質問</Label>
               <Textarea
                 id="ask-prompt"
-                placeholder="What would you like to ask?"
+                placeholder="何を質問しますか？"
                 rows={3}
-                defaultValue="What can I help you with today?"
+                defaultValue="本日はどのようなご用件でしょうか？"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="variable">Save Response To</Label>
+              <Label htmlFor="variable">回答の保存先</Label>
               <Input id="variable" placeholder="user_intent" defaultValue="user_response" />
             </div>
             <div className="space-y-2">
-              <Label>Expected Answers (optional)</Label>
+              <Label>期待される回答（任意）</Label>
               <Textarea
-                placeholder="sales, support, billing, other"
+                placeholder="営業, サポート, 請求, その他"
                 rows={2}
               />
               <p className="text-xs text-muted-foreground">
-                Comma-separated list of expected responses
+                カンマ区切りで期待される回答を入力
               </p>
             </div>
           </>
@@ -102,26 +102,26 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
         {node.type === "condition" && (
           <>
             <div className="space-y-2">
-              <Label>Condition Variable</Label>
+              <Label>条件変数</Label>
               <Input placeholder="user_intent" defaultValue="user_response" />
             </div>
             <div className="space-y-3">
-              <Label>Branches</Label>
+              <Label>分岐</Label>
               <div className="space-y-2">
                 <div className="flex gap-2">
-                  <Input placeholder="Value" defaultValue="sales" className="flex-1" />
-                  <Input placeholder="Go to" defaultValue="Sales Flow" className="flex-1" />
+                  <Input placeholder="値" defaultValue="営業" className="flex-1" />
+                  <Input placeholder="遷移先" defaultValue="営業フロー" className="flex-1" />
                 </div>
                 <div className="flex gap-2">
-                  <Input placeholder="Value" defaultValue="support" className="flex-1" />
-                  <Input placeholder="Go to" defaultValue="Support Flow" className="flex-1" />
+                  <Input placeholder="値" defaultValue="サポート" className="flex-1" />
+                  <Input placeholder="遷移先" defaultValue="サポートフロー" className="flex-1" />
                 </div>
                 <div className="flex gap-2">
-                  <Input placeholder="Value" value="default" readOnly className="flex-1 opacity-50" />
-                  <Input placeholder="Go to" defaultValue="General Flow" className="flex-1" />
+                  <Input placeholder="値" value="デフォルト" readOnly className="flex-1 opacity-50" />
+                  <Input placeholder="遷移先" defaultValue="一般フロー" className="flex-1" />
                 </div>
               </div>
-              <Button variant="outline" size="sm">Add Branch</Button>
+              <Button variant="outline" size="sm">分岐を追加</Button>
             </div>
           </>
         )}
@@ -129,7 +129,7 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
         {node.type === "webhook" && (
           <>
             <div className="space-y-2">
-              <Label>HTTP Method</Label>
+              <Label>HTTPメソッド</Label>
               <Select defaultValue="post">
                 <SelectTrigger>
                   <SelectValue />
@@ -143,7 +143,7 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="webhook-url">Endpoint URL</Label>
+              <Label htmlFor="webhook-url">エンドポイントURL</Label>
               <Input
                 id="webhook-url"
                 placeholder="https://api.example.com/webhook"
@@ -151,7 +151,7 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="webhook-body">Request Body (JSON)</Label>
+              <Label htmlFor="webhook-body">リクエストボディ（JSON）</Label>
               <Textarea
                 id="webhook-body"
                 placeholder='{"key": "value"}'
@@ -161,7 +161,7 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Save Response To</Label>
+              <Label>レスポンスの保存先</Label>
               <Input placeholder="api_response" defaultValue="customer_data" />
             </div>
           </>
@@ -169,12 +169,12 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
 
         {node.type === "end" && (
           <div className="space-y-2">
-            <Label htmlFor="end-message">Goodbye Message</Label>
+            <Label htmlFor="end-message">お別れメッセージ</Label>
             <Textarea
               id="end-message"
-              placeholder="Thank you for calling!"
+              placeholder="お電話ありがとうございました！"
               rows={3}
-              defaultValue="Thank you for calling. Goodbye!"
+              defaultValue="お電話ありがとうございました。失礼いたします。"
             />
           </div>
         )}
@@ -183,9 +183,9 @@ export function NodeEditor({ node, onClose }: NodeEditorProps) {
       <div className="border-t border-border p-4 flex gap-2">
         <Button variant="destructive" size="sm" className="gap-2">
           <Trash2 className="h-4 w-4" />
-          Delete
+          削除
         </Button>
-        <Button className="flex-1">Save Changes</Button>
+        <Button className="flex-1">変更を保存</Button>
       </div>
     </div>
   );
