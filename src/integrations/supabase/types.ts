@@ -14,16 +14,264 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      agents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          fallback_behavior: string | null
+          id: string
+          max_call_duration: number | null
+          name: string
+          status: Database["public"]["Enums"]["agent_status"]
+          updated_at: string
+          voice_id: string
+          voice_speed: string | null
+          voice_style: string | null
+          welcome_timeout: number | null
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fallback_behavior?: string | null
+          id?: string
+          max_call_duration?: number | null
+          name: string
+          status?: Database["public"]["Enums"]["agent_status"]
+          updated_at?: string
+          voice_id?: string
+          voice_speed?: string | null
+          voice_style?: string | null
+          welcome_timeout?: number | null
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          fallback_behavior?: string | null
+          id?: string
+          max_call_duration?: number | null
+          name?: string
+          status?: Database["public"]["Enums"]["agent_status"]
+          updated_at?: string
+          voice_id?: string
+          voice_speed?: string | null
+          voice_style?: string | null
+          welcome_timeout?: number | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          agent_id: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          outcome: string | null
+          phone_number: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["conversation_status"]
+          transcript: Json | null
+        }
+        Insert: {
+          agent_id: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          outcome?: string | null
+          phone_number?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["conversation_status"]
+          transcript?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          outcome?: string | null
+          phone_number?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["conversation_status"]
+          transcript?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flow_nodes: {
+        Row: {
+          agent_id: string
+          config: Json
+          created_at: string
+          description: string | null
+          id: string
+          node_type: Database["public"]["Enums"]["flow_node_type"]
+          position: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          node_type: Database["public"]["Enums"]["flow_node_type"]
+          position?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          config?: Json
+          created_at?: string
+          description?: string | null
+          id?: string
+          node_type?: Database["public"]["Enums"]["flow_node_type"]
+          position?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flow_nodes_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      workspace_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["member_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          elevenlabs_api_key: string | null
+          id: string
+          name: string
+          plan: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          elevenlabs_api_key?: string | null
+          id?: string
+          name: string
+          plan?: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          elevenlabs_api_key?: string | null
+          id?: string
+          name?: string
+          plan?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_workspace_admin: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      agent_status: "draft" | "published"
+      conversation_status: "completed" | "failed" | "in_progress"
+      flow_node_type: "speak" | "ask" | "condition" | "webhook" | "end"
+      member_role: "owner" | "admin" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +398,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      agent_status: ["draft", "published"],
+      conversation_status: ["completed", "failed", "in_progress"],
+      flow_node_type: ["speak", "ask", "condition", "webhook", "end"],
+      member_role: ["owner", "admin", "member"],
+    },
   },
 } as const
