@@ -91,23 +91,44 @@ serve(async (req) => {
 
     console.log('Conversation saved successfully:', data.id);
 
-    // Trigger webhooks asynchronously
-    try {
-      await fetch(`${supabaseUrl}/functions/v1/send-webhook`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          conversationId: data.id,
-          agentId: agentId,
-        }),
-      });
-    } catch (webhookError) {
-      console.error('Error triggering webhooks:', webhookError);
-      // Don't fail the main request if webhooks fail
-    }
+    // Trigger webhooks and summary generation asynchronously
+    const backgroundTasks = async () => {
+      try {
+        // Trigger webhooks
+        await fetch(`${supabaseUrl}/functions/v1/send-webhook`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            conversationId: data.id,
+            agentId: agentId,
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Error triggering webhooks:', webhookError);
+      }
+
+      try {
+        // Generate AI summary
+        await fetch(`${supabaseUrl}/functions/v1/generate-summary`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            conversationId: data.id,
+          }),
+        });
+      } catch (summaryError) {
+        console.error('Error generating summary:', summaryError);
+      }
+    };
+
+    // Run background tasks without blocking response
+    backgroundTasks();
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

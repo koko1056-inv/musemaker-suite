@@ -158,11 +158,13 @@ export type Database = {
           duration_seconds: number | null
           ended_at: string | null
           id: string
+          key_points: Json | null
           metadata: Json | null
           outcome: string | null
           phone_number: string | null
           started_at: string
           status: Database["public"]["Enums"]["conversation_status"]
+          summary: string | null
           transcript: Json | null
         }
         Insert: {
@@ -171,11 +173,13 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          key_points?: Json | null
           metadata?: Json | null
           outcome?: string | null
           phone_number?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["conversation_status"]
+          summary?: string | null
           transcript?: Json | null
         }
         Update: {
@@ -184,11 +188,13 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          key_points?: Json | null
           metadata?: Json | null
           outcome?: string | null
           phone_number?: string | null
           started_at?: string
           status?: Database["public"]["Enums"]["conversation_status"]
+          summary?: string | null
           transcript?: Json | null
         }
         Relationships: [

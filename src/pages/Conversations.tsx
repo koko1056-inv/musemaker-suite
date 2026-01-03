@@ -28,6 +28,11 @@ import {
   Loader2,
   Pause,
   Volume2,
+  FileText,
+  Lightbulb,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from "lucide-react";
 import { useConversations } from "@/hooks/useConversations";
 import { format } from "date-fns";
@@ -50,6 +55,10 @@ interface ConversationDisplay {
   rawDate: Date;
   transcript: TranscriptMessage[];
   audioUrl: string | null;
+  summary: string | null;
+  keyPoints: string[];
+  sentiment: string | null;
+  actionItems: string[];
 }
 
 function formatDuration(seconds: number | null): string {
@@ -166,6 +175,10 @@ export default function Conversations() {
     rawDate: new Date(conv.started_at),
     transcript: conv.transcript,
     audioUrl: conv.audio_url,
+    summary: conv.summary,
+    keyPoints: conv.key_points || [],
+    sentiment: conv.metadata?.sentiment || null,
+    actionItems: conv.metadata?.action_items || [],
   }));
 
   const filteredConversations = displayConversations.filter((conv) => {
@@ -292,9 +305,8 @@ export default function Conversations() {
                   <TableHead>エージェント</TableHead>
                   <TableHead>通話時間</TableHead>
                   <TableHead>ステータス</TableHead>
-                  <TableHead>結果</TableHead>
+                  <TableHead>AI要約</TableHead>
                   <TableHead>日時</TableHead>
-                  <TableHead>録音</TableHead>
                   <TableHead className="w-[100px]">操作</TableHead>
                 </TableRow>
               </TableHeader>
@@ -334,18 +346,17 @@ export default function Conversations() {
                         {conv.status === "completed" ? "完了" : conv.status === "in_progress" ? "進行中" : "失敗"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{conv.outcome}</TableCell>
-                    <TableCell className="text-muted-foreground">{conv.date}</TableCell>
                     <TableCell>
-                      {conv.audioUrl ? (
-                        <Badge variant="outline" className="gap-1">
-                          <Volume2 className="h-3 w-3" />
-                          あり
-                        </Badge>
+                      {conv.summary ? (
+                        <div className="flex items-center gap-2 max-w-[200px]">
+                          <FileText className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm truncate">{conv.summary}</span>
+                        </div>
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-muted-foreground">{conv.date}</TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -397,6 +408,66 @@ export default function Conversations() {
                     <p className="font-medium">{selectedConversation.date}</p>
                   </div>
                 </div>
+
+                {/* AI Summary Section */}
+                {selectedConversation.summary && (
+                  <div className="bg-primary/5 rounded-lg p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 text-primary" />
+                      <span className="font-medium">AI要約</span>
+                      {selectedConversation.sentiment && (
+                        <Badge 
+                          variant={
+                            selectedConversation.sentiment === 'positive' ? 'default' :
+                            selectedConversation.sentiment === 'negative' ? 'destructive' : 'secondary'
+                          }
+                          className="gap-1 ml-auto"
+                        >
+                          {selectedConversation.sentiment === 'positive' && <TrendingUp className="h-3 w-3" />}
+                          {selectedConversation.sentiment === 'negative' && <TrendingDown className="h-3 w-3" />}
+                          {selectedConversation.sentiment === 'neutral' && <Minus className="h-3 w-3" />}
+                          {selectedConversation.sentiment === 'positive' ? 'ポジティブ' :
+                           selectedConversation.sentiment === 'negative' ? 'ネガティブ' : 'ニュートラル'}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-sm">{selectedConversation.summary}</p>
+                    
+                    {selectedConversation.keyPoints.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <Lightbulb className="h-4 w-4 text-yellow-500" />
+                          重要ポイント
+                        </div>
+                        <ul className="space-y-1 text-sm">
+                          {selectedConversation.keyPoints.map((point, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span>{point}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {selectedConversation.actionItems.length > 0 && (
+                      <div className="space-y-2 border-t border-border/50 pt-3">
+                        <div className="flex items-center gap-2 text-sm font-medium">
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          アクションアイテム
+                        </div>
+                        <ul className="space-y-1 text-sm">
+                          {selectedConversation.actionItems.map((item, i) => (
+                            <li key={i} className="flex items-start gap-2">
+                              <span className="text-green-500">□</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Audio Player */}
                 {selectedConversation.audioUrl && (
