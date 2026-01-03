@@ -259,7 +259,7 @@ export default function Conversations() {
 
             {/* Status Filter */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">ステータス:</span>
+              <span className="text-xs text-muted-foreground">ステータス:</span>
               <div className="flex gap-1">
                 {[
                   { value: "all", label: "すべて" },
