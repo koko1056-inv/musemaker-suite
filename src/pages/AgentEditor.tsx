@@ -23,6 +23,7 @@ import {
   LayoutTemplate,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
+import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
 import {
   Dialog,
   DialogContent,
@@ -642,6 +643,11 @@ export default function AgentEditor() {
                     </div>
                   </CardContent>
                 </Card>
+              )}
+
+              {/* Knowledge Base Section (only for existing agents) */}
+              {!showTemplates && !isNew && (
+                <AgentKnowledgeSection agentId={id} isNew={isNew} />
               )}
 
               {/* Step 3: Review */}
