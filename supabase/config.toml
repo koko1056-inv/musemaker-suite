@@ -5,3 +5,12 @@ verify_jwt = false
 
 [functions.elevenlabs-voices]
 verify_jwt = false
+
+[functions.elevenlabs-conversation-token]
+verify_jwt = false
+
+[functions.elevenlabs-transcribe]
+verify_jwt = false
+
+[functions.save-conversation]
+verify_jwt = false
