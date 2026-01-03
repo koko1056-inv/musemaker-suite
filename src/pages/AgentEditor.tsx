@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { FlowCanvas } from "@/components/flow/FlowCanvas";
 import { NodeEditor } from "@/components/flow/NodeEditor";
@@ -39,6 +39,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useElevenLabs } from "@/hooks/useElevenLabs";
 import { VoiceCallPanel } from "@/components/voice/VoiceCallPanel";
+import { useAgents } from "@/hooks/useAgents";
+import { toast } from "sonner";
 
 // Default voices with ElevenLabs IDs
 const defaultVoices = [
@@ -49,12 +51,44 @@ const defaultVoices = [
   { id: "pFZP5JQG7iQjIQuC4Bku", name: "リリー", language: "多言語", gender: "女性" },
 ];
 
+const voiceStyles = [
+  { id: "conversational", name: "会話的" },
+  { id: "professional", name: "プロフェッショナル" },
+  { id: "friendly", name: "フレンドリー" },
+  { id: "calm", name: "落ち着いた" },
+];
+
+const voiceSpeeds = [
+  { id: "slow", name: "ゆっくり" },
+  { id: "normal", name: "普通" },
+  { id: "fast", name: "速い" },
+];
+
+const fallbackOptions = [
+  { id: "transfer", name: "オペレーターに転送" },
+  { id: "retry", name: "3回リトライ" },
+  { id: "end", name: "通話終了" },
+];
+
 export default function AgentEditor() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const isNew = id === "new";
-  const [agentName, setAgentName] = useState(isNew ? "" : "カスタマーサポート");
+  
+  const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Form state
+  const [agentName, setAgentName] = useState("");
+  const [description, setDescription] = useState("");
   const [selectedVoice, setSelectedVoice] = useState(defaultVoices[0].id);
+  const [voiceStyle, setVoiceStyle] = useState("conversational");
+  const [voiceSpeed, setVoiceSpeed] = useState("normal");
   const [status, setStatus] = useState<"draft" | "published">("draft");
+  const [welcomeTimeout, setWelcomeTimeout] = useState(5);
+  const [maxCallDuration, setMaxCallDuration] = useState(10);
+  const [fallbackBehavior, setFallbackBehavior] = useState("transfer");
+  
   const [selectedNode, setSelectedNode] = useState<{
     id: string;
     type: NodeType;
@@ -65,15 +99,76 @@ export default function AgentEditor() {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [elevenLabsAgentId, setElevenLabsAgentId] = useState("");
 
-  const { isLoading, generateSpeech, stopAudio } = useElevenLabs();
+  const { isLoading: isPlayingAudio, generateSpeech, stopAudio } = useElevenLabs();
+  const { createAgent, updateAgent, getAgent } = useAgents();
 
-  const embedCode = `<script src="https://voiceforge.ai/embed.js"></script>
-<voice-agent id="agent_${id || 'xxx'}" />`;
+  // Load existing agent
+  useEffect(() => {
+    if (!isNew && id) {
+      setIsLoadingAgent(true);
+      getAgent(id)
+        .then((agent) => {
+          setAgentName(agent.name);
+          setDescription(agent.description || "");
+          setSelectedVoice(agent.voice_id);
+          setVoiceStyle(agent.voice_style || "conversational");
+          setVoiceSpeed(agent.voice_speed || "normal");
+          setStatus(agent.status as "draft" | "published");
+          setWelcomeTimeout(agent.welcome_timeout || 5);
+          setMaxCallDuration(agent.max_call_duration || 10);
+          setFallbackBehavior(agent.fallback_behavior || "transfer");
+        })
+        .catch(() => {
+          navigate("/agents");
+        })
+        .finally(() => {
+          setIsLoadingAgent(false);
+        });
+    }
+  }, [id, isNew, getAgent, navigate]);
 
-  const apiEndpoint = `https://api.voiceforge.ai/v1/agents/${id || 'xxx'}/call`;
+  const handleSave = useCallback(async (newStatus?: "draft" | "published") => {
+    if (!agentName.trim()) {
+      toast.error("エージェント名を入力してください");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const agentData = {
+        name: agentName,
+        description: description || null,
+        voice_id: selectedVoice,
+        voice_style: voiceStyle,
+        voice_speed: voiceSpeed,
+        status: newStatus || status,
+        welcome_timeout: welcomeTimeout,
+        max_call_duration: maxCallDuration,
+        fallback_behavior: fallbackBehavior,
+      };
+
+      if (isNew) {
+        const newAgent = await createAgent(agentData);
+        navigate(`/agents/${newAgent.id}`, { replace: true });
+      } else if (id) {
+        await updateAgent(id, agentData);
+        if (newStatus) setStatus(newStatus);
+      }
+    } finally {
+      setIsSaving(false);
+    }
+  }, [
+    agentName, description, selectedVoice, voiceStyle, voiceSpeed, 
+    status, welcomeTimeout, maxCallDuration, fallbackBehavior,
+    isNew, id, createAgent, updateAgent, navigate
+  ]);
+
+  const handlePublish = async () => {
+    await handleSave("published");
+  };
 
   const handlePlaySample = async () => {
-    if (isLoading) {
+    if (isPlayingAudio) {
       stopAudio();
       return;
     }
@@ -81,6 +176,21 @@ export default function AgentEditor() {
   };
 
   const selectedVoiceData = defaultVoices.find(v => v.id === selectedVoice);
+
+  const embedCode = `<script src="https://voiceforge.ai/embed.js"></script>
+<voice-agent id="agent_${id || 'xxx'}" />`;
+
+  const apiEndpoint = `https://api.voiceforge.ai/v1/agents/${id || 'xxx'}/call`;
+
+  if (isLoadingAgent) {
+    return (
+      <AppLayout>
+        <div className="flex h-screen items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -154,17 +264,23 @@ export default function AgentEditor() {
                 </div>
               </DialogContent>
             </Dialog>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Play className="h-4 w-4" />
-              テスト
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2">
-              <Save className="h-4 w-4" />
-              下書き保存
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              onClick={() => handleSave()}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              保存
             </Button>
             <Dialog>
               <DialogTrigger asChild>
-                <Button size="sm" className="gap-2">
+                <Button size="sm" className="gap-2" disabled={isSaving}>
                   <Upload className="h-4 w-4" />
                   公開
                 </Button>
@@ -196,8 +312,12 @@ export default function AgentEditor() {
                   </div>
                   <Button
                     className="w-full"
-                    onClick={() => setStatus("published")}
+                    onClick={handlePublish}
+                    disabled={isSaving}
                   >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : null}
                     今すぐ公開
                   </Button>
                 </div>
@@ -268,7 +388,7 @@ export default function AgentEditor() {
                       onClick={handlePlaySample}
                       disabled={!previewText.trim()}
                     >
-                      {isLoading ? (
+                      {isPlayingAudio ? (
                         <>
                           <Square className="h-4 w-4" />
                           停止
@@ -285,29 +405,32 @@ export default function AgentEditor() {
 
                 <div className="space-y-2">
                   <Label>話し方スタイル</Label>
-                  <Select defaultValue="conversational">
+                  <Select value={voiceStyle} onValueChange={setVoiceStyle}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="conversational">会話的</SelectItem>
-                      <SelectItem value="professional">プロフェッショナル</SelectItem>
-                      <SelectItem value="friendly">フレンドリー</SelectItem>
-                      <SelectItem value="calm">落ち着いた</SelectItem>
+                      {voiceStyles.map((style) => (
+                        <SelectItem key={style.id} value={style.id}>
+                          {style.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-2">
                   <Label>話す速度</Label>
-                  <Select defaultValue="normal">
+                  <Select value={voiceSpeed} onValueChange={setVoiceSpeed}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="slow">ゆっくり</SelectItem>
-                      <SelectItem value="normal">普通</SelectItem>
-                      <SelectItem value="fast">速い</SelectItem>
+                      {voiceSpeeds.map((speed) => (
+                        <SelectItem key={speed.id} value={speed.id}>
+                          {speed.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -319,30 +442,41 @@ export default function AgentEditor() {
                   <Textarea
                     placeholder="このエージェントの役割を説明..."
                     rows={3}
-                    defaultValue="お客様のお問い合わせやサポートチケットに対応"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
                   <Label>ウェルカムタイムアウト（秒）</Label>
-                  <Input type="number" defaultValue="5" />
+                  <Input 
+                    type="number" 
+                    value={welcomeTimeout}
+                    onChange={(e) => setWelcomeTimeout(parseInt(e.target.value) || 5)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>最大通話時間（分）</Label>
-                  <Input type="number" defaultValue="10" />
+                  <Input 
+                    type="number" 
+                    value={maxCallDuration}
+                    onChange={(e) => setMaxCallDuration(parseInt(e.target.value) || 10)}
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label>フォールバック動作</Label>
-                  <Select defaultValue="transfer">
+                  <Select value={fallbackBehavior} onValueChange={setFallbackBehavior}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="transfer">オペレーターに転送</SelectItem>
-                      <SelectItem value="retry">3回リトライ</SelectItem>
-                      <SelectItem value="end">通話終了</SelectItem>
+                      {fallbackOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
