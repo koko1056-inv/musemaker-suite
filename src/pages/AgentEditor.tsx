@@ -24,6 +24,7 @@ import {
   Volume2,
   Loader2,
   Square,
+  Phone,
 } from "lucide-react";
 import { NodeType } from "@/components/flow/FlowNode";
 import {
@@ -37,6 +38,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useElevenLabs } from "@/hooks/useElevenLabs";
+import { VoiceCallPanel } from "@/components/voice/VoiceCallPanel";
 
 // Default voices with ElevenLabs IDs
 const defaultVoices = [
@@ -60,6 +62,8 @@ export default function AgentEditor() {
     description?: string;
   } | null>(null);
   const [previewText, setPreviewText] = useState("こんにちは！本日はどのようなご用件でしょうか？");
+  const [showCallDialog, setShowCallDialog] = useState(false);
+  const [elevenLabsAgentId, setElevenLabsAgentId] = useState("");
 
   const { isLoading, generateSpeech, stopAudio } = useElevenLabs();
 
@@ -111,6 +115,45 @@ export default function AgentEditor() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Phone className="h-4 w-4" />
+                  通話テスト
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>音声通話テスト</DialogTitle>
+                  <DialogDescription>
+                    ElevenLabsエージェントIDを入力して通話をテストします
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 pt-2">
+                  <div className="space-y-2">
+                    <Label>ElevenLabs Agent ID</Label>
+                    <Input
+                      value={elevenLabsAgentId}
+                      onChange={(e) => setElevenLabsAgentId(e.target.value)}
+                      placeholder="agent_xxxxxxxxx"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      ElevenLabsダッシュボードからエージェントIDを取得してください
+                    </p>
+                  </div>
+                  {elevenLabsAgentId && (
+                    <VoiceCallPanel
+                      agentId={id || 'test'}
+                      elevenLabsAgentId={elevenLabsAgentId}
+                      agentName={agentName || 'テストエージェント'}
+                      onCallEnd={() => {
+                        // Optionally close dialog or refresh data
+                      }}
+                    />
+                  )}
+                </div>
+              </DialogContent>
+            </Dialog>
             <Button variant="outline" size="sm" className="gap-2">
               <Play className="h-4 w-4" />
               テスト
