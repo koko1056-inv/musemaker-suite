@@ -36,7 +36,7 @@ const navigation = [
 ];
 
 export function AppSidebar() {
-  const location = useLocation();
+  const currentLocation = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
@@ -86,8 +86,8 @@ export function AppSidebar() {
       {/* Navigation */}
       <nav className="flex-1 space-y-1 px-3 py-2">
         {navigation.map((item) => {
-          const isActive = location.pathname === item.href || 
-            (item.href !== "/" && location.pathname.startsWith(item.href));
+          const isActive = currentLocation.pathname === item.href || 
+            (item.href !== "/" && currentLocation.pathname.startsWith(item.href));
           
           return (
             <Link
