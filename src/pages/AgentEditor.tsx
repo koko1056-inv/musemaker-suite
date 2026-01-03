@@ -560,8 +560,8 @@ export default function AgentEditor() {
                           <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-auto p-1">
-                          {availableVoices.slice(0, 20).map((voice) => (
+                        <div className="grid grid-cols-1 gap-2 max-h-80 overflow-auto p-1">
+                          {availableVoices.map((voice) => (
                             <button
                               key={voice.id}
                               onClick={() => setSelectedVoice(voice.id)}
@@ -596,12 +596,6 @@ export default function AgentEditor() {
                             </button>
                           ))}
                         </div>
-                      )}
-                      
-                      {availableVoices.length > 20 && (
-                        <p className="text-xs text-muted-foreground text-center">
-                          上位20件を表示中（全{availableVoices.length}件）
-                        </p>
                       )}
                     </div>
 
