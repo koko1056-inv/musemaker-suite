@@ -19,11 +19,13 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          elevenlabs_agent_id: string | null
           fallback_behavior: string | null
           id: string
           max_call_duration: number | null
           name: string
           status: Database["public"]["Enums"]["agent_status"]
+          system_prompt: string | null
           updated_at: string
           voice_id: string
           voice_speed: string | null
@@ -35,11 +37,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
           id?: string
           max_call_duration?: number | null
           name: string
           status?: Database["public"]["Enums"]["agent_status"]
+          system_prompt?: string | null
           updated_at?: string
           voice_id?: string
           voice_speed?: string | null
@@ -51,11 +55,13 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
           id?: string
           max_call_duration?: number | null
           name?: string
           status?: Database["public"]["Enums"]["agent_status"]
+          system_prompt?: string | null
           updated_at?: string
           voice_id?: string
           voice_speed?: string | null

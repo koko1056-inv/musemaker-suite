@@ -81,6 +81,7 @@ export default function AgentEditor() {
   // Form state
   const [agentName, setAgentName] = useState("");
   const [description, setDescription] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState("");
   const [selectedVoice, setSelectedVoice] = useState(defaultVoices[0].id);
   const [voiceStyle, setVoiceStyle] = useState("conversational");
   const [voiceSpeed, setVoiceSpeed] = useState("normal");
@@ -88,6 +89,7 @@ export default function AgentEditor() {
   const [welcomeTimeout, setWelcomeTimeout] = useState(5);
   const [maxCallDuration, setMaxCallDuration] = useState(10);
   const [fallbackBehavior, setFallbackBehavior] = useState("transfer");
+  const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
   
   const [selectedNode, setSelectedNode] = useState<{
     id: string;
@@ -97,7 +99,6 @@ export default function AgentEditor() {
   } | null>(null);
   const [previewText, setPreviewText] = useState("こんにちは！本日はどのようなご用件でしょうか？");
   const [showCallDialog, setShowCallDialog] = useState(false);
-  const [elevenLabsAgentId, setElevenLabsAgentId] = useState("");
 
   const { isLoading: isPlayingAudio, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
@@ -110,6 +111,7 @@ export default function AgentEditor() {
         .then((agent) => {
           setAgentName(agent.name);
           setDescription(agent.description || "");
+          setSystemPrompt((agent as any).system_prompt || "");
           setSelectedVoice(agent.voice_id);
           setVoiceStyle(agent.voice_style || "conversational");
           setVoiceSpeed(agent.voice_speed || "normal");
@@ -117,6 +119,7 @@ export default function AgentEditor() {
           setWelcomeTimeout(agent.welcome_timeout || 5);
           setMaxCallDuration(agent.max_call_duration || 10);
           setFallbackBehavior(agent.fallback_behavior || "transfer");
+          setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
         })
         .catch(() => {
           navigate("/agents");
@@ -138,6 +141,7 @@ export default function AgentEditor() {
       const agentData = {
         name: agentName,
         description: description || null,
+        system_prompt: systemPrompt || null,
         voice_id: selectedVoice,
         voice_style: voiceStyle,
         voice_speed: voiceSpeed,
@@ -148,17 +152,19 @@ export default function AgentEditor() {
       };
 
       if (isNew) {
-        const newAgent = await createAgent(agentData);
+        const newAgent = await createAgent(agentData as any);
+        setElevenLabsAgentId(newAgent.elevenlabs_agent_id || null);
         navigate(`/agents/${newAgent.id}`, { replace: true });
       } else if (id) {
-        await updateAgent(id, agentData);
+        const updatedAgent = await updateAgent(id, agentData as any);
         if (newStatus) setStatus(newStatus);
+        setElevenLabsAgentId(updatedAgent.elevenlabs_agent_id || null);
       }
     } finally {
       setIsSaving(false);
     }
   }, [
-    agentName, description, selectedVoice, voiceStyle, voiceSpeed, 
+    agentName, description, systemPrompt, selectedVoice, voiceStyle, voiceSpeed, 
     status, welcomeTimeout, maxCallDuration, fallbackBehavior,
     isNew, id, createAgent, updateAgent, navigate
   ]);
@@ -236,30 +242,39 @@ export default function AgentEditor() {
                 <DialogHeader>
                   <DialogTitle>音声通話テスト</DialogTitle>
                   <DialogDescription>
-                    ElevenLabsエージェントIDを入力して通話をテストします
+                    {elevenlabsAgentId 
+                      ? 'ElevenLabsと同期済みのエージェントで通話をテストできます'
+                      : 'エージェントを保存してElevenLabsと同期してから通話をテストしてください'
+                    }
                   </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 pt-2">
-                  <div className="space-y-2">
-                    <Label>ElevenLabs Agent ID</Label>
-                    <Input
-                      value={elevenLabsAgentId}
-                      onChange={(e) => setElevenLabsAgentId(e.target.value)}
-                      placeholder="agent_xxxxxxxxx"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      ElevenLabsダッシュボードからエージェントIDを取得してください
+                  {elevenlabsAgentId ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label>ElevenLabs Agent ID</Label>
+                        <Input
+                          value={elevenlabsAgentId}
+                          readOnly
+                          className="bg-muted"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          このエージェントはElevenLabsと同期されています
+                        </p>
+                      </div>
+                      <VoiceCallPanel
+                        agentId={id || 'test'}
+                        elevenLabsAgentId={elevenlabsAgentId}
+                        agentName={agentName || 'テストエージェント'}
+                        onCallEnd={() => {
+                          // Optionally close dialog or refresh data
+                        }}
+                      />
+                    </>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      エージェントを保存するとElevenLabsに自動的に同期され、通話テストが可能になります。
                     </p>
-                  </div>
-                  {elevenLabsAgentId && (
-                    <VoiceCallPanel
-                      agentId={id || 'test'}
-                      elevenLabsAgentId={elevenLabsAgentId}
-                      agentName={agentName || 'テストエージェント'}
-                      onCallEnd={() => {
-                        // Optionally close dialog or refresh data
-                      }}
-                    />
                   )}
                 </div>
               </DialogContent>
@@ -437,6 +452,13 @@ export default function AgentEditor() {
               </TabsContent>
 
               <TabsContent value="settings" className="p-4 space-y-4 mt-0">
+                {elevenlabsAgentId && (
+                  <div className="glass rounded-lg p-3 space-y-1">
+                    <Label className="text-xs text-muted-foreground">ElevenLabs Agent ID</Label>
+                    <p className="text-sm font-mono break-all">{elevenlabsAgentId}</p>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <Label>エージェントの説明</Label>
                   <Textarea
@@ -445,6 +467,19 @@ export default function AgentEditor() {
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>システムプロンプト</Label>
+                  <Textarea
+                    placeholder="エージェントの振る舞いを定義するプロンプトを入力..."
+                    rows={4}
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    空の場合、エージェント名と説明から自動生成されます
+                  </p>
                 </div>
 
                 <div className="space-y-2">
