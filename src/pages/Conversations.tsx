@@ -47,6 +47,7 @@ interface ConversationDisplay {
   status: 'completed' | 'failed' | 'in_progress';
   outcome: string;
   date: string;
+  rawDate: Date;
   transcript: TranscriptMessage[];
   audioUrl: string | null;
 }
@@ -148,6 +149,8 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
 
 export default function Conversations() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
   const [selectedConversation, setSelectedConversation] = useState<ConversationDisplay | null>(null);
   const { conversations, isLoading } = useConversations();
 
@@ -160,15 +163,38 @@ export default function Conversations() {
     status: conv.status as 'completed' | 'failed' | 'in_progress',
     outcome: conv.outcome || '-',
     date: format(new Date(conv.started_at), 'yyyy-MM-dd HH:mm', { locale: ja }),
+    rawDate: new Date(conv.started_at),
     transcript: conv.transcript,
     audioUrl: conv.audio_url,
   }));
 
-  const filteredConversations = displayConversations.filter(
-    (conv) =>
-      conv.phone.includes(searchQuery) ||
-      conv.agent.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredConversations = displayConversations.filter((conv) => {
+    // Text search
+    const matchesSearch = conv.phone.includes(searchQuery) ||
+      conv.agent.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = statusFilter === "all" || conv.status === statusFilter;
+    
+    // Date filter
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const monthAgo = new Date(today);
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    let matchesDate = true;
+    if (dateFilter === "today") {
+      matchesDate = conv.rawDate >= today;
+    } else if (dateFilter === "week") {
+      matchesDate = conv.rawDate >= weekAgo;
+    } else if (dateFilter === "month") {
+      matchesDate = conv.rawDate >= monthAgo;
+    }
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
 
   return (
     <AppLayout>
@@ -182,20 +208,70 @@ export default function Conversations() {
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="電話番号またはエージェントで検索..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
+        <div className="mb-6 space-y-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="電話番号またはエージェントで検索..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
-          <Button variant="outline" className="gap-2">
-            <Filter className="h-4 w-4" />
-            フィルター
-          </Button>
+          
+          <div className="flex flex-wrap gap-4">
+            {/* Date Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">期間:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "all", label: "すべて" },
+                  { value: "today", label: "今日" },
+                  { value: "week", label: "今週" },
+                  { value: "month", label: "今月" },
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={dateFilter === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setDateFilter(option.value as typeof dateFilter)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">ステータス:</span>
+              <div className="flex gap-1">
+                {[
+                  { value: "all", label: "すべて" },
+                  { value: "completed", label: "完了" },
+                  { value: "in_progress", label: "進行中" },
+                  { value: "failed", label: "失敗" },
+                ].map((option) => (
+                  <Button
+                    key={option.value}
+                    variant={statusFilter === option.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setStatusFilter(option.value as typeof statusFilter)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {(searchQuery || dateFilter !== "all" || statusFilter !== "all") && (
+            <p className="text-sm text-muted-foreground">
+              {filteredConversations.length}件の会話が見つかりました
+            </p>
+          )}
         </div>
 
         {/* Table */}

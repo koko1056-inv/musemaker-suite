@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -21,12 +21,45 @@ interface VoiceCallPanelProps {
   onCallEnd?: () => void;
 }
 
+// Audio level indicator component
+function AudioLevelIndicator({ level, isActive }: { level: number; isActive: boolean }) {
+  const bars = 5;
+  const normalizedLevel = Math.min(1, Math.max(0, level));
+  const activeBars = Math.ceil(normalizedLevel * bars);
+
+  return (
+    <div className="flex items-center gap-0.5 h-4">
+      {Array.from({ length: bars }).map((_, i) => (
+        <div
+          key={i}
+          className={`w-1 rounded-full transition-all duration-75 ${
+            isActive && i < activeBars
+              ? i < 2
+                ? 'bg-green-500'
+                : i < 4
+                ? 'bg-yellow-500'
+                : 'bg-red-500'
+              : 'bg-muted-foreground/30'
+          }`}
+          style={{
+            height: `${40 + i * 15}%`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function VoiceCallPanel({ 
   agentId, 
   elevenLabsAgentId, 
   agentName,
   onCallEnd 
 }: VoiceCallPanelProps) {
+  const [inputLevel, setInputLevel] = useState(0);
+  const [outputLevel, setOutputLevel] = useState(0);
+  const animationFrameRef = useRef<number>();
+
   const {
     isConnecting,
     isSaving,
@@ -35,6 +68,7 @@ export function VoiceCallPanel({
     transcript,
     startConversation,
     endConversation,
+    conversation,
   } = useVoiceConversation({
     agentId,
     elevenLabsAgentId,
@@ -42,6 +76,35 @@ export function VoiceCallPanel({
       onCallEnd?.();
     },
   });
+
+  // Monitor audio levels when connected
+  useEffect(() => {
+    if (!isConnected || !conversation) {
+      setInputLevel(0);
+      setOutputLevel(0);
+      return;
+    }
+
+    const updateLevels = () => {
+      try {
+        const input = conversation.getInputVolume?.() || 0;
+        const output = conversation.getOutputVolume?.() || 0;
+        setInputLevel(input);
+        setOutputLevel(output);
+      } catch {
+        // Ignore errors when getting volume
+      }
+      animationFrameRef.current = requestAnimationFrame(updateLevels);
+    };
+
+    updateLevels();
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isConnected, conversation]);
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -76,6 +139,20 @@ export function VoiceCallPanel({
       </CardHeader>
       
       <CardContent className="space-y-4">
+        {/* Audio Level Indicators */}
+        {isConnected && (
+          <div className="flex justify-center gap-8 py-2 px-4 rounded-lg bg-muted/30">
+            <div className="flex flex-col items-center gap-1">
+              <AudioLevelIndicator level={inputLevel} isActive={!isSpeaking} />
+              <span className="text-xs text-muted-foreground">あなた</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <AudioLevelIndicator level={outputLevel} isActive={isSpeaking} />
+              <span className="text-xs text-muted-foreground">AI</span>
+            </div>
+          </div>
+        )}
+
         {/* Transcript Display */}
         <div className="border rounded-lg bg-muted/30">
           <div className="px-3 py-2 border-b flex items-center gap-2">

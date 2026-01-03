@@ -218,5 +218,6 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
     transcript,
     startConversation,
     endConversation,
+    conversation, // Expose conversation for audio level monitoring
   };
 }

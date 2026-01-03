@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Plus, X, Loader2, RefreshCw, Check } from "lucide-react";
+import { BookOpen, Plus, X, Loader2, RefreshCw, Check, Zap } from "lucide-react";
 import { useKnowledgeBases } from "@/hooks/useKnowledgeBase";
 import {
   useAgentKnowledgeBases,
@@ -29,6 +29,8 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
   const [selectedKbId, setSelectedKbId] = useState<string>("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
+  const prevLinkedKbsRef = useRef<string[]>([]);
 
   const { data: allKnowledgeBases = [], isLoading: isLoadingKbs } = useKnowledgeBases();
   const { data: linkedKbs = [], isLoading: isLoadingLinked } = useAgentKnowledgeBases(agentId);
@@ -38,6 +40,35 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
 
   const linkedKbIds = linkedKbs.map((link) => link.knowledge_base_id);
   const availableKbs = allKnowledgeBases.filter((kb) => !linkedKbIds.includes(kb.id));
+
+  // Auto-sync when knowledge bases are linked/unlinked
+  useEffect(() => {
+    if (!agentId || !autoSyncEnabled || isLoadingLinked) return;
+    
+    const currentIds = linkedKbs.map(kb => kb.knowledge_base_id).sort().join(',');
+    const prevIds = prevLinkedKbsRef.current.sort().join(',');
+    
+    // Only sync if the linked knowledge bases have changed (and we have previous data)
+    if (prevLinkedKbsRef.current.length > 0 && currentIds !== prevIds) {
+      handleAutoSync();
+    }
+    
+    prevLinkedKbsRef.current = linkedKbs.map(kb => kb.knowledge_base_id);
+  }, [linkedKbs, agentId, autoSyncEnabled, isLoadingLinked]);
+
+  const handleAutoSync = async () => {
+    if (!agentId || isSyncing) return;
+    setIsSyncing(true);
+    try {
+      await syncKnowledgeBase(agentId);
+      setLastSynced(new Date());
+      toast.success("ナレッジを自動同期しました");
+    } catch (error) {
+      console.error("Auto-sync failed:", error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleLink = async () => {
     if (!agentId || !selectedKbId) return;
@@ -162,9 +193,12 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
                   最終同期: {lastSynced.toLocaleTimeString("ja-JP")}
                 </p>
               )}
-              <p className="text-xs text-muted-foreground text-center mt-1">
-                ナレッジベースの内容を変更したら同期してください
-              </p>
+              <div className="flex items-center justify-center gap-2 mt-2">
+                <Zap className={`h-3 w-3 ${autoSyncEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
+                <span className="text-xs text-muted-foreground">
+                  {autoSyncEnabled ? '自動同期: オン' : '自動同期: オフ'}
+                </span>
+              </div>
             </div>
           </div>
         ) : (
