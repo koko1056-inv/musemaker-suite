@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { FlowCanvas } from "@/components/flow/FlowCanvas";
@@ -20,9 +20,10 @@ import {
   Play,
   Upload,
   Code,
-  Settings,
   Circle,
   Volume2,
+  Loader2,
+  Square,
 } from "lucide-react";
 import { NodeType } from "@/components/flow/FlowNode";
 import {
@@ -35,20 +36,22 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { useElevenLabs } from "@/hooks/useElevenLabs";
 
-const voices = [
-  { id: "rachel", name: "レイチェル", language: "英語 (US)", gender: "女性" },
-  { id: "josh", name: "ジョシュ", language: "英語 (US)", gender: "男性" },
-  { id: "sarah", name: "サラ", language: "英語 (UK)", gender: "女性" },
-  { id: "adam", name: "アダム", language: "英語 (UK)", gender: "男性" },
-  { id: "emily", name: "エミリー", language: "英語 (AU)", gender: "女性" },
+// Default voices with ElevenLabs IDs
+const defaultVoices = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "サラ", language: "多言語", gender: "女性" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "ジョージ", language: "多言語", gender: "男性" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "マチルダ", language: "多言語", gender: "女性" },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "ダニエル", language: "多言語", gender: "男性" },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "リリー", language: "多言語", gender: "女性" },
 ];
 
 export default function AgentEditor() {
   const { id } = useParams();
   const isNew = id === "new";
   const [agentName, setAgentName] = useState(isNew ? "" : "カスタマーサポート");
-  const [selectedVoice, setSelectedVoice] = useState("rachel");
+  const [selectedVoice, setSelectedVoice] = useState(defaultVoices[0].id);
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [selectedNode, setSelectedNode] = useState<{
     id: string;
@@ -56,11 +59,24 @@ export default function AgentEditor() {
     title: string;
     description?: string;
   } | null>(null);
+  const [previewText, setPreviewText] = useState("こんにちは！本日はどのようなご用件でしょうか？");
+
+  const { isLoading, generateSpeech, stopAudio } = useElevenLabs();
 
   const embedCode = `<script src="https://voiceforge.ai/embed.js"></script>
 <voice-agent id="agent_${id || 'xxx'}" />`;
 
   const apiEndpoint = `https://api.voiceforge.ai/v1/agents/${id || 'xxx'}/call`;
+
+  const handlePlaySample = async () => {
+    if (isLoading) {
+      stopAudio();
+      return;
+    }
+    await generateSpeech(previewText, selectedVoice);
+  };
+
+  const selectedVoiceData = defaultVoices.find(v => v.id === selectedVoice);
 
   return (
     <AppLayout>
@@ -175,7 +191,7 @@ export default function AgentEditor() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {voices.map((voice) => (
+                      {defaultVoices.map((voice) => (
                         <SelectItem key={voice.id} value={voice.id}>
                           <div className="flex flex-col">
                             <span>{voice.name}</span>
@@ -192,12 +208,34 @@ export default function AgentEditor() {
                 <div className="glass rounded-lg p-4 space-y-3">
                   <h4 className="font-medium text-foreground">音声プレビュー</h4>
                   <p className="text-sm text-muted-foreground">
-                    選択した音声のサンプルを聴く
+                    {selectedVoiceData?.name}の音声でサンプルを再生
                   </p>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="gap-2 flex-1">
-                      <Volume2 className="h-4 w-4" />
-                      サンプル再生
+                  <div className="space-y-2">
+                    <Textarea
+                      value={previewText}
+                      onChange={(e) => setPreviewText(e.target.value)}
+                      placeholder="プレビューするテキストを入力..."
+                      rows={2}
+                      className="text-sm"
+                    />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="gap-2 w-full"
+                      onClick={handlePlaySample}
+                      disabled={!previewText.trim()}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Square className="h-4 w-4" />
+                          停止
+                        </>
+                      ) : (
+                        <>
+                          <Volume2 className="h-4 w-4" />
+                          サンプル再生
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
