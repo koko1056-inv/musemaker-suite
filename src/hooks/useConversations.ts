@@ -18,6 +18,13 @@ interface Conversation {
   started_at: string;
   ended_at: string | null;
   audio_url: string | null;
+  summary: string | null;
+  key_points: string[];
+  metadata: {
+    sentiment?: string;
+    action_items?: string[];
+    summarized_at?: string;
+  } | null;
   agent?: {
     name: string;
   };
@@ -48,6 +55,10 @@ export function useConversations() {
         transcript: Array.isArray(conv.transcript) 
           ? (conv.transcript as unknown as TranscriptMessage[])
           : [],
+        key_points: Array.isArray(conv.key_points)
+          ? (conv.key_points as unknown as string[])
+          : [],
+        metadata: conv.metadata as Conversation['metadata'],
       }));
 
       setConversations(transformedData);
