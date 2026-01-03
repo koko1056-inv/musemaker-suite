@@ -30,6 +30,8 @@ import {
   Edit,
   ExternalLink,
   Loader2,
+  Cloud,
+  CloudOff,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAgents } from "@/hooks/useAgents";
@@ -138,6 +140,17 @@ export default function Agents() {
                       <Bot className="h-6 w-6" />
                     </div>
                     <div className="flex items-center gap-2">
+                      {agent.elevenlabs_agent_id ? (
+                        <Badge variant="outline" className="gap-1 text-green-600 border-green-600/30 bg-green-50 dark:bg-green-950/30">
+                          <Cloud className="h-3 w-3" />
+                          同期済み
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="gap-1 text-muted-foreground">
+                          <CloudOff className="h-3 w-3" />
+                          未同期
+                        </Badge>
+                      )}
                       <Badge
                         variant={agent.status === "published" ? "default" : "secondary"}
                         className="gap-1"
