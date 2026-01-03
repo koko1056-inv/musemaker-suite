@@ -30,65 +30,65 @@ import {
 const conversations = [
   {
     id: "1",
-    phone: "+1 (555) 123-4567",
-    agent: "Customer Support",
+    phone: "+81 90-1234-5678",
+    agent: "カスタマーサポート",
     duration: "3:45",
     status: "completed",
-    outcome: "Resolved",
+    outcome: "解決済み",
     date: "2024-01-20 14:32",
     transcript: [
-      { role: "agent", text: "Hello! Thank you for calling Acme Corp. How can I help you today?" },
-      { role: "user", text: "Hi, I need to check on my order status." },
-      { role: "agent", text: "Of course! Can you please provide your order number?" },
-      { role: "user", text: "It's order 12345." },
-      { role: "agent", text: "Thank you. I can see your order is currently being processed and will ship within 2 business days." },
-      { role: "user", text: "Great, thank you!" },
-      { role: "agent", text: "You're welcome! Is there anything else I can help you with?" },
-      { role: "user", text: "No, that's all. Thanks!" },
-      { role: "agent", text: "Thank you for calling. Have a great day!" },
+      { role: "agent", text: "お電話ありがとうございます。サンプル株式会社です。本日はどのようなご用件でしょうか？" },
+      { role: "user", text: "注文の状況を確認したいのですが。" },
+      { role: "agent", text: "かしこまりました。注文番号をお教えいただけますか？" },
+      { role: "user", text: "注文番号は12345です。" },
+      { role: "agent", text: "ありがとうございます。お客様のご注文は現在処理中で、2営業日以内に発送予定です。" },
+      { role: "user", text: "分かりました、ありがとうございます！" },
+      { role: "agent", text: "どういたしまして！他にご不明な点はございますか？" },
+      { role: "user", text: "いいえ、大丈夫です。ありがとう！" },
+      { role: "agent", text: "お電話ありがとうございました。良い一日をお過ごしください！" },
     ],
   },
   {
     id: "2",
-    phone: "+1 (555) 987-6543",
-    agent: "Sales Assistant",
+    phone: "+81 80-9876-5432",
+    agent: "営業アシスタント",
     duration: "5:12",
     status: "completed",
-    outcome: "Demo Scheduled",
+    outcome: "デモ予約済み",
     date: "2024-01-20 13:15",
     transcript: [
-      { role: "agent", text: "Hello! Thanks for your interest in our product. How can I help?" },
-      { role: "user", text: "I'd like to schedule a demo." },
-      { role: "agent", text: "I'll connect you with our sales team." },
+      { role: "agent", text: "製品にご興味をお持ちいただきありがとうございます。ご質問はございますか？" },
+      { role: "user", text: "デモを予約したいのですが。" },
+      { role: "agent", text: "営業チームにお繋ぎいたします。" },
     ],
   },
   {
     id: "3",
-    phone: "+1 (555) 456-7890",
-    agent: "Booking Agent",
+    phone: "+81 70-4567-8901",
+    agent: "予約エージェント",
     duration: "2:30",
     status: "completed",
-    outcome: "Appointment Booked",
+    outcome: "予約完了",
     date: "2024-01-20 11:45",
     transcript: [],
   },
   {
     id: "4",
-    phone: "+1 (555) 321-0987",
-    agent: "Customer Support",
+    phone: "+81 90-3210-9876",
+    agent: "カスタマーサポート",
     duration: "1:15",
     status: "failed",
-    outcome: "Transferred",
+    outcome: "転送済み",
     date: "2024-01-20 10:20",
     transcript: [],
   },
   {
     id: "5",
-    phone: "+1 (555) 654-3210",
-    agent: "FAQ Helper",
+    phone: "+81 80-6543-2109",
+    agent: "FAQヘルパー",
     duration: "4:00",
     status: "completed",
-    outcome: "Resolved",
+    outcome: "解決済み",
     date: "2024-01-20 09:55",
     transcript: [],
   },
@@ -109,9 +109,9 @@ export default function Conversations() {
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Conversations</h1>
+          <h1 className="text-3xl font-bold text-foreground">会話履歴</h1>
           <p className="mt-1 text-muted-foreground">
-            View and analyze all voice agent conversations
+            すべての音声エージェントの会話を表示・分析
           </p>
         </div>
 
@@ -120,7 +120,7 @@ export default function Conversations() {
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by phone or agent..."
+              placeholder="電話番号またはエージェントで検索..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -128,7 +128,7 @@ export default function Conversations() {
           </div>
           <Button variant="outline" className="gap-2">
             <Filter className="h-4 w-4" />
-            Filters
+            フィルター
           </Button>
         </div>
 
@@ -137,13 +137,13 @@ export default function Conversations() {
           <Table>
             <TableHeader>
               <TableRow className="border-border/50 hover:bg-transparent">
-                <TableHead>Phone</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Duration</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Outcome</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
+                <TableHead>電話番号</TableHead>
+                <TableHead>エージェント</TableHead>
+                <TableHead>通話時間</TableHead>
+                <TableHead>ステータス</TableHead>
+                <TableHead>結果</TableHead>
+                <TableHead>日時</TableHead>
+                <TableHead className="w-[100px]">操作</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -177,7 +177,7 @@ export default function Conversations() {
                       ) : (
                         <XCircle className="h-3 w-3" />
                       )}
-                      {conv.status}
+                      {conv.status === "completed" ? "完了" : "失敗"}
                     </Badge>
                   </TableCell>
                   <TableCell>{conv.outcome}</TableCell>
@@ -193,7 +193,7 @@ export default function Conversations() {
                       }}
                     >
                       <Play className="h-4 w-4" />
-                      View
+                      表示
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -216,25 +216,25 @@ export default function Conversations() {
               <div className="space-y-4">
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>
-                    <p className="text-muted-foreground">Agent</p>
+                    <p className="text-muted-foreground">エージェント</p>
                     <p className="font-medium">{selectedConversation.agent}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Duration</p>
+                    <p className="text-muted-foreground">通話時間</p>
                     <p className="font-medium">{selectedConversation.duration}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Outcome</p>
+                    <p className="text-muted-foreground">結果</p>
                     <p className="font-medium">{selectedConversation.outcome}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Date</p>
+                    <p className="text-muted-foreground">日時</p>
                     <p className="font-medium">{selectedConversation.date}</p>
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-4">
-                  <h4 className="font-medium mb-4">Transcript</h4>
+                  <h4 className="font-medium mb-4">トランスクリプト</h4>
                   <div className="space-y-3">
                     {selectedConversation.transcript.length > 0 ? (
                       selectedConversation.transcript.map((msg, i) => (
@@ -250,7 +250,7 @@ export default function Conversations() {
                             }`}
                           >
                             <p className="text-xs font-medium text-muted-foreground mb-1">
-                              {msg.role === "agent" ? "Agent" : "Caller"}
+                              {msg.role === "agent" ? "エージェント" : "お客様"}
                             </p>
                             <p className="text-sm">{msg.text}</p>
                           </div>
@@ -258,7 +258,7 @@ export default function Conversations() {
                       ))
                     ) : (
                       <p className="text-muted-foreground text-center py-8">
-                        No transcript available
+                        トランスクリプトがありません
                       </p>
                     )}
                   </div>

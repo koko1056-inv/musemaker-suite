@@ -47,9 +47,9 @@ export default function Settings() {
       <div className="p-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Settings</h1>
+          <h1 className="text-3xl font-bold text-foreground">設定</h1>
           <p className="mt-1 text-muted-foreground">
-            Manage your workspace preferences and integrations
+            ワークスペースの設定と連携機能を管理
           </p>
         </div>
 
@@ -57,19 +57,19 @@ export default function Settings() {
           <TabsList className="bg-muted/50">
             <TabsTrigger value="workspace" className="gap-2">
               <Building className="h-4 w-4" />
-              Workspace
+              ワークスペース
             </TabsTrigger>
             <TabsTrigger value="integrations" className="gap-2">
               <Key className="h-4 w-4" />
-              Integrations
+              連携
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
-              Notifications
+              通知
             </TabsTrigger>
             <TabsTrigger value="billing" className="gap-2">
               <CreditCard className="h-4 w-4" />
-              Billing
+              請求
             </TabsTrigger>
           </TabsList>
 
@@ -77,21 +77,21 @@ export default function Settings() {
           <TabsContent value="workspace" className="space-y-6">
             <div className="glass rounded-xl card-shadow p-6 space-y-6">
               <div>
-                <h3 className="font-semibold text-foreground mb-4">Workspace Information</h3>
+                <h3 className="font-semibold text-foreground mb-4">ワークスペース情報</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="workspace-name">Workspace Name</Label>
-                    <Input id="workspace-name" defaultValue="Acme Corp" />
+                    <Label htmlFor="workspace-name">ワークスペース名</Label>
+                    <Input id="workspace-name" defaultValue="株式会社サンプル" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="workspace-slug">Workspace URL</Label>
+                    <Label htmlFor="workspace-slug">ワークスペースURL</Label>
                     <div className="flex">
                       <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground">
                         voiceforge.ai/
                       </span>
                       <Input
                         id="workspace-slug"
-                        defaultValue="acme-corp"
+                        defaultValue="sample-corp"
                         className="rounded-l-none"
                       />
                     </div>
@@ -100,7 +100,7 @@ export default function Settings() {
               </div>
 
               <div className="pt-4 border-t border-border">
-                <Button>Save Changes</Button>
+                <Button>変更を保存</Button>
               </div>
             </div>
 
@@ -108,27 +108,27 @@ export default function Settings() {
             <div className="glass rounded-xl card-shadow p-6 border-destructive/50">
               <h3 className="font-semibold text-destructive mb-4 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5" />
-                Danger Zone
+                危険な操作
               </h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Permanently delete your workspace and all associated data.
+                ワークスペースと関連するすべてのデータを完全に削除します。
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive">Delete Workspace</Button>
+                  <Button variant="destructive">ワークスペースを削除</Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Delete Workspace</AlertDialogTitle>
+                    <AlertDialogTitle>ワークスペースを削除</AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete your
-                      workspace, all agents, conversations, and data.
+                      この操作は取り消せません。ワークスペース、すべてのエージェント、
+                      会話、データが完全に削除されます。
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
                     <AlertDialogAction className="bg-destructive hover:bg-destructive/90">
-                      Delete
+                      削除
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -148,29 +148,29 @@ export default function Settings() {
                   <div>
                     <h3 className="font-semibold text-foreground">ElevenLabs</h3>
                     <p className="text-sm text-muted-foreground">
-                      Voice synthesis and speech-to-text
+                      音声合成と音声認識
                     </p>
                   </div>
                 </div>
                 {apiKeySaved ? (
                   <Badge className="bg-success/10 text-success gap-1">
                     <Check className="h-3 w-3" />
-                    Connected
+                    接続済み
                   </Badge>
                 ) : (
-                  <Badge variant="outline">Not Connected</Badge>
+                  <Badge variant="outline">未接続</Badge>
                 )}
               </div>
 
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="elevenlabs-key">API Key</Label>
+                  <Label htmlFor="elevenlabs-key">APIキー</Label>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
                       <Input
                         id="elevenlabs-key"
                         type={apiKeyVisible ? "text" : "password"}
-                        placeholder="Enter your ElevenLabs API key"
+                        placeholder="ElevenLabsのAPIキーを入力"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         className="pr-10"
@@ -189,16 +189,16 @@ export default function Settings() {
                         )}
                       </Button>
                     </div>
-                    <Button onClick={handleSaveApiKey}>Save</Button>
+                    <Button onClick={handleSaveApiKey}>保存</Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Your API key is encrypted and stored securely on our servers.
+                    APIキーは暗号化されて安全に保存されます。
                   </p>
                 </div>
 
                 <Button variant="outline" className="gap-2" asChild>
                   <a href="https://elevenlabs.io/api" target="_blank" rel="noopener noreferrer">
-                    Get API Key
+                    APIキーを取得
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -207,9 +207,9 @@ export default function Settings() {
 
             {/* Webhooks */}
             <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-4">Webhooks</h3>
+              <h3 className="font-semibold text-foreground mb-4">Webhook</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Receive real-time notifications when events occur in your workspace.
+                ワークスペースでイベントが発生した際にリアルタイムで通知を受け取ります。
               </p>
               <div className="space-y-4">
                 <div className="space-y-2">
@@ -219,7 +219,7 @@ export default function Settings() {
                     placeholder="https://your-server.com/webhook"
                   />
                 </div>
-                <Button>Add Webhook</Button>
+                <Button>Webhookを追加</Button>
               </div>
             </div>
           </TabsContent>
@@ -227,13 +227,13 @@ export default function Settings() {
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-6">
             <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-6">Email Notifications</h3>
+              <h3 className="font-semibold text-foreground mb-6">メール通知</h3>
               <div className="space-y-4">
                 {[
-                  { id: "new-conversation", label: "New conversations", description: "Get notified when a new conversation starts" },
-                  { id: "failed-calls", label: "Failed calls", description: "Get alerted when a call fails or transfers" },
-                  { id: "weekly-report", label: "Weekly analytics report", description: "Receive a summary of your agent performance" },
-                  { id: "team-updates", label: "Team updates", description: "When members join or leave the workspace" },
+                  { id: "new-conversation", label: "新しい会話", description: "新しい会話が開始された際に通知" },
+                  { id: "failed-calls", label: "失敗した通話", description: "通話が失敗または転送された際にアラート" },
+                  { id: "weekly-report", label: "週次分析レポート", description: "エージェントのパフォーマンスのサマリーを受信" },
+                  { id: "team-updates", label: "チームの更新", description: "メンバーがワークスペースに参加または退出した際" },
                 ].map((item) => (
                   <div key={item.id} className="flex items-center justify-between py-2">
                     <div>
@@ -252,9 +252,9 @@ export default function Settings() {
             <div className="glass rounded-xl card-shadow p-6">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="font-semibold text-foreground">Current Plan</h3>
+                  <h3 className="font-semibold text-foreground">現在のプラン</h3>
                   <p className="text-sm text-muted-foreground">
-                    You are currently on the Pro plan
+                    現在Proプランをご利用中です
                   </p>
                 </div>
                 <Badge className="bg-primary/10 text-primary text-lg px-4 py-1">Pro</Badge>
@@ -263,31 +263,31 @@ export default function Settings() {
               <div className="grid gap-4 md:grid-cols-3 mb-6">
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-2xl font-bold text-foreground">10,000</p>
-                  <p className="text-sm text-muted-foreground">API calls / month</p>
+                  <p className="text-sm text-muted-foreground">API呼び出し / 月</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
                   <p className="text-2xl font-bold text-foreground">5</p>
-                  <p className="text-sm text-muted-foreground">Team members</p>
+                  <p className="text-sm text-muted-foreground">チームメンバー</p>
                 </div>
                 <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-2xl font-bold text-foreground">Unlimited</p>
-                  <p className="text-sm text-muted-foreground">Agents</p>
+                  <p className="text-2xl font-bold text-foreground">無制限</p>
+                  <p className="text-sm text-muted-foreground">エージェント</p>
                 </div>
               </div>
 
               <div className="flex gap-3">
-                <Button>Upgrade Plan</Button>
-                <Button variant="outline">Manage Billing</Button>
+                <Button>プランをアップグレード</Button>
+                <Button variant="outline">請求を管理</Button>
               </div>
             </div>
 
             {/* Usage */}
             <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-4">This Month's Usage</h3>
+              <h3 className="font-semibold text-foreground mb-4">今月の使用量</h3>
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">API Calls</span>
+                    <span className="text-muted-foreground">API呼び出し</span>
                     <span className="font-medium text-foreground">6,234 / 10,000</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
@@ -299,7 +299,7 @@ export default function Settings() {
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Voice Minutes</span>
+                    <span className="text-muted-foreground">音声分数</span>
                     <span className="font-medium text-foreground">1,450 / 5,000</span>
                   </div>
                   <div className="h-2 bg-muted rounded-full overflow-hidden">

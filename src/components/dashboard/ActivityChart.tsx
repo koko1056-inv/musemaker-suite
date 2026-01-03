@@ -9,21 +9,21 @@ import {
 } from "recharts";
 
 const data = [
-  { name: "Mon", conversations: 240 },
-  { name: "Tue", conversations: 380 },
-  { name: "Wed", conversations: 520 },
-  { name: "Thu", conversations: 410 },
-  { name: "Fri", conversations: 650 },
-  { name: "Sat", conversations: 320 },
-  { name: "Sun", conversations: 280 },
+  { name: "月", conversations: 240 },
+  { name: "火", conversations: 380 },
+  { name: "水", conversations: 520 },
+  { name: "木", conversations: 410 },
+  { name: "金", conversations: 650 },
+  { name: "土", conversations: 320 },
+  { name: "日", conversations: 280 },
 ];
 
 export function ActivityChart() {
   return (
     <div className="glass rounded-xl card-shadow animate-fade-in">
       <div className="border-b border-border/50 px-6 py-4">
-        <h3 className="font-semibold text-foreground">Weekly Activity</h3>
-        <p className="text-sm text-muted-foreground">Conversations over the past week</p>
+        <h3 className="font-semibold text-foreground">週間アクティビティ</h3>
+        <p className="text-sm text-muted-foreground">過去1週間の会話数</p>
       </div>
       <div className="p-6">
         <div className="h-[280px]">

@@ -31,27 +31,27 @@ import {
 } from "@/components/ui/select";
 
 const conversationData = [
-  { date: "Jan 14", conversations: 145 },
-  { date: "Jan 15", conversations: 232 },
-  { date: "Jan 16", conversations: 189 },
-  { date: "Jan 17", conversations: 278 },
-  { date: "Jan 18", conversations: 315 },
-  { date: "Jan 19", conversations: 198 },
-  { date: "Jan 20", conversations: 256 },
+  { date: "1月14日", conversations: 145 },
+  { date: "1月15日", conversations: 232 },
+  { date: "1月16日", conversations: 189 },
+  { date: "1月17日", conversations: 278 },
+  { date: "1月18日", conversations: 315 },
+  { date: "1月19日", conversations: 198 },
+  { date: "1月20日", conversations: 256 },
 ];
 
 const agentPerformance = [
-  { name: "Customer Support", success: 94, calls: 450 },
-  { name: "Sales Assistant", success: 87, calls: 280 },
-  { name: "Booking Agent", success: 91, calls: 320 },
-  { name: "FAQ Helper", success: 96, calls: 190 },
+  { name: "カスタマーサポート", success: 94, calls: 450 },
+  { name: "営業アシスタント", success: 87, calls: 280 },
+  { name: "予約エージェント", success: 91, calls: 320 },
+  { name: "FAQヘルパー", success: 96, calls: 190 },
 ];
 
 const outcomeData = [
-  { name: "Resolved", value: 65, color: "hsl(142, 70%, 45%)" },
-  { name: "Transferred", value: 20, color: "hsl(221, 83%, 53%)" },
-  { name: "Scheduled", value: 10, color: "hsl(250, 83%, 65%)" },
-  { name: "Failed", value: 5, color: "hsl(0, 63%, 31%)" },
+  { name: "解決済み", value: 65, color: "hsl(142, 70%, 45%)" },
+  { name: "転送済み", value: 20, color: "hsl(221, 83%, 53%)" },
+  { name: "予約済み", value: 10, color: "hsl(250, 83%, 65%)" },
+  { name: "失敗", value: 5, color: "hsl(0, 63%, 31%)" },
 ];
 
 export default function Analytics() {
@@ -61,9 +61,9 @@ export default function Analytics() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Analytics</h1>
+            <h1 className="text-3xl font-bold text-foreground">分析</h1>
             <p className="mt-1 text-muted-foreground">
-              Track performance and insights across all agents
+              すべてのエージェントのパフォーマンスとインサイトを追跡
             </p>
           </div>
           <Select defaultValue="7d">
@@ -71,10 +71,10 @@ export default function Analytics() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="24h">Last 24 hours</SelectItem>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
+              <SelectItem value="24h">過去24時間</SelectItem>
+              <SelectItem value="7d">過去7日間</SelectItem>
+              <SelectItem value="30d">過去30日間</SelectItem>
+              <SelectItem value="90d">過去90日間</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -82,28 +82,28 @@ export default function Analytics() {
         {/* Stats */}
         <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            title="Total Calls"
+            title="総通話数"
             value="1,613"
             change="+18.2%"
             changeType="positive"
             icon={<Phone className="h-6 w-6" />}
           />
           <StatCard
-            title="Avg. Duration"
-            value="3m 12s"
+            title="平均通話時間"
+            value="3分12秒"
             change="-5%"
             changeType="positive"
             icon={<Clock className="h-6 w-6" />}
           />
           <StatCard
-            title="Success Rate"
+            title="成功率"
             value="92.4%"
             change="+2.1%"
             changeType="positive"
             icon={<CheckCircle className="h-6 w-6" />}
           />
           <StatCard
-            title="Resolution Rate"
+            title="解決率"
             value="87.8%"
             change="+4.3%"
             changeType="positive"
@@ -116,8 +116,8 @@ export default function Analytics() {
           {/* Conversations Over Time */}
           <div className="glass rounded-xl card-shadow animate-fade-in">
             <div className="border-b border-border/50 px-6 py-4">
-              <h3 className="font-semibold text-foreground">Conversations Over Time</h3>
-              <p className="text-sm text-muted-foreground">Daily conversation volume</p>
+              <h3 className="font-semibold text-foreground">会話数の推移</h3>
+              <p className="text-sm text-muted-foreground">日別会話数</p>
             </div>
             <div className="p-6">
               <div className="h-[300px]">
@@ -157,8 +157,8 @@ export default function Analytics() {
           {/* Outcome Distribution */}
           <div className="glass rounded-xl card-shadow animate-fade-in">
             <div className="border-b border-border/50 px-6 py-4">
-              <h3 className="font-semibold text-foreground">Outcome Distribution</h3>
-              <p className="text-sm text-muted-foreground">How conversations end</p>
+              <h3 className="font-semibold text-foreground">結果の分布</h3>
+              <p className="text-sm text-muted-foreground">会話の終了方法</p>
             </div>
             <div className="p-6">
               <div className="h-[300px] flex items-center justify-center">
@@ -208,8 +208,8 @@ export default function Analytics() {
           {/* Agent Performance */}
           <div className="glass rounded-xl card-shadow animate-fade-in lg:col-span-2">
             <div className="border-b border-border/50 px-6 py-4">
-              <h3 className="font-semibold text-foreground">Agent Performance</h3>
-              <p className="text-sm text-muted-foreground">Success rate by agent</p>
+              <h3 className="font-semibold text-foreground">エージェントパフォーマンス</h3>
+              <p className="text-sm text-muted-foreground">エージェント別成功率</p>
             </div>
             <div className="p-6">
               <div className="h-[300px]">
@@ -225,7 +225,7 @@ export default function Analytics() {
                         borderRadius: "8px",
                         color: "hsl(210, 40%, 98%)",
                       }}
-                      formatter={(value: number) => [`${value}%`, "Success Rate"]}
+                      formatter={(value: number) => [`${value}%`, "成功率"]}
                     />
                     <Bar dataKey="success" fill="hsl(221, 83%, 53%)" radius={[0, 4, 4, 0]} />
                   </BarChart>

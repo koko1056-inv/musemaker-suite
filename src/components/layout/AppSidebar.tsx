@@ -20,12 +20,12 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Agents", href: "/agents", icon: Bot },
-  { name: "Conversations", href: "/conversations", icon: MessageSquare },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Team", href: "/team", icon: Users },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "ダッシュボード", href: "/", icon: LayoutDashboard },
+  { name: "エージェント", href: "/agents", icon: Bot },
+  { name: "会話履歴", href: "/conversations", icon: MessageSquare },
+  { name: "分析", href: "/analytics", icon: BarChart3 },
+  { name: "チーム", href: "/team", icon: Users },
+  { name: "設定", href: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
@@ -49,19 +49,19 @@ export function AppSidebar() {
               <Zap className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">Acme Corp</p>
-              <p className="text-xs text-muted-foreground">Pro Plan</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">株式会社サンプル</p>
+              <p className="text-xs text-muted-foreground">Proプラン</p>
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
             <DropdownMenuItem>
               <Zap className="mr-2 h-4 w-4" />
-              Acme Corp
+              株式会社サンプル
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Zap className="mr-2 h-4 w-4" />
-              Personal Workspace
+              個人ワークスペース
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -96,18 +96,18 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-lg p-2 transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">JD</AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary text-sm">山田</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">John Doe</p>
-              <p className="text-xs text-muted-foreground truncate">john@acme.com</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">山田 太郎</p>
+              <p className="text-xs text-muted-foreground truncate">yamada@example.com</p>
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">Sign out</DropdownMenuItem>
+            <DropdownMenuItem>プロフィール</DropdownMenuItem>
+            <DropdownMenuItem>請求</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">ログアウト</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
