@@ -167,81 +167,92 @@ export default function KnowledgeBase() {
 
   return (
     <AppLayout>
-      <div className="flex h-[calc(100vh-4rem)]">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)]">
         {/* Sidebar - Knowledge Base List */}
-        <div className="w-80 border-r border-border bg-muted/30 flex flex-col">
+        <div className={`w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-border bg-muted/30 flex flex-col ${selectedKb ? 'hidden lg:flex' : 'flex'}`}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <BookOpen className="h-5 w-5" />
+              <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <BookOpen className="h-4 w-4 text-primary" />
+                </div>
                 ナレッジベース
               </h2>
               <Dialog open={isCreateKbOpen} onOpenChange={setIsCreateKbOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="h-4 w-4" />
+                  <Button size="sm" className="h-9">
+                    <Plus className="h-4 w-4 mr-1" />
+                    新規
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
                   <DialogHeader>
-                    <DialogTitle>新規ナレッジベース</DialogTitle>
-                    <DialogDescription>
-                      FAQや製品情報を整理するナレッジベースを作成します
+                    <DialogTitle className="text-base sm:text-lg">新規ナレッジベース</DialogTitle>
+                    <DialogDescription className="text-sm">
+                      FAQや製品情報を整理するフォルダを作成します
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label>名前</Label>
+                      <Label className="text-sm">名前</Label>
                       <Input
                         value={kbName}
                         onChange={(e) => setKbName(e.target.value)}
                         placeholder="例: 製品FAQ"
+                        className="h-11 sm:h-10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>説明</Label>
+                      <Label className="text-sm">説明（任意）</Label>
                       <Textarea
                         value={kbDescription}
                         onChange={(e) => setKbDescription(e.target.value)}
-                        placeholder="このナレッジベースの説明..."
+                        placeholder="何を保存するか..."
+                        className="text-sm"
                       />
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsCreateKbOpen(false)}>
+                  <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => setIsCreateKbOpen(false)} className="w-full sm:w-auto">
                       キャンセル
                     </Button>
-                    <Button onClick={handleCreateKb} disabled={createKb.isPending}>
+                    <Button onClick={handleCreateKb} disabled={createKb.isPending} className="w-full sm:w-auto">
                       作成
                     </Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
             </div>
+            <p className="text-xs sm:text-sm text-muted-foreground">
+              AIに教える情報をここに登録します
+            </p>
           </div>
 
           <ScrollArea className="flex-1">
             <div className="p-2 space-y-1">
               {isLoadingKbs ? (
-                <div className="p-4 text-center text-muted-foreground">読み込み中...</div>
+                <div className="p-4 text-center text-muted-foreground text-sm">読み込み中...</div>
               ) : knowledgeBases.length === 0 ? (
-                <div className="p-4 text-center text-muted-foreground">
-                  <FolderOpen className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">ナレッジベースがありません</p>
+                <div className="p-6 text-center text-muted-foreground">
+                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                    <FolderOpen className="h-6 w-6 opacity-50" />
+                  </div>
+                  <p className="text-sm font-medium mb-1">まだありません</p>
+                  <p className="text-xs">「新規」ボタンで作成しましょう</p>
                 </div>
               ) : (
                 knowledgeBases.map((kb) => (
                   <div
                     key={kb.id}
-                    className={`group flex items-center justify-between p-3 rounded-lg cursor-pointer transition-colors ${
+                    className={`group flex items-center justify-between p-3 sm:p-4 rounded-xl cursor-pointer transition-colors min-h-[56px] ${
                       selectedKbId === kb.id
                         ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
+                        : "hover:bg-muted active:bg-muted"
                     }`}
                     onClick={() => setSelectedKbId(kb.id)}
                   >
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{kb.name}</p>
+                      <p className="font-medium truncate text-sm sm:text-base">{kb.name}</p>
                       {kb.description && (
                         <p
                           className={`text-xs truncate ${
@@ -257,7 +268,7 @@ export default function KnowledgeBase() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className={`opacity-0 group-hover:opacity-100 ${
+                      className={`opacity-0 group-hover:opacity-100 h-8 w-8 ${
                         selectedKbId === kb.id ? "hover:bg-primary-foreground/10" : ""
                       }`}
                       onClick={(e) => {
@@ -275,64 +286,75 @@ export default function KnowledgeBase() {
         </div>
 
         {/* Main Content - Knowledge Items */}
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${!selectedKb ? 'hidden lg:flex' : 'flex'}`}>
           {selectedKb ? (
             <>
               <div className="p-4 border-b border-border">
-                <div className="flex items-center justify-between mb-4">
+                {/* Mobile Back Button */}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="lg:hidden mb-3 -ml-2"
+                  onClick={() => setSelectedKbId(null)}
+                >
+                  ← 一覧に戻る
+                </Button>
+                
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                   <div>
-                    <h1 className="text-2xl font-bold">{selectedKb.name}</h1>
+                    <h1 className="text-lg sm:text-2xl font-bold">{selectedKb.name}</h1>
                     {selectedKb.description && (
-                      <p className="text-muted-foreground">{selectedKb.description}</p>
+                      <p className="text-sm text-muted-foreground">{selectedKb.description}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <label>
+                    <label className="flex-1 sm:flex-none">
                       <input
                         type="file"
                         className="hidden"
                         accept=".pdf,.doc,.docx,.txt,.md"
                         onChange={handleFileUpload}
                       />
-                      <Button variant="outline" asChild>
+                      <Button variant="outline" asChild className="w-full sm:w-auto h-10">
                         <span>
                           <Upload className="h-4 w-4 mr-2" />
-                          ファイルアップロード
+                          ファイル
                         </span>
                       </Button>
                     </label>
                     <Dialog open={isCreateItemOpen} onOpenChange={setIsCreateItemOpen}>
                       <DialogTrigger asChild>
-                        <Button>
+                        <Button className="flex-1 sm:flex-none h-10">
                           <Plus className="h-4 w-4 mr-2" />
-                          アイテム追加
+                          追加
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
+                      <DialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-2xl">
                         <DialogHeader>
-                          <DialogTitle>新規ナレッジアイテム</DialogTitle>
-                          <DialogDescription>
-                            FAQや製品情報を追加します
+                          <DialogTitle className="text-base sm:text-lg">新規ナレッジアイテム</DialogTitle>
+                          <DialogDescription className="text-sm">
+                            AIに教える情報を追加します
                           </DialogDescription>
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
-                            <Label>タイトル</Label>
+                            <Label className="text-sm">タイトル</Label>
                             <Input
                               value={itemTitle}
                               onChange={(e) => setItemTitle(e.target.value)}
                               placeholder="例: 返品ポリシーについて"
+                              className="h-11 sm:h-10"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label>カテゴリ</Label>
+                            <Label className="text-sm">カテゴリ</Label>
                             <Select value={itemCategory} onValueChange={setItemCategory}>
-                              <SelectTrigger>
+                              <SelectTrigger className="h-11 sm:h-10">
                                 <SelectValue placeholder="カテゴリを選択" />
                               </SelectTrigger>
                               <SelectContent>
                                 {CATEGORIES.map((cat) => (
-                                  <SelectItem key={cat.value} value={cat.value}>
+                                  <SelectItem key={cat.value} value={cat.value} className="py-3 sm:py-2">
                                     {cat.label}
                                   </SelectItem>
                                 ))}
@@ -340,20 +362,20 @@ export default function KnowledgeBase() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label>内容</Label>
+                            <Label className="text-sm">内容</Label>
                             <Textarea
                               value={itemContent}
                               onChange={(e) => setItemContent(e.target.value)}
                               placeholder="ナレッジの内容を入力..."
-                              className="min-h-[200px]"
+                              className="min-h-[150px] sm:min-h-[200px] text-sm"
                             />
                           </div>
                         </div>
-                        <DialogFooter>
-                          <Button variant="outline" onClick={() => setIsCreateItemOpen(false)}>
+                        <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                          <Button variant="outline" onClick={() => setIsCreateItemOpen(false)} className="w-full sm:w-auto">
                             キャンセル
                           </Button>
-                          <Button onClick={handleCreateItem} disabled={createItem.isPending}>
+                          <Button onClick={handleCreateItem} disabled={createItem.isPending} className="w-full sm:w-auto">
                             追加
                           </Button>
                         </DialogFooter>
@@ -367,41 +389,44 @@ export default function KnowledgeBase() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="ナレッジを検索..."
-                    className="pl-10"
+                    className="pl-10 h-11 sm:h-10"
                   />
                 </div>
               </div>
 
               <ScrollArea className="flex-1 p-4">
                 {isLoadingItems ? (
-                  <div className="text-center text-muted-foreground py-8">読み込み中...</div>
+                  <div className="text-center text-muted-foreground py-8 text-sm">読み込み中...</div>
                 ) : filteredItems.length === 0 ? (
                   <div className="text-center text-muted-foreground py-8">
-                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>アイテムがありません</p>
-                    <p className="text-sm mt-1">
-                      「アイテム追加」ボタンからナレッジを追加してください
+                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                      <FileText className="h-6 w-6 opacity-50" />
+                    </div>
+                    <p className="font-medium text-sm">アイテムがありません</p>
+                    <p className="text-xs mt-1">
+                      「追加」ボタンからナレッジを登録しましょう
                     </p>
                   </div>
                 ) : (
-                  <div className="grid gap-4">
+                  <div className="grid gap-3 sm:gap-4">
                     {filteredItems.map((item) => (
-                      <Card key={item.id}>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <CardTitle className="text-lg">{item.title}</CardTitle>
+                      <Card key={item.id} className="overflow-hidden">
+                        <CardHeader className="pb-2 px-4 sm:px-6 pt-4">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <CardTitle className="text-base sm:text-lg truncate">{item.title}</CardTitle>
                               {item.category && (
-                                <Badge variant="secondary" className="mt-1">
+                                <Badge variant="secondary" className="mt-1 text-xs">
                                   {CATEGORIES.find((c) => c.value === item.category)?.label ||
                                     item.category}
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 shrink-0">
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-9 w-9"
                                 onClick={() => handleEditItem(item)}
                               >
                                 <Edit className="h-4 w-4" />
@@ -409,6 +434,7 @@ export default function KnowledgeBase() {
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                className="h-9 w-9"
                                 onClick={() => handleDeleteItem(item)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -416,8 +442,8 @@ export default function KnowledgeBase() {
                             </div>
                           </div>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-muted-foreground whitespace-pre-wrap">
+                        <CardContent className="px-4 sm:px-6 pb-4">
+                          <p className="text-muted-foreground whitespace-pre-wrap text-sm line-clamp-4">
                             {item.content}
                           </p>
                           {item.file_url && (
@@ -428,7 +454,7 @@ export default function KnowledgeBase() {
                               className="text-primary text-sm mt-2 inline-flex items-center gap-1 hover:underline"
                             >
                               <FileText className="h-4 w-4" />
-                              添付ファイルを表示
+                              添付ファイル
                             </a>
                           )}
                         </CardContent>
@@ -440,27 +466,28 @@ export default function KnowledgeBase() {
 
               {/* Edit Dialog */}
               <Dialog open={isEditItemOpen} onOpenChange={setIsEditItemOpen}>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-2xl">
                   <DialogHeader>
-                    <DialogTitle>ナレッジアイテムを編集</DialogTitle>
+                    <DialogTitle className="text-base sm:text-lg">ナレッジアイテムを編集</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label>タイトル</Label>
+                      <Label className="text-sm">タイトル</Label>
                       <Input
                         value={itemTitle}
                         onChange={(e) => setItemTitle(e.target.value)}
+                        className="h-11 sm:h-10"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>カテゴリ</Label>
+                      <Label className="text-sm">カテゴリ</Label>
                       <Select value={itemCategory} onValueChange={setItemCategory}>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-11 sm:h-10">
                           <SelectValue placeholder="カテゴリを選択" />
                         </SelectTrigger>
                         <SelectContent>
                           {CATEGORIES.map((cat) => (
-                            <SelectItem key={cat.value} value={cat.value}>
+                            <SelectItem key={cat.value} value={cat.value} className="py-3 sm:py-2">
                               {cat.label}
                             </SelectItem>
                           ))}
@@ -468,19 +495,19 @@ export default function KnowledgeBase() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>内容</Label>
+                      <Label className="text-sm">内容</Label>
                       <Textarea
                         value={itemContent}
                         onChange={(e) => setItemContent(e.target.value)}
-                        className="min-h-[200px]"
+                        className="min-h-[150px] sm:min-h-[200px] text-sm"
                       />
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsEditItemOpen(false)}>
+                  <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                    <Button variant="outline" onClick={() => setIsEditItemOpen(false)} className="w-full sm:w-auto">
                       キャンセル
                     </Button>
-                    <Button onClick={handleUpdateItem} disabled={updateItem.isPending}>
+                    <Button onClick={handleUpdateItem} disabled={updateItem.isPending} className="w-full sm:w-auto">
                       保存
                     </Button>
                   </DialogFooter>
@@ -488,11 +515,13 @@ export default function KnowledgeBase() {
               </Dialog>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <BookOpen className="h-16 w-16 mx-auto mb-4 opacity-50" />
-                <h2 className="text-xl font-semibold mb-2">ナレッジベースを選択</h2>
-                <p>左のリストからナレッジベースを選択するか、新規作成してください</p>
+            <div className="flex-1 flex items-center justify-center text-muted-foreground p-4">
+              <div className="text-center max-w-sm">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                  <BookOpen className="h-8 w-8 opacity-50" />
+                </div>
+                <h2 className="text-lg sm:text-xl font-semibold mb-2">ナレッジベースを選択</h2>
+                <p className="text-sm">左のリストから選択するか、「新規」ボタンで作成してください</p>
               </div>
             </div>
           )}

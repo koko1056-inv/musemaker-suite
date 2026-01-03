@@ -26,15 +26,15 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const navigation = [
-  { name: "ダッシュボード", href: "/", icon: LayoutDashboard },
-  { name: "エージェント", href: "/agents", icon: Bot },
-  { name: "ナレッジベース", href: "/knowledge", icon: BookOpen },
-  { name: "会話履歴", href: "/conversations", icon: MessageSquare },
-  { name: "分析", href: "/analytics", icon: BarChart3 },
-  { name: "利用量", href: "/usage", icon: Gauge },
-  { name: "監査ログ", href: "/audit-logs", icon: Shield },
-  { name: "チーム", href: "/team", icon: Users },
-  { name: "設定", href: "/settings", icon: Settings },
+  { name: "ホーム", href: "/", icon: LayoutDashboard, description: "概要を見る" },
+  { name: "エージェント", href: "/agents", icon: Bot, description: "AI作成・管理" },
+  { name: "ナレッジ", href: "/knowledge", icon: BookOpen, description: "知識を登録" },
+  { name: "会話履歴", href: "/conversations", icon: MessageSquare, description: "通話記録" },
+  { name: "分析", href: "/analytics", icon: BarChart3, description: "データ分析" },
+  { name: "利用量", href: "/usage", icon: Gauge, description: "使用状況" },
+  { name: "ログ", href: "/audit-logs", icon: Shield, description: "操作履歴" },
+  { name: "チーム", href: "/team", icon: Users, description: "メンバー管理" },
+  { name: "設定", href: "/settings", icon: Settings, description: "各種設定" },
 ];
 
 interface AppSidebarProps {
@@ -94,7 +94,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 px-3 py-2">
+      <nav className="flex-1 space-y-1 px-3 py-2 overflow-y-auto">
         {navigation.map((item) => {
           const isActive = currentLocation.pathname === item.href || 
             (item.href !== "/" && currentLocation.pathname.startsWith(item.href));
@@ -105,14 +105,19 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
               to={item.href}
               onClick={handleNavClick}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                "flex items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all duration-200 min-h-[52px]",
                 isActive
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >
-              <item.icon className="h-5 w-5" />
-              {item.name}
+              <item.icon className="h-5 w-5 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <span className="block">{item.name}</span>
+                {!isActive && (
+                  <span className="block text-xs text-muted-foreground/80 truncate">{item.description}</span>
+                )}
+              </div>
             </Link>
           );
         })}

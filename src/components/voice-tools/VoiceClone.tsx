@@ -95,54 +95,56 @@ export function VoiceClone() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Mic className="h-5 w-5 text-primary" />
+    <Card className="h-full">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Mic className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          </div>
           音声クローン
         </CardTitle>
-        <CardDescription>
-          音声サンプルをアップロードして、カスタム音声を作成できます。
+        <CardDescription className="text-xs sm:text-sm">
+          あなただけのカスタム音声を作成
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Alert>
+        <Alert className="py-3">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            クローンには、はっきりとした発声の音声サンプルが必要です。
-            ノイズが少なく、1〜2分程度の音声が理想的です。
+          <AlertDescription className="text-xs sm:text-sm">
+            はっきりとした発声の音声サンプル（1〜2分程度）をご用意ください
           </AlertDescription>
         </Alert>
 
         {/* Voice Name */}
         <div className="space-y-2">
-          <Label htmlFor="voice-name">音声の名前 *</Label>
+          <Label htmlFor="voice-name" className="text-sm font-medium">① 音声の名前 <span className="text-destructive">*</span></Label>
           <Input
             id="voice-name"
             placeholder="例: 田中さんの声"
             value={voiceName}
             onChange={(e) => setVoiceName(e.target.value)}
+            className="h-11 sm:h-10 text-sm"
           />
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="voice-description">説明（任意）</Label>
+          <Label htmlFor="voice-description" className="text-sm font-medium">② 説明（任意）</Label>
           <Textarea
             id="voice-description"
-            placeholder="この音声についての説明を入力..."
+            placeholder="この音声についてのメモ..."
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="resize-none"
+            className="resize-none text-sm"
             rows={2}
           />
         </div>
 
         {/* File Upload */}
         <div className="space-y-2">
-          <Label>音声サンプル（1〜25ファイル）</Label>
+          <Label className="text-sm font-medium">③ 音声サンプルをアップロード</Label>
           <div
-            className="border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-primary/50 border-muted-foreground/25"
+            className="border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-colors cursor-pointer hover:border-primary/50 active:bg-muted/50 border-muted-foreground/25"
             onClick={() => fileInputRef.current?.click()}
           >
             <input
@@ -154,10 +156,12 @@ export function VoiceClone() {
               onChange={handleFileSelect}
             />
             <div className="flex flex-col items-center gap-2">
-              <Upload className="h-10 w-10 text-muted-foreground" />
-              <p className="font-medium text-foreground">クリックしてファイルを選択</p>
-              <p className="text-sm text-muted-foreground">
-                MP3, WAV, WebM, OGG, M4A（最大10MB/ファイル）
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                <Upload className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="font-medium text-foreground text-sm sm:text-base">タップしてファイルを選択</p>
+              <p className="text-xs text-muted-foreground">
+                1〜25ファイル（各10MBまで）
               </p>
             </div>
           </div>
@@ -166,19 +170,16 @@ export function VoiceClone() {
         {/* File List */}
         {audioFiles.length > 0 && (
           <div className="space-y-2">
-            <Label>選択されたファイル（{audioFiles.length}件）</Label>
-            <div className="space-y-2 max-h-[200px] overflow-y-auto">
+            <Label className="text-sm font-medium text-primary">選択済み: {audioFiles.length}件</Label>
+            <div className="space-y-2 max-h-[160px] overflow-y-auto">
               {audioFiles.map((file, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2"
+                  className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2.5"
                 >
                   <div className="flex items-center gap-2 min-w-0">
                     <Mic className="h-4 w-4 text-primary shrink-0" />
                     <span className="text-sm truncate">{file.name}</span>
-                    <span className="text-xs text-muted-foreground shrink-0">
-                      ({(file.size / 1024 / 1024).toFixed(1)} MB)
-                    </span>
                   </div>
                   <Button
                     variant="ghost"
@@ -196,10 +197,10 @@ export function VoiceClone() {
 
         {/* Success Message */}
         {success && (
-          <Alert className="border-success bg-success/10">
+          <Alert className="border-success bg-success/10 py-3">
             <Check className="h-4 w-4 text-success" />
-            <AlertDescription className="text-success">
-              音声クローンが作成されました！エージェント設定の音声一覧に追加されています。
+            <AlertDescription className="text-success text-sm">
+              音声クローンが作成されました！エージェント設定で選択できます。
             </AlertDescription>
           </Alert>
         )}
@@ -208,7 +209,7 @@ export function VoiceClone() {
         <Button
           onClick={handleCloneVoice}
           disabled={isLoading || !voiceName.trim() || audioFiles.length === 0}
-          className="w-full"
+          className="w-full h-12 sm:h-10 text-sm sm:text-base"
         >
           {isLoading ? (
             <>
@@ -216,7 +217,7 @@ export function VoiceClone() {
               作成中...
             </>
           ) : (
-            "音声クローンを作成"
+            <>④ 音声クローンを作成</>
           )}
         </Button>
       </CardContent>

@@ -109,98 +109,99 @@ export default function Agents() {
       <TooltipProvider>
         <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto mobile-safe-bottom">
           {/* Header with welcome message */}
-          <div className="mb-6 md:mb-8">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                  <Bot className="h-6 w-6 text-primary" />
+          <div className="mb-5 sm:mb-6 md:mb-8">
+            <div className="flex flex-col gap-3 sm:gap-4">
+              <div className="flex items-center gap-3 mb-1 sm:mb-2">
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                  <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                 </div>
                 <div>
-                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
-                  <p className="text-sm text-muted-foreground">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     AIアシスタントを作成・管理
                   </p>
                 </div>
               </div>
-              <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto">
+              <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto h-12 sm:h-11 text-base">
                 <Link to="/agents/new">
                   <Sparkles className="h-5 w-5" />
-                  新しく作成
+                  新しく作成する
                 </Link>
               </Button>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="glass rounded-xl p-4 card-shadow">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Bot className="h-5 w-5 text-primary" />
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6 md:mb-8">
+            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+                  <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">{agents.length}</p>
-                  <p className="text-xs text-muted-foreground">総エージェント数</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{agents.length}</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">総数</p>
                 </div>
               </div>
             </div>
-            <div className="glass rounded-xl p-4 card-shadow">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-green-500/10 shrink-0">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {agents.filter(a => a.status === 'published').length}
                   </p>
-                  <p className="text-xs text-muted-foreground">公開中</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">公開中</p>
                 </div>
               </div>
             </div>
-            <div className="glass rounded-xl p-4 card-shadow">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-                  <FileEdit className="h-5 w-5 text-amber-500" />
+            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-amber-500/10 shrink-0">
+                  <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {agents.filter(a => a.status === 'draft').length}
                   </p>
-                  <p className="text-xs text-muted-foreground">下書き</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">下書き</p>
                 </div>
               </div>
             </div>
-            <div className="glass rounded-xl p-4 card-shadow">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                  <Phone className="h-5 w-5 text-blue-500" />
+            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-500/10 shrink-0">
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-foreground">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">
                     {agents.filter(a => a.elevenlabs_agent_id).length}
                   </p>
-                  <p className="text-xs text-muted-foreground">通話可能</p>
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">通話可能</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Search and Filters */}
-          <div className="mb-6 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
+          <div className="mb-5 sm:mb-6 flex flex-col gap-3 sm:gap-4">
+            <div className="relative max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="名前や説明で検索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11"
+                className="pl-10 h-11 sm:h-10 text-sm"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto pb-1">
               <Button
                 variant={statusFilter === "all" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("all")}
+                className="text-xs sm:text-sm h-8 sm:h-9 shrink-0"
               >
                 すべて
               </Button>
@@ -208,7 +209,7 @@ export default function Agents() {
                 variant={statusFilter === "published" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("published")}
-                className="gap-1"
+                className="gap-1 text-xs sm:text-sm h-8 sm:h-9 shrink-0"
               >
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 公開中
@@ -217,7 +218,7 @@ export default function Agents() {
                 variant={statusFilter === "draft" ? "default" : "outline"}
                 size="sm"
                 onClick={() => setStatusFilter("draft")}
-                className="gap-1"
+                className="gap-1 text-xs sm:text-sm h-8 sm:h-9 shrink-0"
               >
                 <FileEdit className="h-3.5 w-3.5" />
                 下書き
@@ -225,7 +226,7 @@ export default function Agents() {
             </div>
           </div>
           {(searchQuery || statusFilter !== "all") && (
-            <p className="mb-4 text-sm text-muted-foreground">
+            <p className="mb-4 text-xs sm:text-sm text-muted-foreground">
               {filteredAgents.length}件のエージェントが見つかりました
             </p>
           )}
