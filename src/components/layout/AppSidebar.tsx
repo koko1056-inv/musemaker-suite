@@ -14,6 +14,7 @@ import {
   Shield,
   Gauge,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,6 +28,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const navigation = [
   { name: "ダッシュボード", href: "/", icon: LayoutDashboard },
   { name: "エージェント", href: "/agents", icon: Bot },
+  { name: "ナレッジベース", href: "/knowledge", icon: BookOpen },
   { name: "会話履歴", href: "/conversations", icon: MessageSquare },
   { name: "分析", href: "/analytics", icon: BarChart3 },
   { name: "利用量", href: "/usage", icon: Gauge },
