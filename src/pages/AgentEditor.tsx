@@ -21,6 +21,7 @@ import {
   PartyPopper,
   ArrowRight,
   LayoutTemplate,
+  Bot,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
@@ -451,32 +452,32 @@ export default function AgentEditor() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name" className="flex items-center gap-2">
-                        エージェント名
+                    <div className="space-y-3">
+                      <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
+                        エージェントの名前
                         <span className="text-destructive">*</span>
                       </Label>
                       <Input
                         id="name"
                         value={agentName}
                         onChange={(e) => setAgentName(e.target.value)}
-                        placeholder="例: カスタマーサポート担当"
-                        className="text-base"
+                        placeholder="例: 受付担当アシスタント"
+                        className="text-base h-12"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        お客様に表示される名前です
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        💡 お客様に表示される名前です。わかりやすい名前をつけましょう
                       </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="description" className="flex items-center gap-2">
-                        役割・説明
+                    <div className="space-y-3">
+                      <Label htmlFor="description" className="flex items-center gap-2 text-base font-medium">
+                        どんな役割ですか？
                         <Tooltip>
                           <TooltipTrigger>
                             <HelpCircle className="h-4 w-4 text-muted-foreground" />
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p className="max-w-xs">エージェントがどんな役割を果たすか説明してください。これがAIの振る舞いに影響します。</p>
+                            <p className="max-w-xs">AIに「何をしてほしいか」を教えてください。これがAIの性格や話し方に影響します。</p>
                           </TooltipContent>
                         </Tooltip>
                       </Label>
@@ -484,29 +485,35 @@ export default function AgentEditor() {
                         id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="例: お客様からの問い合わせに丁寧に対応し、製品の質問や注文状況の確認をサポートします"
+                        placeholder="例: 美容室の予約受付をする。空き時間を確認して予約を取る。丁寧で親しみやすい対応をする。"
                         rows={3}
-                        className="resize-none"
+                        className="resize-none text-base"
                       />
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        💡 具体的に書くほど、AIが正確に動作します
+                      </p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="prompt" className="flex items-center gap-2">
-                        詳細な指示（オプション）
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">より詳細な振る舞いを指定したい場合に入力してください。空欄の場合は役割・説明から自動生成されます。</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="prompt" className="flex items-center gap-2 text-base font-medium">
+                          詳細な指示（上級者向け）
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="max-w-xs">省略OK！空欄の場合は上の「役割」から自動で作成されます。</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </Label>
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">省略可</span>
+                      </div>
                       <Textarea
                         id="prompt"
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
-                        placeholder="より詳しい指示を入力（省略可）"
+                        placeholder="より詳しい指示を入力したい場合はここに記入"
                         rows={4}
                         className="resize-none"
                       />
@@ -521,16 +528,22 @@ export default function AgentEditor() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Mic className="h-5 w-5 text-primary" />
-                      音声設定
+                      声を選ぶ
                     </CardTitle>
                     <CardDescription>
-                      エージェントの声を選びます
+                      再生ボタン（▶）を押して、声を試聴してみましょう
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                        🎧 <span className="font-medium text-foreground">ヒント:</span> 各音声の横にある再生ボタンを押すと、声を確認できます
+                      </p>
+                    </div>
+                    
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label className="flex items-center gap-2">
+                        <Label className="flex items-center gap-2 text-base font-medium">
                           音声を選択
                           <span className="text-destructive">*</span>
                         </Label>
@@ -602,14 +615,14 @@ export default function AgentEditor() {
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2 text-base font-medium">
                         話す速度
-                        <span className="text-sm font-normal text-muted-foreground">
+                        <span className="text-sm font-normal text-primary bg-primary/10 px-2 py-0.5 rounded">
                           {voiceSpeed.toFixed(1)}x
                         </span>
                       </Label>
                       <div className="flex items-center gap-4">
-                        <span className="text-xs text-muted-foreground">ゆっくり</span>
+                        <span className="text-sm text-muted-foreground">🐢 ゆっくり</span>
                         <Slider
                           value={[voiceSpeed]}
                           onValueChange={([val]) => setVoiceSpeed(val)}
@@ -618,19 +631,22 @@ export default function AgentEditor() {
                           step={0.1}
                           className="flex-1"
                         />
-                        <span className="text-xs text-muted-foreground">速い</span>
+                        <span className="text-sm text-muted-foreground">速い 🐇</span>
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        💡 1.0xが自然な速さです
+                      </p>
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="flex items-center gap-2">
+                      <Label className="flex items-center gap-2 text-base font-medium">
                         最大通話時間
-                        <span className="text-sm font-normal text-muted-foreground">
+                        <span className="text-sm font-normal text-primary bg-primary/10 px-2 py-0.5 rounded">
                           {maxCallDuration}分
                         </span>
                       </Label>
                       <div className="flex items-center gap-4">
-                        <span className="text-xs text-muted-foreground">1分</span>
+                        <span className="text-sm text-muted-foreground">1分</span>
                         <Slider
                           value={[maxCallDuration]}
                           onValueChange={([val]) => setMaxCallDuration(val)}
@@ -639,8 +655,11 @@ export default function AgentEditor() {
                           step={1}
                           className="flex-1"
                         />
-                        <span className="text-xs text-muted-foreground">30分</span>
+                        <span className="text-sm text-muted-foreground">30分</span>
                       </div>
+                      <p className="text-sm text-muted-foreground">
+                        💡 この時間を超えると通話が自動で終了します
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -656,35 +675,48 @@ export default function AgentEditor() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
-                      確認
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      準備完了！
                     </CardTitle>
                     <CardDescription>
-                      設定内容を確認してエージェントを作成します
+                      あと少しで完成です。内容を確認してください
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="rounded-lg border p-4 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">エージェント名</span>
-                        <span className="font-medium">{agentName}</span>
+                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-5 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Bot className="h-6 w-6 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-semibold text-lg">{agentName}</p>
+                          <p className="text-sm text-muted-foreground">あなたのAIアシスタント</p>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">音声</span>
-                        <span className="font-medium">{selectedVoiceData?.name || "未選択"}</span>
+                      
+                      <div className="grid grid-cols-2 gap-3 pt-2">
+                        <div className="p-3 rounded-lg bg-background">
+                          <p className="text-xs text-muted-foreground mb-1">🎤 音声</p>
+                          <p className="font-medium">{selectedVoiceData?.name || "未選択"}</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-background">
+                          <p className="text-xs text-muted-foreground mb-1">⚡ 速度</p>
+                          <p className="font-medium">{voiceSpeed.toFixed(1)}x</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-background">
+                          <p className="text-xs text-muted-foreground mb-1">⏱️ 最大時間</p>
+                          <p className="font-medium">{maxCallDuration}分</p>
+                        </div>
+                        <div className="p-3 rounded-lg bg-background">
+                          <p className="text-xs text-muted-foreground mb-1">📝 状態</p>
+                          <p className="font-medium">下書き</p>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">話す速度</span>
-                        <span className="font-medium">{voiceSpeed.toFixed(1)}x</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">最大通話時間</span>
-                        <span className="font-medium">{maxCallDuration}分</span>
-                      </div>
+                      
                       {description && (
-                        <div className="pt-2 border-t">
-                          <span className="text-muted-foreground text-sm">役割・説明</span>
-                          <p className="mt-1 text-sm">{description}</p>
+                        <div className="pt-3 border-t border-primary/10">
+                          <p className="text-xs text-muted-foreground mb-1">💼 役割</p>
+                          <p className="text-sm">{description}</p>
                         </div>
                       )}
                     </div>
