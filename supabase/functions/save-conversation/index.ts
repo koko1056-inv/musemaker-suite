@@ -91,6 +91,24 @@ serve(async (req) => {
 
     console.log('Conversation saved successfully:', data.id);
 
+    // Trigger webhooks asynchronously
+    try {
+      await fetch(`${supabaseUrl}/functions/v1/send-webhook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          conversationId: data.id,
+          agentId: agentId,
+        }),
+      });
+    } catch (webhookError) {
+      console.error('Error triggering webhooks:', webhookError);
+      // Don't fail the main request if webhooks fail
+    }
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });

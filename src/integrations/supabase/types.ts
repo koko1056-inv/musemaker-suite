@@ -354,6 +354,95 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_logs: {
+        Row: {
+          conversation_id: string | null
+          error_message: string | null
+          id: string
+          response_body: string | null
+          sent_at: string
+          status_code: number | null
+          webhook_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          error_message?: string | null
+          id?: string
+          response_body?: string | null
+          sent_at?: string
+          status_code?: number | null
+          webhook_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          error_message?: string | null
+          id?: string
+          response_body?: string | null
+          sent_at?: string
+          status_code?: number | null
+          webhook_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_logs_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "webhook_logs_webhook_id_fkey"
+            columns: ["webhook_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      webhooks: {
+        Row: {
+          created_at: string
+          event_type: string
+          headers: Json | null
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          url: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type?: string
+          headers?: Json | null
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          url: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          headers?: Json | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          url?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhooks_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
