@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.elevenlabs-agent-sync]
 verify_jwt = false
+
+[functions.generate-agent-config]
+verify_jwt = false
