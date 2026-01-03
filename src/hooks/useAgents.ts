@@ -9,19 +9,23 @@ type AgentUpdate = TablesUpdate<'agents'>;
 
 // Helper function to sync agent with ElevenLabs
 async function syncWithElevenLabs(
-  action: 'create' | 'update' | 'delete',
+  action: 'create' | 'update' | 'delete' | 'sync_knowledge',
   agentConfig?: { name: string; description?: string; voice_id: string; system_prompt?: string },
-  elevenlabsAgentId?: string
-): Promise<string | null> {
+  elevenlabsAgentId?: string,
+  agentId?: string
+): Promise<{ agent_id: string | null; knowledge_items_count?: number }> {
   try {
     const { data, error } = await supabase.functions.invoke('elevenlabs-agent-sync', {
-      body: { action, agentConfig, elevenlabsAgentId },
+      body: { action, agentConfig, elevenlabsAgentId, agentId },
     });
 
     if (error) throw error;
     if (data?.error) throw new Error(data.error);
 
-    return data?.agent_id || null;
+    return { 
+      agent_id: data?.agent_id || null,
+      knowledge_items_count: data?.knowledge_items_count
+    };
   } catch (error) {
     console.error(`Failed to ${action} agent on ElevenLabs:`, error);
     throw error;
@@ -60,8 +64,8 @@ export function useAgents() {
 
   const createAgent = useCallback(async (agent: Omit<AgentInsert, 'workspace_id'>) => {
     try {
-      // First, create the agent on ElevenLabs
-      const elevenlabsAgentId = await syncWithElevenLabs('create', {
+      // First, create the agent on ElevenLabs (without knowledge base - it will be synced after)
+      const result = await syncWithElevenLabs('create', {
         name: agent.name,
         description: agent.description || undefined,
         voice_id: agent.voice_id || 'EXAVITQu4vr4xnSDxMaL',
@@ -74,7 +78,7 @@ export function useAgents() {
         .insert({
           ...agent,
           workspace_id: DEMO_WORKSPACE_ID,
-          elevenlabs_agent_id: elevenlabsAgentId,
+          elevenlabs_agent_id: result.agent_id,
         })
         .select()
         .single();
@@ -103,7 +107,7 @@ export function useAgents() {
           description: updates.description || currentAgent.description || undefined,
           voice_id: updates.voice_id || currentAgent.voice_id,
           system_prompt: (updates as any).system_prompt || (currentAgent as any).system_prompt || undefined,
-        }, currentAgent.elevenlabs_agent_id);
+        }, currentAgent.elevenlabs_agent_id, id);
       }
 
       const { data, error } = await supabase
@@ -172,6 +176,34 @@ export function useAgents() {
     }
   }, []);
 
+  const syncKnowledgeBase = useCallback(async (id: string) => {
+    try {
+      const agent = agents.find(a => a.id === id);
+      if (!agent?.elevenlabs_agent_id) {
+        throw new Error('エージェントがElevenLabsと同期されていません');
+      }
+
+      const result = await syncWithElevenLabs(
+        'sync_knowledge',
+        {
+          name: agent.name,
+          description: agent.description || undefined,
+          voice_id: agent.voice_id,
+          system_prompt: (agent as any).system_prompt || undefined,
+        },
+        agent.elevenlabs_agent_id,
+        id
+      );
+
+      toast.success(`ナレッジベースを同期しました（${result.knowledge_items_count || 0}件）`);
+      return result;
+    } catch (error) {
+      console.error('Error syncing knowledge base:', error);
+      toast.error('ナレッジベースの同期に失敗しました');
+      throw error;
+    }
+  }, [agents]);
+
   return {
     agents,
     isLoading,
@@ -180,5 +212,6 @@ export function useAgents() {
     updateAgent,
     deleteAgent,
     getAgent,
+    syncKnowledgeBase,
   };
 }
