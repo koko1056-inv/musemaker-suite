@@ -25,6 +25,7 @@ import {
   Loader2,
   Square,
   Phone,
+  RefreshCw,
 } from "lucide-react";
 import { NodeType } from "@/components/flow/FlowNode";
 import {
@@ -42,13 +43,13 @@ import { VoiceCallPanel } from "@/components/voice/VoiceCallPanel";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
 
-// Default voices with ElevenLabs IDs
-const defaultVoices = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "サラ", language: "多言語", gender: "女性" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "ジョージ", language: "多言語", gender: "男性" },
-  { id: "XrExE9yKIg1WjnnlVkGX", name: "マチルダ", language: "多言語", gender: "女性" },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "ダニエル", language: "多言語", gender: "男性" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "リリー", language: "多言語", gender: "女性" },
+// Fallback voices if ElevenLabs API fails
+const fallbackVoices = [
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "サラ", category: "premade", labels: { accent: "american", gender: "female" } },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "ジョージ", category: "premade", labels: { accent: "british", gender: "male" } },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "マチルダ", category: "premade", labels: { accent: "american", gender: "female" } },
+  { id: "onwK4e9ZLuTAKqWW03F9", name: "ダニエル", category: "premade", labels: { accent: "british", gender: "male" } },
+  { id: "pFZP5JQG7iQjIQuC4Bku", name: "リリー", category: "premade", labels: { accent: "british", gender: "female" } },
 ];
 
 const voiceStyles = [
@@ -82,7 +83,7 @@ export default function AgentEditor() {
   const [agentName, setAgentName] = useState("");
   const [description, setDescription] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState(defaultVoices[0].id);
+  const [selectedVoice, setSelectedVoice] = useState(fallbackVoices[0].id);
   const [voiceStyle, setVoiceStyle] = useState("conversational");
   const [voiceSpeed, setVoiceSpeed] = useState("normal");
   const [status, setStatus] = useState<"draft" | "published">("draft");
@@ -99,9 +100,27 @@ export default function AgentEditor() {
   } | null>(null);
   const [previewText, setPreviewText] = useState("こんにちは！本日はどのようなご用件でしょうか？");
   const [showCallDialog, setShowCallDialog] = useState(false);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState(fallbackVoices);
 
-  const { isLoading: isPlayingAudio, generateSpeech, stopAudio } = useElevenLabs();
+  const { isLoading: isPlayingAudio, voices, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
+
+  // Fetch ElevenLabs voices on mount
+  useEffect(() => {
+    const loadVoices = async () => {
+      setIsLoadingVoices(true);
+      try {
+        const fetchedVoices = await fetchVoices();
+        if (fetchedVoices && fetchedVoices.length > 0) {
+          setAvailableVoices(fetchedVoices);
+        }
+      } finally {
+        setIsLoadingVoices(false);
+      }
+    };
+    loadVoices();
+  }, [fetchVoices]);
 
   // Load existing agent
   useEffect(() => {
@@ -181,7 +200,7 @@ export default function AgentEditor() {
     await generateSpeech(previewText, selectedVoice);
   };
 
-  const selectedVoiceData = defaultVoices.find(v => v.id === selectedVoice);
+  const selectedVoiceData = availableVoices.find(v => v.id === selectedVoice);
 
   const embedCode = `<script src="https://voiceforge.ai/embed.js"></script>
 <voice-agent id="agent_${id || 'xxx'}" />`;
@@ -363,24 +382,49 @@ export default function AgentEditor() {
 
               <TabsContent value="voice" className="p-4 space-y-4 mt-0">
                 <div className="space-y-2">
-                  <Label>音声を選択</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>音声を選択</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={async () => {
+                        setIsLoadingVoices(true);
+                        const fetchedVoices = await fetchVoices();
+                        if (fetchedVoices && fetchedVoices.length > 0) {
+                          setAvailableVoices(fetchedVoices);
+                        }
+                        setIsLoadingVoices(false);
+                      }}
+                      disabled={isLoadingVoices}
+                      className="h-6 px-2 text-xs"
+                    >
+                      {isLoadingVoices ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
                   <Select value={selectedVoice} onValueChange={setSelectedVoice}>
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue placeholder={isLoadingVoices ? "読み込み中..." : "音声を選択"} />
                     </SelectTrigger>
-                    <SelectContent>
-                      {defaultVoices.map((voice) => (
+                    <SelectContent className="max-h-[300px]">
+                      {availableVoices.map((voice) => (
                         <SelectItem key={voice.id} value={voice.id}>
                           <div className="flex flex-col">
                             <span>{voice.name}</span>
                             <span className="text-xs text-muted-foreground">
-                              {voice.language} • {voice.gender}
+                              {voice.category} • {voice.labels?.gender || "unknown"}
                             </span>
                           </div>
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {availableVoices.length}個の音声が利用可能
+                  </p>
                 </div>
 
                 <div className="glass rounded-lg p-4 space-y-3">
