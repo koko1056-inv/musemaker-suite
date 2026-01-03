@@ -60,14 +60,16 @@ const voiceData: Record<string, { name: string; description: string }> = {
 export default function Agents() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const { agents, isLoading, deleteAgent, createAgent } = useAgents();
 
-  const filteredAgents = agents.filter(
-    (agent) =>
-      agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
-  );
+  const filteredAgents = agents.filter((agent) => {
+    const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
+    const matchesStatus = statusFilter === "all" || agent.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const handleDelete = async () => {
     if (!deleteAgentId) return;
@@ -183,9 +185,9 @@ export default function Agents() {
             </div>
           </div>
 
-          {/* Search with helpful hint */}
-          <div className="mb-6">
-            <div className="relative max-w-md">
+          {/* Search and Filters */}
+          <div className="mb-6 flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 placeholder="名前や説明で検索..."
@@ -194,12 +196,39 @@ export default function Agents() {
                 className="pl-10 h-11"
               />
             </div>
-            {searchQuery && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                {filteredAgents.length}件のエージェントが見つかりました
-              </p>
-            )}
+            <div className="flex gap-2">
+              <Button
+                variant={statusFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("all")}
+              >
+                すべて
+              </Button>
+              <Button
+                variant={statusFilter === "published" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("published")}
+                className="gap-1"
+              >
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                公開中
+              </Button>
+              <Button
+                variant={statusFilter === "draft" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter("draft")}
+                className="gap-1"
+              >
+                <FileEdit className="h-3.5 w-3.5" />
+                下書き
+              </Button>
+            </div>
           </div>
+          {(searchQuery || statusFilter !== "all") && (
+            <p className="mb-4 text-sm text-muted-foreground">
+              {filteredAgents.length}件のエージェントが見つかりました
+            </p>
+          )}
 
           {/* Loading State */}
           {isLoading ? (

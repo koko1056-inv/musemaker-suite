@@ -1,11 +1,18 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageSquare, Plus, Loader2, ArrowRight } from "lucide-react";
+import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Clock, TrendingUp, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { useConversations } from "@/hooks/useConversations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useMemo } from "react";
+
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 export default function Dashboard() {
   const { agents, isLoading: isLoadingAgents } = useAgents();
@@ -13,6 +20,42 @@ export default function Dashboard() {
 
   const publishedAgents = agents?.filter(a => a.status === "published") || [];
   const recentAgents = agents?.slice(0, 5) || [];
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+
+    const todayConversations = conversations?.filter(c => 
+      new Date(c.started_at) >= today
+    ) || [];
+
+    const weekConversations = conversations?.filter(c => 
+      new Date(c.started_at) >= weekAgo
+    ) || [];
+
+    const totalDuration = conversations?.reduce((sum, c) => 
+      sum + (c.duration_seconds || 0), 0
+    ) || 0;
+
+    const avgDuration = conversations?.length 
+      ? Math.round(totalDuration / conversations.length) 
+      : 0;
+
+    const completedCount = conversations?.filter(c => c.status === 'completed').length || 0;
+    const successRate = conversations?.length 
+      ? Math.round((completedCount / conversations.length) * 100) 
+      : 0;
+
+    return {
+      todayCount: todayConversations.length,
+      weekCount: weekConversations.length,
+      avgDuration,
+      successRate,
+    };
+  }, [conversations]);
 
   return (
     <AppLayout>
@@ -33,8 +76,8 @@ export default function Dashboard() {
           </Button>
         </div>
 
-        {/* Stats Grid */}
-        <div className="mb-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Main Stats Grid */}
+        <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -57,7 +100,7 @@ export default function Dashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
-                会話数
+                総会話数
               </CardTitle>
               <MessageSquare className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
@@ -68,28 +111,75 @@ export default function Dashboard() {
                 <div className="text-3xl font-bold">{conversations?.length || 0}</div>
               )}
               <p className="text-xs text-muted-foreground mt-1">
-                全期間
+                成功率: {stats.successRate}%
               </p>
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2 lg:col-span-1">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                今日の通話
+              </CardTitle>
+              <Calendar className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoadingConversations ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <div className="text-3xl font-bold">{stats.todayCount}</div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                今週: {stats.weekCount}件
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                平均通話時間
+              </CardTitle>
+              <Clock className="h-5 w-5 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {isLoadingConversations ? (
+                <Loader2 className="h-6 w-6 animate-spin" />
+              ) : (
+                <div className="text-3xl font-bold">{formatDuration(stats.avgDuration)}</div>
+              )}
+              <p className="text-xs text-muted-foreground mt-1">
+                全会話の平均
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="mb-8">
+          <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 クイックアクション
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Button asChild variant="outline" className="w-full justify-start gap-2">
+            <CardContent className="flex flex-wrap gap-2">
+              <Button asChild variant="outline" className="gap-2">
                 <Link to="/agents/new">
                   <Plus className="h-4 w-4" />
                   新しいエージェントを作成
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="w-full justify-start gap-2">
+              <Button asChild variant="outline" className="gap-2">
                 <Link to="/agents">
                   <Bot className="h-4 w-4" />
-                  エージェント一覧を表示
+                  エージェント一覧
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="gap-2">
+                <Link to="/conversations">
+                  <MessageSquare className="h-4 w-4" />
+                  会話履歴
                 </Link>
               </Button>
             </CardContent>
