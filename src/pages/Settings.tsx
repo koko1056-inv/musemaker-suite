@@ -20,15 +20,19 @@ import {
   Building,
   Key,
   Bell,
-  Shield,
   CreditCard,
   ExternalLink,
   Eye,
   EyeOff,
   Check,
   AlertTriangle,
+  Webhook,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { WebhookManager } from "@/components/webhooks/WebhookManager";
+
+// Demo workspace ID for testing
+const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function Settings() {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -62,6 +66,10 @@ export default function Settings() {
             <TabsTrigger value="integrations" className="gap-2">
               <Key className="h-4 w-4" />
               連携
+            </TabsTrigger>
+            <TabsTrigger value="webhooks" className="gap-2">
+              <Webhook className="h-4 w-4" />
+              Webhook
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
@@ -205,23 +213,11 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Webhooks */}
-            <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-4">Webhook</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                ワークスペースでイベントが発生した際にリアルタイムで通知を受け取ります。
-              </p>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="webhook-url">Webhook URL</Label>
-                  <Input
-                    id="webhook-url"
-                    placeholder="https://your-server.com/webhook"
-                  />
-                </div>
-                <Button>Webhookを追加</Button>
-              </div>
-            </div>
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks">
+            <WebhookManager workspaceId={DEMO_WORKSPACE_ID} />
           </TabsContent>
 
           {/* Notifications Tab */}
