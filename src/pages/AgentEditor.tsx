@@ -27,6 +27,9 @@ import {
   Settings2,
   HelpCircle,
   CheckCircle2,
+  Sparkles,
+  PartyPopper,
+  ArrowRight,
 } from "lucide-react";
 import {
   Dialog,
@@ -71,6 +74,8 @@ export default function AgentEditor() {
   const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
   
   const [showCallDialog, setShowCallDialog] = useState(false);
+  const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
+  const [newlyCreatedAgentId, setNewlyCreatedAgentId] = useState<string | null>(null);
   const [isLoadingVoices, setIsLoadingVoices] = useState(true);
   const [availableVoices, setAvailableVoices] = useState<any[]>([]);
   const [playingPreviewId, setPlayingPreviewId] = useState<string | null>(null);
@@ -152,8 +157,9 @@ export default function AgentEditor() {
       if (isNew) {
         const newAgent = await createAgent(agentData as any);
         setElevenLabsAgentId(newAgent.elevenlabs_agent_id || null);
-        toast.success("エージェントを作成しました！");
-        navigate(`/agents/${newAgent.id}`, { replace: true });
+        setNewlyCreatedAgentId(newAgent.id);
+        // Show onboarding dialog instead of navigating immediately
+        setShowOnboardingDialog(true);
       } else if (id) {
         const updatedAgent = await updateAgent(id, agentData as any);
         if (newStatus) setStatus(newStatus);
@@ -224,10 +230,81 @@ export default function AgentEditor() {
     );
   }
 
+  const handleStartTestCall = () => {
+    setShowOnboardingDialog(false);
+    if (newlyCreatedAgentId) {
+      navigate(`/agents/${newlyCreatedAgentId}`, { replace: true });
+      // Small delay to ensure navigation completes before opening dialog
+      setTimeout(() => {
+        setShowCallDialog(true);
+      }, 100);
+    }
+  };
+
+  const handleSkipTestCall = () => {
+    setShowOnboardingDialog(false);
+    if (newlyCreatedAgentId) {
+      navigate(`/agents/${newlyCreatedAgentId}`, { replace: true });
+    }
+  };
+
   return (
     <AppLayout>
       <TooltipProvider>
         <div className="flex h-screen flex-col bg-muted/30">
+          {/* Onboarding Dialog */}
+          <Dialog open={showOnboardingDialog} onOpenChange={setShowOnboardingDialog}>
+            <DialogContent className="sm:max-w-md">
+              <div className="flex flex-col items-center text-center py-6">
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <PartyPopper className="h-8 w-8 text-primary" />
+                </div>
+                <DialogHeader className="space-y-2">
+                  <DialogTitle className="text-xl">
+                    🎉 エージェントが完成しました！
+                  </DialogTitle>
+                  <DialogDescription className="text-base">
+                    <span className="font-medium text-foreground">{agentName}</span> が正常に作成されました。
+                    <br />
+                    今すぐテスト通話をして、エージェントと会話してみましょう！
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="w-full space-y-3 mt-6">
+                  <Button
+                    onClick={handleStartTestCall}
+                    className="w-full gap-2"
+                    size="lg"
+                  >
+                    <Phone className="h-5 w-5" />
+                    テスト通話を開始
+                    <Sparkles className="h-4 w-4" />
+                  </Button>
+                  
+                  <Button
+                    variant="ghost"
+                    onClick={handleSkipTestCall}
+                    className="w-full text-muted-foreground"
+                  >
+                    後でテストする
+                    <ArrowRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+
+                <div className="mt-6 p-4 rounded-lg bg-muted/50 text-left w-full">
+                  <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <Mic className="h-4 w-4 text-primary" />
+                    テスト通話の流れ
+                  </h4>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>1. マイクへのアクセスを許可します</li>
+                    <li>2. エージェントが挨拶で応答します</li>
+                    <li>3. 自由に会話してみましょう</li>
+                  </ul>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
           {/* Header */}
           <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
             <div className="flex items-center gap-4">
