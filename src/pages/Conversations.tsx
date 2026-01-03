@@ -211,33 +211,38 @@ export default function Conversations() {
 
   return (
     <AppLayout>
-      <div className="p-4 md:p-8 mobile-safe-bottom">
+      <div className="p-4 md:p-6 lg:p-8 mobile-safe-bottom max-w-6xl mx-auto">
         {/* Header */}
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground">会話履歴</h1>
-          <p className="mt-1 text-sm md:text-base text-muted-foreground">
-            すべての音声エージェントの会話を表示・分析
-          </p>
+        <div className="mb-5 sm:mb-6 md:mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">会話履歴</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                通話の記録を確認・分析
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="電話番号またはエージェントで検索..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+        <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-4">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="電話番号やエージェント名で検索..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-11 sm:h-10 text-sm"
+            />
           </div>
           
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             {/* Date Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">期間:</span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+              <span className="text-xs sm:text-sm text-muted-foreground shrink-0">期間:</span>
               <div className="flex gap-1">
                 {[
                   { value: "all", label: "すべて" },
@@ -250,6 +255,7 @@ export default function Conversations() {
                     variant={dateFilter === option.value ? "default" : "outline"}
                     size="sm"
                     onClick={() => setDateFilter(option.value as typeof dateFilter)}
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
                   >
                     {option.label}
                   </Button>
@@ -258,8 +264,8 @@ export default function Conversations() {
             </div>
 
             {/* Status Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">状況:</span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
+              <span className="text-xs sm:text-sm text-muted-foreground shrink-0">状況:</span>
               <div className="flex gap-1">
                 {[
                   { value: "all", label: "すべて" },
@@ -272,6 +278,7 @@ export default function Conversations() {
                     variant={statusFilter === option.value ? "default" : "outline"}
                     size="sm"
                     onClick={() => setStatusFilter(option.value as typeof statusFilter)}
+                    className="text-xs sm:text-sm h-8 sm:h-9 px-2.5 sm:px-3"
                   >
                     {option.label}
                   </Button>
@@ -281,7 +288,7 @@ export default function Conversations() {
           </div>
 
           {(searchQuery || dateFilter !== "all" || statusFilter !== "all") && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               {filteredConversations.length}件の会話が見つかりました
             </p>
           )}
@@ -290,32 +297,39 @@ export default function Conversations() {
         {/* Table */}
         <div className="glass rounded-xl card-shadow overflow-hidden">
           {isLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <div className="flex flex-col items-center justify-center py-12 sm:py-16 gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-muted-foreground">読み込み中...</p>
             </div>
           ) : filteredConversations.length === 0 ? (
-            <div className="text-center py-16 text-muted-foreground">
-              会話履歴がありません
+            <div className="text-center py-12 sm:py-16 text-muted-foreground px-4">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                <Phone className="h-6 w-6 opacity-50" />
+              </div>
+              <p className="font-medium text-sm sm:text-base">会話履歴がありません</p>
+              <p className="text-xs sm:text-sm mt-1">エージェントと通話すると、ここに記録されます</p>
             </div>
           ) : (
             <>
               {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
+              <div className="md:hidden space-y-3 p-3">
                 {filteredConversations.map((conv, index) => (
                   <div
                     key={conv.id}
-                    className="glass rounded-xl p-4 card-shadow animate-fade-in cursor-pointer active:scale-[0.98] transition-transform"
+                    className="glass rounded-xl p-4 card-shadow animate-fade-in cursor-pointer active:bg-muted/50 transition-colors min-h-[100px]"
                     style={{ animationDelay: `${index * 30}ms` }}
                     onClick={() => setSelectedConversation(conv)}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{conv.phone}</span>
+                    <div className="flex items-start justify-between mb-2 gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                          <Phone className="h-4 w-4 text-primary" />
+                        </div>
+                        <span className="font-medium text-sm truncate">{conv.phone}</span>
                       </div>
                       <Badge
                         variant={conv.status === "completed" ? "default" : conv.status === "in_progress" ? "secondary" : "destructive"}
-                        className="gap-1"
+                        className="gap-1 text-xs shrink-0"
                       >
                         {conv.status === "completed" ? (
                           <CheckCircle className="h-3 w-3" />
@@ -328,16 +342,16 @@ export default function Conversations() {
                       </Badge>
                     </div>
                     
-                    <div className="text-sm text-muted-foreground mb-2">{conv.agent}</div>
+                    <div className="text-xs text-muted-foreground mb-2 ml-10">{conv.agent}</div>
                     
                     {conv.summary && (
-                      <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-primary/5">
-                        <FileText className="h-4 w-4 text-primary shrink-0" />
-                        <span className="text-sm line-clamp-2">{conv.summary}</span>
+                      <div className="flex items-start gap-2 mb-2 p-2 rounded-lg bg-primary/5 ml-10">
+                        <FileText className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                        <span className="text-xs line-clamp-2">{conv.summary}</span>
                       </div>
                     )}
                     
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground ml-10">
                       <div className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         {conv.duration}

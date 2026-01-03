@@ -99,22 +99,24 @@ export function SpeechToText() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <FileAudio className="h-5 w-5 text-primary" />
+    <Card className="h-full">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+          <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <FileAudio className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+          </div>
           音声文字起こし
         </CardTitle>
-        <CardDescription>
-          音声ファイルをアップロードして、テキストに変換できます。
+        <CardDescription className="text-xs sm:text-sm">
+          録音ファイルをテキストに変換します
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* File Upload */}
         <div className="space-y-2">
-          <Label>音声ファイル</Label>
+          <Label className="text-sm font-medium">① 音声ファイルを選択</Label>
           <div
-            className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors cursor-pointer hover:border-primary/50 ${
+            className={`border-2 border-dashed rounded-xl p-4 sm:p-6 text-center transition-colors cursor-pointer hover:border-primary/50 active:bg-muted/50 ${
               audioFile ? "border-primary bg-primary/5" : "border-muted-foreground/25"
             }`}
             onClick={() => fileInputRef.current?.click()}
@@ -128,18 +130,22 @@ export function SpeechToText() {
             />
             {audioFile ? (
               <div className="flex flex-col items-center gap-2">
-                <FileAudio className="h-10 w-10 text-primary" />
-                <p className="font-medium text-foreground">{audioFile.name}</p>
-                <p className="text-sm text-muted-foreground">
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileAudio className="h-6 w-6 text-primary" />
+                </div>
+                <p className="font-medium text-foreground text-sm sm:text-base">{audioFile.name}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {(audioFile.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-2">
-                <Upload className="h-10 w-10 text-muted-foreground" />
-                <p className="font-medium text-foreground">クリックしてファイルを選択</p>
-                <p className="text-sm text-muted-foreground">
-                  MP3, WAV, WebM, OGG, M4A（最大25MB）
+                <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center">
+                  <Upload className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="font-medium text-foreground text-sm sm:text-base">タップしてファイルを選択</p>
+                <p className="text-xs text-muted-foreground">
+                  MP3, WAV など（最大25MB）
                 </p>
               </div>
             )}
@@ -148,14 +154,14 @@ export function SpeechToText() {
 
         {/* Language Selection */}
         <div className="space-y-2">
-          <Label>言語</Label>
+          <Label className="text-sm font-medium">② 言語を選択</Label>
           <Select value={languageCode} onValueChange={setLanguageCode}>
-            <SelectTrigger>
+            <SelectTrigger className="h-11 sm:h-10 text-sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.map((lang) => (
-                <SelectItem key={lang.code} value={lang.code}>
+                <SelectItem key={lang.code} value={lang.code} className="py-3 sm:py-2">
                   {lang.label}
                 </SelectItem>
               ))}
@@ -168,7 +174,7 @@ export function SpeechToText() {
           <Button
             onClick={handleTranscribe}
             disabled={!audioFile || isLoading}
-            className="flex-1"
+            className="flex-1 h-12 sm:h-10 text-sm sm:text-base"
           >
             {isLoading ? (
               <>
@@ -176,11 +182,11 @@ export function SpeechToText() {
                 変換中...
               </>
             ) : (
-              "文字起こしを開始"
+              <>③ 文字起こしを開始</>
             )}
           </Button>
           {audioFile && (
-            <Button variant="outline" onClick={handleClear}>
+            <Button variant="outline" onClick={handleClear} className="h-12 sm:h-10 w-12 sm:w-10">
               <Trash2 className="h-4 w-4" />
             </Button>
           )}
@@ -188,21 +194,27 @@ export function SpeechToText() {
 
         {/* Result */}
         {transcription && (
-          <div className="space-y-2">
+          <div className="space-y-2 pt-2 border-t">
             <div className="flex items-center justify-between">
-              <Label>結果</Label>
-              <Button variant="ghost" size="sm" onClick={handleCopy}>
+              <Label className="text-sm font-medium text-primary">✓ 結果</Label>
+              <Button variant="ghost" size="sm" onClick={handleCopy} className="h-9 px-3">
                 {copied ? (
-                  <Check className="h-4 w-4 text-success" />
+                  <>
+                    <Check className="h-4 w-4 text-success mr-1" />
+                    コピー済み
+                  </>
                 ) : (
-                  <Copy className="h-4 w-4" />
+                  <>
+                    <Copy className="h-4 w-4 mr-1" />
+                    コピー
+                  </>
                 )}
               </Button>
             </div>
             <Textarea
               value={transcription}
               readOnly
-              className="min-h-[150px] resize-none"
+              className="min-h-[120px] sm:min-h-[150px] resize-none text-sm"
             />
           </div>
         )}
