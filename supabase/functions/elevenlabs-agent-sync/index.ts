@@ -49,6 +49,7 @@ serve(async (req) => {
               language: 'ja',
             },
             tts: {
+              model_id: 'eleven_turbo_v2_5',
               voice_id: agentConfig.voice_id,
             },
           },
@@ -93,6 +94,7 @@ serve(async (req) => {
               language: 'ja',
             },
             tts: {
+              model_id: 'eleven_turbo_v2_5',
               voice_id: agentConfig.voice_id,
             },
           },
