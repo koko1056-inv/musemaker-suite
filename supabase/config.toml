@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.save-conversation]
 verify_jwt = false
+
+[functions.elevenlabs-agent-sync]
+verify_jwt = false
