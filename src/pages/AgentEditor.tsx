@@ -102,6 +102,8 @@ export default function AgentEditor() {
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [isLoadingVoices, setIsLoadingVoices] = useState(false);
   const [availableVoices, setAvailableVoices] = useState(fallbackVoices);
+  const [playingPreviewId, setPlayingPreviewId] = useState<string | null>(null);
+  const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
 
   const { isLoading: isPlayingAudio, voices, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
@@ -198,6 +200,47 @@ export default function AgentEditor() {
       return;
     }
     await generateSpeech(previewText, selectedVoice);
+  };
+
+  const handleVoicePreview = (e: React.MouseEvent, voice: typeof availableVoices[0]) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Stop current preview if playing
+    if (previewAudio) {
+      previewAudio.pause();
+      previewAudio.currentTime = 0;
+    }
+    
+    // If clicking the same voice, just stop
+    if (playingPreviewId === voice.id) {
+      setPlayingPreviewId(null);
+      setPreviewAudio(null);
+      return;
+    }
+    
+    // Play preview from ElevenLabs preview_url
+    if ((voice as any).preview_url) {
+      const audio = new Audio((voice as any).preview_url);
+      setPreviewAudio(audio);
+      setPlayingPreviewId(voice.id);
+      
+      audio.onended = () => {
+        setPlayingPreviewId(null);
+        setPreviewAudio(null);
+      };
+      
+      audio.onerror = () => {
+        setPlayingPreviewId(null);
+        setPreviewAudio(null);
+        toast.error("プレビューの再生に失敗しました");
+      };
+      
+      audio.play().catch(() => {
+        setPlayingPreviewId(null);
+        setPreviewAudio(null);
+      });
+    }
   };
 
   const selectedVoiceData = availableVoices.find(v => v.id === selectedVoice);
@@ -411,12 +454,26 @@ export default function AgentEditor() {
                     </SelectTrigger>
                     <SelectContent className="max-h-[300px]">
                       {availableVoices.map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id}>
-                          <div className="flex flex-col min-w-0">
-                            <span className="truncate">{voice.name}</span>
-                            <span className="text-xs text-muted-foreground truncate">
-                              {voice.category} • {voice.labels?.gender || "unknown"}
-                            </span>
+                        <SelectItem key={voice.id} value={voice.id} className="pr-2">
+                          <div className="flex items-center gap-2 w-full min-w-0">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 flex-shrink-0"
+                              onClick={(e) => handleVoicePreview(e, voice)}
+                            >
+                              {playingPreviewId === voice.id ? (
+                                <Square className="h-3 w-3" />
+                              ) : (
+                                <Play className="h-3 w-3" />
+                              )}
+                            </Button>
+                            <div className="flex flex-col min-w-0 flex-1">
+                              <span className="truncate text-sm">{voice.name}</span>
+                              <span className="text-xs text-muted-foreground truncate">
+                                {voice.category} • {voice.labels?.gender || "unknown"}
+                              </span>
+                            </div>
                           </div>
                         </SelectItem>
                       ))}
