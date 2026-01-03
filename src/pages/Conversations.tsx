@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,10 +26,13 @@ import {
   XCircle,
   Play,
   Loader2,
+  Pause,
+  Volume2,
 } from "lucide-react";
 import { useConversations } from "@/hooks/useConversations";
-import { formatDistanceToNow, format } from "date-fns";
+import { format } from "date-fns";
 import { ja } from "date-fns/locale";
+import { Slider } from "@/components/ui/slider";
 
 interface TranscriptMessage {
   role: 'agent' | 'user';
@@ -45,6 +48,7 @@ interface ConversationDisplay {
   outcome: string;
   date: string;
   transcript: TranscriptMessage[];
+  audioUrl: string | null;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -52,6 +56,94 @@ function formatDuration(seconds: number | null): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function AudioPlayer({ audioUrl }: { audioUrl: string }) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const togglePlayPause = () => {
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+      <div className="flex items-center gap-2">
+        <Volume2 className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium">通話録音</span>
+      </div>
+      
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+      />
+      
+      <div className="flex items-center gap-3">
+        <Button
+          variant="outline"
+          size="icon"
+          className="h-10 w-10 rounded-full"
+          onClick={togglePlayPause}
+        >
+          {isPlaying ? (
+            <Pause className="h-4 w-4" />
+          ) : (
+            <Play className="h-4 w-4 ml-0.5" />
+          )}
+        </Button>
+        
+        <div className="flex-1 space-y-1">
+          <Slider
+            value={[currentTime]}
+            max={duration || 100}
+            step={0.1}
+            onValueChange={handleSeek}
+            className="cursor-pointer"
+          />
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{formatDuration(Math.floor(currentTime))}</span>
+            <span>{formatDuration(Math.floor(duration))}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Conversations() {
@@ -69,6 +161,7 @@ export default function Conversations() {
     outcome: conv.outcome || '-',
     date: format(new Date(conv.started_at), 'yyyy-MM-dd HH:mm', { locale: ja }),
     transcript: conv.transcript,
+    audioUrl: conv.audio_url,
   }));
 
   const filteredConversations = displayConversations.filter(
@@ -125,6 +218,7 @@ export default function Conversations() {
                   <TableHead>ステータス</TableHead>
                   <TableHead>結果</TableHead>
                   <TableHead>日時</TableHead>
+                  <TableHead>録音</TableHead>
                   <TableHead className="w-[100px]">操作</TableHead>
                 </TableRow>
               </TableHeader>
@@ -166,6 +260,16 @@ export default function Conversations() {
                     </TableCell>
                     <TableCell>{conv.outcome}</TableCell>
                     <TableCell className="text-muted-foreground">{conv.date}</TableCell>
+                    <TableCell>
+                      {conv.audioUrl ? (
+                        <Badge variant="outline" className="gap-1">
+                          <Volume2 className="h-3 w-3" />
+                          あり
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -217,6 +321,11 @@ export default function Conversations() {
                     <p className="font-medium">{selectedConversation.date}</p>
                   </div>
                 </div>
+
+                {/* Audio Player */}
+                {selectedConversation.audioUrl && (
+                  <AudioPlayer audioUrl={selectedConversation.audioUrl} />
+                )}
 
                 <div className="border-t border-border pt-4">
                   <h4 className="font-medium mb-4">トランスクリプト</h4>
