@@ -59,16 +59,16 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
-      <div className="p-8">
+      <div className="p-4 md:p-8 mobile-safe-bottom">
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">ダッシュボード</h1>
-            <p className="mt-1 text-muted-foreground">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">ダッシュボード</h1>
+            <p className="mt-1 text-sm md:text-base text-muted-foreground">
               音声エージェントの概要
             </p>
           </div>
-          <Button asChild className="gap-2">
+          <Button asChild className="gap-2 w-full sm:w-auto">
             <Link to="/agents/new">
               <Plus className="h-4 w-4" />
               エージェント作成

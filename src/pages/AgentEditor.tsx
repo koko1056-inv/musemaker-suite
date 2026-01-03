@@ -260,7 +260,7 @@ export default function AgentEditor() {
   return (
     <AppLayout>
       <TooltipProvider>
-        <div className="flex h-screen flex-col bg-muted/30">
+        <div className="flex min-h-screen flex-col bg-muted/30 mobile-safe-bottom">
           {/* Onboarding Dialog */}
           <Dialog open={showOnboardingDialog} onOpenChange={setShowOnboardingDialog}>
             <DialogContent className="sm:max-w-md">
@@ -315,28 +315,28 @@ export default function AgentEditor() {
             </DialogContent>
           </Dialog>
           {/* Header */}
-          <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" asChild>
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border bg-background px-4 md:px-6 py-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Button variant="ghost" size="icon" asChild className="shrink-0">
                 <Link to="/agents">
                   <ArrowLeft className="h-4 w-4" />
                 </Link>
               </Button>
-              <div>
-                <h1 className="text-lg font-semibold">
-                  {isNew ? "新しいエージェントを作成" : agentName || "エージェント編集"}
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-lg font-semibold truncate">
+                  {isNew ? "新しいエージェント" : agentName || "エージェント編集"}
                 </h1>
-                <p className="text-sm text-muted-foreground">
-                  {isNew ? "AIアシスタントを簡単に設定できます" : "エージェントの設定を編集"}
+                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                  {isNew ? "AIアシスタントを簡単に設定" : "エージェントの設定を編集"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
               {!isNew && (
                 <Badge
                   variant={status === "published" ? "default" : "secondary"}
-                  className="gap-1"
+                  className="gap-1 hidden sm:flex"
                 >
                   <Circle
                     className={`h-1.5 w-1.5 ${
@@ -354,10 +354,10 @@ export default function AgentEditor() {
                   <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
                       <Phone className="h-4 w-4" />
-                      テスト通話
+                      <span className="hidden sm:inline">テスト通話</span>
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
+                  <DialogContent className="sm:max-w-md max-h-[90vh] overflow-auto">
                     <DialogHeader>
                       <DialogTitle>テスト通話</DialogTitle>
                       <DialogDescription>
@@ -378,34 +378,35 @@ export default function AgentEditor() {
                 onClick={() => handleSave()}
                 disabled={isSaving || !canProceedToStep3}
                 className="gap-2"
+                size="sm"
               >
                 {isSaving ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <Save className="h-4 w-4" />
                 )}
-                {isNew ? "作成" : "保存"}
+                <span className="hidden sm:inline">{isNew ? "作成" : "保存"}</span>
               </Button>
             </div>
           </header>
 
           {/* Progress Steps */}
           {isNew && !showTemplates && (
-            <div className="bg-background border-b border-border px-6 py-3">
-              <div className="flex items-center justify-center gap-8 max-w-2xl mx-auto">
+            <div className="bg-background border-b border-border px-4 py-3 overflow-x-auto">
+              <div className="flex items-center justify-center gap-3 sm:gap-8 max-w-2xl mx-auto min-w-max">
                 {[
                   { num: 1, label: "基本情報", icon: MessageSquare },
                   { num: 2, label: "音声設定", icon: Mic },
                   { num: 3, label: "確認", icon: CheckCircle2 },
                 ].map((step, idx) => (
-                  <div key={step.num} className="flex items-center gap-2">
+                  <div key={step.num} className="flex items-center gap-1 sm:gap-2">
                     <button
                       onClick={() => {
                         if (step.num === 1) setCurrentStep(1);
                         else if (step.num === 2 && canProceedToStep2) setCurrentStep(2);
                         else if (step.num === 3 && canProceedToStep3) setCurrentStep(3);
                       }}
-                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
+                      className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full transition-colors ${
                         currentStep === step.num
                           ? "bg-primary text-primary-foreground"
                           : currentStep > step.num
@@ -414,10 +415,10 @@ export default function AgentEditor() {
                       }`}
                     >
                       <step.icon className="h-4 w-4" />
-                      <span className="text-sm font-medium">{step.label}</span>
+                      <span className="text-xs sm:text-sm font-medium">{step.label}</span>
                     </button>
                     {idx < 2 && (
-                      <div className={`w-12 h-0.5 ${currentStep > step.num ? "bg-primary" : "bg-border"}`} />
+                      <div className={`w-6 sm:w-12 h-0.5 ${currentStep > step.num ? "bg-primary" : "bg-border"}`} />
                     )}
                   </div>
                 ))}
@@ -426,8 +427,8 @@ export default function AgentEditor() {
           )}
 
           {/* Main Content */}
-          <div className="flex-1 overflow-auto py-8">
-            <div className="max-w-2xl mx-auto px-6 space-y-6">
+          <div className="flex-1 overflow-auto py-4 md:py-8">
+            <div className="max-w-2xl mx-auto px-4 md:px-6 space-y-6">
               
               {/* Template Selection (only for new agents) */}
               {isNew && showTemplates && (

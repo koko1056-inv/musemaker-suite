@@ -107,10 +107,10 @@ export function VoiceCallPanel({
   }, [isConnected, conversation]);
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2">
-          <Phone className="h-5 w-5" />
+    <Card className="w-full max-w-md mx-auto border-0 sm:border">
+      <CardHeader className="text-center pb-2 sm:pb-4">
+        <CardTitle className="flex items-center justify-center gap-2 text-base sm:text-lg">
+          <Phone className="h-4 w-4 sm:h-5 sm:w-5" />
           {agentName}
         </CardTitle>
         <div className="flex justify-center gap-2 mt-2">
@@ -138,7 +138,7 @@ export function VoiceCallPanel({
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-3 sm:space-y-4 p-3 sm:p-6">
         {/* Audio Level Indicators */}
         {isConnected && (
           <div className="flex justify-center gap-8 py-2 px-4 rounded-lg bg-muted/30">
@@ -159,7 +159,7 @@ export function VoiceCallPanel({
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm font-medium">トランスクリプト</span>
           </div>
-          <ScrollArea className="h-48">
+          <ScrollArea className="h-40 sm:h-48">
             <div className="p-3 space-y-2">
               {transcript.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -191,11 +191,11 @@ export function VoiceCallPanel({
         </div>
 
         {/* Call Controls */}
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 pt-2">
           {!isConnected ? (
             <Button
               size="lg"
-              className="gap-2 px-8"
+              className="gap-2 px-6 sm:px-8 h-12 sm:h-14 text-base touch-target"
               onClick={startConversation}
               disabled={isConnecting || isSaving}
             >
@@ -215,7 +215,7 @@ export function VoiceCallPanel({
             <Button
               size="lg"
               variant="destructive"
-              className="gap-2 px-8"
+              className="gap-2 px-6 sm:px-8 h-12 sm:h-14 text-base touch-target"
               onClick={endConversation}
             >
               <PhoneOff className="h-5 w-5" />
