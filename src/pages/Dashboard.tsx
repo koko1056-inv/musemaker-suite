@@ -1,12 +1,14 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Clock, TrendingUp, Calendar } from "lucide-react";
+import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, Sparkles, BookOpen, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { useConversations } from "@/hooks/useConversations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
+import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
+import { ActionCard } from "@/components/ui/action-card";
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -19,21 +21,16 @@ export default function Dashboard() {
   const { conversations, isLoading: isLoadingConversations } = useConversations();
 
   const publishedAgents = agents?.filter(a => a.status === "published") || [];
-  const recentAgents = agents?.slice(0, 5) || [];
+  const recentAgents = agents?.slice(0, 3) || [];
+  const hasAgents = agents && agents.length > 0;
 
   // Calculate statistics
   const stats = useMemo(() => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
 
     const todayConversations = conversations?.filter(c => 
       new Date(c.started_at) >= today
-    ) || [];
-
-    const weekConversations = conversations?.filter(c => 
-      new Date(c.started_at) >= weekAgo
     ) || [];
 
     const totalDuration = conversations?.reduce((sum, c) => 
@@ -51,7 +48,6 @@ export default function Dashboard() {
 
     return {
       todayCount: todayConversations.length,
-      weekCount: weekConversations.length,
       avgDuration,
       successRate,
     };
@@ -59,191 +55,209 @@ export default function Dashboard() {
 
   return (
     <AppLayout>
+      <WelcomeDialog />
       <div className="p-4 md:p-8 mobile-safe-bottom">
-        {/* Header */}
-        <div className="mb-6 md:mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">ダッシュボード</h1>
-            <p className="mt-1 text-sm md:text-base text-muted-foreground">
-              音声エージェントの概要
-            </p>
-          </div>
-          <Button asChild className="gap-2 w-full sm:w-auto">
-            <Link to="/agents/new">
-              <Plus className="h-4 w-4" />
-              エージェント作成
-            </Link>
-          </Button>
-        </div>
-
-        {/* Main Stats Grid */}
-        <div className="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                総エージェント数
-              </CardTitle>
-              <Bot className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoadingAgents ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <div className="text-3xl font-bold">{agents?.length || 0}</div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                公開中: {publishedAgents.length}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                総会話数
-              </CardTitle>
-              <MessageSquare className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoadingConversations ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <div className="text-3xl font-bold">{conversations?.length || 0}</div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                成功率: {stats.successRate}%
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                今日の通話
-              </CardTitle>
-              <Calendar className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoadingConversations ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <div className="text-3xl font-bold">{stats.todayCount}</div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                今週: {stats.weekCount}件
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                平均通話時間
-              </CardTitle>
-              <Clock className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {isLoadingConversations ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <div className="text-3xl font-bold">{formatDuration(stats.avgDuration)}</div>
-              )}
-              <p className="text-xs text-muted-foreground mt-1">
-                全会話の平均
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
+        {/* Welcome Header */}
         <div className="mb-8">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                クイックアクション
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-wrap gap-2">
-              <Button asChild variant="outline" className="gap-2">
-                <Link to="/agents/new">
-                  <Plus className="h-4 w-4" />
-                  新しいエージェントを作成
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="gap-2">
-                <Link to="/agents">
-                  <Bot className="h-4 w-4" />
-                  エージェント一覧
-                </Link>
-              </Button>
-              <Button asChild variant="outline" className="gap-2">
-                <Link to="/conversations">
-                  <MessageSquare className="h-4 w-4" />
-                  会話履歴
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
+            こんにちは！👋
+          </h1>
+          <p className="text-muted-foreground">
+            {hasAgents 
+              ? "今日もAIアシスタントを活用しましょう" 
+              : "最初のAIアシスタントを作成して始めましょう"}
+          </p>
         </div>
 
-        {/* Recent Agents */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle>最近のエージェント</CardTitle>
-              <CardDescription>作成したエージェント一覧</CardDescription>
-            </div>
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/agents" className="flex items-center gap-1">
-                すべて表示
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {isLoadingAgents ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin" />
-              </div>
-            ) : recentAgents.length === 0 ? (
-              <div className="text-center py-8">
-                <Bot className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
+        {/* Empty State - First Time User */}
+        {!isLoadingAgents && !hasAgents && (
+          <div className="mb-8">
+            <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-purple-500/5">
+              <CardContent className="flex flex-col items-center text-center py-12 px-6">
+                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-pulse">
+                  <Bot className="h-10 w-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-semibold mb-2">
                   まだエージェントがありません
+                </h2>
+                <p className="text-muted-foreground mb-6 max-w-md">
+                  AIアシスタントを作成すると、電話対応や質問への回答を自動化できます。
+                  <br />
+                  <span className="text-primary font-medium">プログラミングの知識は不要です！</span>
                 </p>
-                <Button asChild>
+                <Button asChild size="lg" className="gap-2 shadow-lg">
                   <Link to="/agents/new">
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Sparkles className="h-5 w-5" />
                     最初のエージェントを作成
                   </Link>
                 </Button>
-              </div>
-            ) : (
-              <div className="divide-y">
-                {recentAgents.map((agent) => (
-                  <Link
-                    key={agent.id}
-                    to={`/agents/${agent.id}`}
-                    className="flex items-center gap-4 py-4 transition-colors hover:bg-muted/50 -mx-4 px-4 rounded-lg"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                      <Bot className="h-5 w-5" />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Quick Actions for New Users */}
+        {!isLoadingAgents && !hasAgents && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <ActionCard
+              to="/agents/new"
+              icon={<Bot className="h-6 w-6" />}
+              title="エージェント作成"
+              description="AIアシスタントを作成する"
+              highlight
+            />
+            <ActionCard
+              to="/knowledge"
+              icon={<BookOpen className="h-6 w-6" />}
+              title="知識を登録"
+              description="AIに教える情報を追加"
+            />
+            <ActionCard
+              to="/settings"
+              icon={<Settings className="h-6 w-6" />}
+              title="設定"
+              description="APIキーなどを設定"
+            />
+          </div>
+        )}
+
+        {/* Stats for Existing Users */}
+        {hasAgents && (
+          <>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              <Card className="bg-gradient-to-br from-primary/10 to-primary/5">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">エージェント</p>
+                      {isLoadingAgents ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold">{agents?.length || 0}</p>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{agent.name}</p>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {agent.description || "説明なし"}
-                      </p>
+                    <Bot className="h-8 w-8 text-primary/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">公開中</p>
+                      {isLoadingAgents ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold">{publishedAgents.length}</p>
+                      )}
                     </div>
-                    <Badge variant={agent.status === "published" ? "default" : "secondary"}>
-                      {agent.status === "published" ? "公開中" : "下書き"}
-                    </Badge>
+                    <Phone className="h-8 w-8 text-green-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">今日の通話</p>
+                      {isLoadingConversations ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold">{stats.todayCount}</p>
+                      )}
+                    </div>
+                    <MessageSquare className="h-8 w-8 text-blue-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">成功率</p>
+                      {isLoadingConversations ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        <p className="text-2xl font-bold">{stats.successRate}%</p>
+                      )}
+                    </div>
+                    <Sparkles className="h-8 w-8 text-amber-500/50" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Primary Action */}
+            <div className="mb-8">
+              <Button asChild size="lg" className="gap-2 w-full sm:w-auto shadow-lg">
+                <Link to="/agents/new">
+                  <Plus className="h-5 w-5" />
+                  新しいエージェントを作成
+                </Link>
+              </Button>
+            </div>
+
+            {/* Recent Agents */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-lg">あなたのエージェント</CardTitle>
+                  <CardDescription>作成したAIアシスタント</CardDescription>
+                </div>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/agents" className="flex items-center gap-1 text-primary">
+                    すべて見る
+                    <ArrowRight className="h-4 w-4" />
                   </Link>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </Button>
+              </CardHeader>
+              <CardContent>
+                {isLoadingAgents ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {recentAgents.map((agent) => (
+                      <Link
+                        key={agent.id}
+                        to={`/agents/${agent.id}`}
+                        className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-muted/50 hover:border-primary/30 transition-all group"
+                      >
+                        <div className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
+                          agent.status === "published" 
+                            ? "bg-green-500/10 text-green-600" 
+                            : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
+                        }`}>
+                          <Bot className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium truncate">{agent.name}</p>
+                            <Badge 
+                              variant={agent.status === "published" ? "default" : "secondary"}
+                              className="text-xs"
+                            >
+                              {agent.status === "published" ? "公開中" : "下書き"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {agent.description || "説明なし"}
+                          </p>
+                        </div>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </AppLayout>
   );

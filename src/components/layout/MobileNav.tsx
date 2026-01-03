@@ -5,14 +5,14 @@ import {
   Bot,
   MessageSquare,
   Settings,
-  BarChart3,
+  Plus,
 } from "lucide-react";
 
 const mobileNavItems = [
   { name: "ホーム", href: "/", icon: LayoutDashboard },
   { name: "エージェント", href: "/agents", icon: Bot },
+  { name: "", href: "/agents/new", icon: Plus, isMain: true },
   { name: "履歴", href: "/conversations", icon: MessageSquare },
-  { name: "分析", href: "/analytics", icon: BarChart3 },
   { name: "設定", href: "/settings", icon: Settings },
 ];
 
@@ -24,17 +24,32 @@ export function MobileNav() {
       <div className="flex items-center justify-around h-16 px-2">
         {mobileNavItems.map((item) => {
           const isActive = location.pathname === item.href || 
-            (item.href !== "/" && location.pathname.startsWith(item.href));
+            (item.href !== "/" && item.href !== "/agents/new" && location.pathname.startsWith(item.href));
+          
+          // Main action button (create new agent)
+          if (item.isMain) {
+            return (
+              <Link
+                key="main-action"
+                to={item.href}
+                className="flex items-center justify-center -mt-6"
+              >
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors active:scale-95">
+                  <Plus className="h-6 w-6" />
+                </div>
+              </Link>
+            );
+          }
           
           return (
             <Link
               key={item.name}
               to={item.href}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[64px]",
+                "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px]",
                 isActive
                   ? "text-primary"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground hover:text-foreground active:bg-muted"
               )}
             >
               <item.icon className={cn("h-5 w-5", isActive && "stroke-[2.5px]")} />

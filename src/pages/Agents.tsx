@@ -112,18 +112,20 @@ export default function Agents() {
           <div className="mb-6 md:mb-8">
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                  <Bot className="h-5 w-5 text-primary" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                  <Bot className="h-6 w-6 text-primary" />
                 </div>
-                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
+                <div>
+                  <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
+                  <p className="text-sm text-muted-foreground">
+                    AIアシスタントを作成・管理
+                  </p>
+                </div>
               </div>
-              <p className="text-sm md:text-base text-muted-foreground">
-                あなたの音声AIアシスタントを作成・管理しましょう
-              </p>
               <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto">
                 <Link to="/agents/new">
-                  <Sparkles className="h-4 w-4" />
-                  新しいエージェントを作成
+                  <Sparkles className="h-5 w-5" />
+                  新しく作成
                 </Link>
               </Button>
             </div>
@@ -232,55 +234,79 @@ export default function Agents() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-muted-foreground">エージェントを読み込んでいます...</p>
+              <p className="text-muted-foreground">読み込んでいます...</p>
             </div>
           ) : agents.length === 0 ? (
-            /* Empty State */
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-10 w-10 text-primary" />
+            /* Empty State - More Friendly */
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 animate-pulse">
+                <Bot className="h-12 w-12 text-primary" />
               </div>
-              <h2 className="text-xl font-semibold text-foreground mb-2">
-                まだエージェントがありません
+              <h2 className="text-2xl font-bold text-foreground mb-3">
+                AIアシスタントを作ってみましょう！
               </h2>
-              <p className="text-muted-foreground mb-6 max-w-md">
-                音声AIエージェントを作成して、自動応答システムを始めましょう。
-                プログラミングの知識は必要ありません。
+              <p className="text-muted-foreground mb-2 max-w-md text-base">
+                3つのステップで簡単に作成できます
               </p>
-              <Button asChild size="lg" className="gap-2">
+              
+              {/* Simple Steps */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 my-8">
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    1
+                  </div>
+                  <span className="text-sm">名前を決める</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    2
+                  </div>
+                  <span className="text-sm">声を選ぶ</span>
+                </div>
+                <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
+                <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
+                    3
+                  </div>
+                  <span className="text-sm">テスト通話</span>
+                </div>
+              </div>
+
+              <Button asChild size="lg" className="gap-2 shadow-lg">
                 <Link to="/agents/new">
-                  <Sparkles className="h-4 w-4" />
-                  最初のエージェントを作成
+                  <Sparkles className="h-5 w-5" />
+                  エージェントを作成する
                 </Link>
               </Button>
 
               {/* Feature highlights */}
               <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
-                <div className="text-center p-4">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Mic className="h-6 w-6 text-primary" />
+                <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Mic className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="font-medium text-foreground mb-1">自然な音声</h3>
+                  <h3 className="font-semibold text-foreground mb-2">自然な音声</h3>
                   <p className="text-sm text-muted-foreground">
-                    人間のような自然な声で会話
+                    人間のような自然な声で会話します
                   </p>
                 </div>
-                <div className="text-center p-4">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <MessageSquare className="h-6 w-6 text-primary" />
+                <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <MessageSquare className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="font-medium text-foreground mb-1">スマートな応答</h3>
+                  <h3 className="font-semibold text-foreground mb-2">スマートな応答</h3>
                   <p className="text-sm text-muted-foreground">
-                    AIが質問に適切に回答
+                    AIがお客様の質問に適切に回答
                   </p>
                 </div>
-                <div className="text-center p-4">
-                  <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Clock className="h-6 w-6 text-primary" />
+                <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
+                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+                    <Clock className="h-7 w-7 text-primary" />
                   </div>
-                  <h3 className="font-medium text-foreground mb-1">24時間対応</h3>
+                  <h3 className="font-semibold text-foreground mb-2">24時間対応</h3>
                   <p className="text-sm text-muted-foreground">
-                    いつでも自動で応対
+                    深夜や休日も自動で応対します
                   </p>
                 </div>
               </div>
