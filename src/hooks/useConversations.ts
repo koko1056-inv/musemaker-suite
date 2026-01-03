@@ -17,6 +17,7 @@ interface Conversation {
   outcome: string | null;
   started_at: string;
   ended_at: string | null;
+  audio_url: string | null;
   agent?: {
     name: string;
   };

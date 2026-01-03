@@ -17,14 +17,14 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { 
-      agentId, 
-      phoneNumber, 
-      transcript, 
-      durationSeconds, 
-      outcome,
-      status = 'completed'
-    } = await req.json();
+    const formData = await req.formData();
+    const agentId = formData.get('agentId') as string;
+    const phoneNumber = formData.get('phoneNumber') as string | null;
+    const transcriptJson = formData.get('transcript') as string;
+    const durationSeconds = parseInt(formData.get('durationSeconds') as string || '0', 10);
+    const outcome = formData.get('outcome') as string | null;
+    const status = formData.get('status') as string || 'completed';
+    const audioFile = formData.get('audio') as File | null;
 
     if (!agentId) {
       throw new Error('Agent ID is required');
@@ -32,15 +32,53 @@ serve(async (req) => {
 
     console.log(`Saving conversation for agent: ${agentId}`);
 
+    let audioUrl: string | null = null;
+
+    // Upload audio if provided
+    if (audioFile && audioFile.size > 0) {
+      const fileName = `${agentId}/${Date.now()}.webm`;
+      console.log(`Uploading audio file: ${fileName}, size: ${audioFile.size} bytes`);
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('call-recordings')
+        .upload(fileName, audioFile, {
+          contentType: audioFile.type || 'audio/webm',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Error uploading audio:', uploadError);
+        throw new Error(`Failed to upload audio: ${uploadError.message}`);
+      }
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('call-recordings')
+        .getPublicUrl(fileName);
+      
+      audioUrl = urlData.publicUrl;
+      console.log(`Audio uploaded successfully: ${audioUrl}`);
+    }
+
+    // Parse transcript
+    let transcript: any[] = [];
+    try {
+      transcript = transcriptJson ? JSON.parse(transcriptJson) : [];
+    } catch (e) {
+      console.error('Error parsing transcript:', e);
+    }
+
+    // Insert conversation record
     const { data, error } = await supabase
       .from('conversations')
       .insert({
         agent_id: agentId,
-        phone_number: phoneNumber,
-        transcript: transcript || [],
-        duration_seconds: durationSeconds || 0,
+        phone_number: phoneNumber || null,
+        transcript: transcript,
+        duration_seconds: durationSeconds,
         outcome: outcome,
         status: status,
+        audio_url: audioUrl,
         ended_at: new Date().toISOString(),
       })
       .select()

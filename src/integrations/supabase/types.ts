@@ -76,6 +76,7 @@ export type Database = {
       conversations: {
         Row: {
           agent_id: string
+          audio_url: string | null
           duration_seconds: number | null
           ended_at: string | null
           id: string
@@ -88,6 +89,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          audio_url?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
@@ -100,6 +102,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          audio_url?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string

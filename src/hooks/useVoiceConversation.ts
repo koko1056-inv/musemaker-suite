@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
 import { useConversation } from '@elevenlabs/react';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface TranscriptMessage {
@@ -26,6 +25,10 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
   const transcriptRef = useRef<TranscriptMessage[]>([]);
   const startTimeRef = useRef<number | null>(null);
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([]);
+  
+  // Audio recording refs
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   const conversation = useConversation({
     onConnect: () => {
@@ -36,10 +39,18 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
     onDisconnect: async () => {
       console.log('Disconnected from ElevenLabs agent');
       
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      
       // Calculate duration
       const durationSeconds = startTimeRef.current 
         ? Math.floor((Date.now() - startTimeRef.current) / 1000)
         : 0;
+
+      // Wait a bit for the last audio chunk
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Save conversation to database
       if (transcriptRef.current.length > 0 || durationSeconds > 0) {
@@ -86,19 +97,31 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
         text: msg.text,
       }));
 
+      // Create audio blob from chunks
+      const audioBlob = audioChunksRef.current.length > 0 
+        ? new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        : null;
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('agentId', agentId);
+      formData.append('transcript', JSON.stringify(formattedTranscript));
+      formData.append('durationSeconds', durationSeconds.toString());
+      formData.append('outcome', formattedTranscript.length > 0 ? '完了' : 'キャンセル');
+      formData.append('status', 'completed');
+      
+      if (phoneNumber) {
+        formData.append('phoneNumber', phoneNumber);
+      }
+      
+      if (audioBlob && audioBlob.size > 0) {
+        formData.append('audio', audioBlob, 'recording.webm');
+        console.log(`Audio recording size: ${audioBlob.size} bytes`);
+      }
+
       const response = await fetch(`${SUPABASE_URL}/functions/v1/save-conversation`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          agentId,
-          phoneNumber: phoneNumber || null,
-          transcript: formattedTranscript,
-          durationSeconds,
-          outcome: formattedTranscript.length > 0 ? '完了' : 'キャンセル',
-          status: 'completed',
-        }),
+        body: formData,
       });
 
       if (!response.ok) {
@@ -115,17 +138,34 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
       toast.error('会話履歴の保存に失敗しました');
     } finally {
       setIsSaving(false);
+      audioChunksRef.current = [];
     }
   }, [agentId, phoneNumber, onConversationEnd]);
 
   const startConversation = useCallback(async () => {
     setIsConnecting(true);
     transcriptRef.current = [];
+    audioChunksRef.current = [];
     setTranscript([]);
     
     try {
       // Request microphone permission
-      await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Start recording
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus',
+      });
+      
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+      
+      mediaRecorder.start(1000); // Collect data every second
+      mediaRecorderRef.current = mediaRecorder;
+      console.log('Audio recording started');
 
       // Get conversation token from edge function
       const response = await fetch(`${SUPABASE_URL}/functions/v1/elevenlabs-conversation-token`, {
@@ -155,6 +195,12 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
     } catch (error) {
       console.error('Failed to start conversation:', error);
       toast.error(error instanceof Error ? error.message : '通話の開始に失敗しました');
+      
+      // Cleanup on error
+      if (mediaRecorderRef.current) {
+        mediaRecorderRef.current.stop();
+        mediaRecorderRef.current = null;
+      }
     } finally {
       setIsConnecting(false);
     }
