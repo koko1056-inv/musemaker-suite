@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +14,65 @@ interface AgentConfig {
   max_call_duration?: number;
 }
 
+interface KnowledgeItem {
+  title: string;
+  content: string;
+  category: string | null;
+}
+
+async function getKnowledgeBaseContent(supabase: any, agentId: string): Promise<string> {
+  try {
+    // Get linked knowledge bases
+    const { data: links, error: linksError } = await supabase
+      .from('agent_knowledge_bases')
+      .select('knowledge_base_id')
+      .eq('agent_id', agentId);
+
+    if (linksError || !links || links.length === 0) {
+      console.log('No knowledge bases linked to this agent');
+      return '';
+    }
+
+    const kbIds = links.map((l: any) => l.knowledge_base_id);
+
+    // Get all knowledge items from linked knowledge bases
+    const { data: items, error: itemsError } = await supabase
+      .from('knowledge_items')
+      .select('title, content, category')
+      .in('knowledge_base_id', kbIds);
+
+    if (itemsError || !items || items.length === 0) {
+      console.log('No knowledge items found');
+      return '';
+    }
+
+    // Format knowledge items for the prompt
+    const formattedItems = items.map((item: KnowledgeItem) => {
+      const category = item.category ? `[${item.category}] ` : '';
+      return `### ${category}${item.title}\n${item.content}`;
+    }).join('\n\n');
+
+    console.log(`Loaded ${items.length} knowledge items for agent`);
+
+    return `
+
+【参照可能なナレッジベース】
+以下の情報を参照して、お客様の質問に正確に回答してください。
+ナレッジベースに記載されていない内容については、「確認してお答えします」と伝えてください。
+
+${formattedItems}
+
+【回答時の注意】
+- ナレッジベースの情報を優先して回答してください
+- 情報がない場合は推測せず、確認が必要な旨を伝えてください
+- FAQに記載がある質問には、その内容に沿って回答してください
+`;
+  } catch (error) {
+    console.error('Error fetching knowledge base content:', error);
+    return '';
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -20,15 +80,32 @@ serve(async (req) => {
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!ELEVENLABS_API_KEY) {
       console.error('ELEVENLABS_API_KEY is not configured');
       throw new Error('ElevenLabs API key is not configured');
     }
 
-    const { action, agentConfig, elevenlabsAgentId } = await req.json();
+    const { action, agentConfig, elevenlabsAgentId, agentId } = await req.json();
 
-    console.log(`Processing ${action} action for agent`);
+    console.log(`Processing ${action} action for agent`, { agentId, elevenlabsAgentId });
+
+    // Initialize Supabase client for fetching knowledge base
+    let knowledgeContent = '';
+    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && agentId) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      knowledgeContent = await getKnowledgeBaseContent(supabase, agentId);
+    }
+
+    // Build the full system prompt with knowledge base content
+    const basePrompt = agentConfig.system_prompt || 
+      `あなたは${agentConfig.name}です。${agentConfig.description || 'お客様のサポートを行うAIアシスタントです。'}`;
+    
+    const fullPrompt = basePrompt + knowledgeContent;
+
+    console.log('Full prompt length:', fullPrompt.length);
 
     if (action === 'create') {
       // Create a new agent on ElevenLabs
@@ -43,7 +120,7 @@ serve(async (req) => {
           conversation_config: {
             agent: {
               prompt: {
-                prompt: agentConfig.system_prompt || `あなたは${agentConfig.name}です。${agentConfig.description || 'お客様のサポートを行うAIアシスタントです。'}`,
+                prompt: fullPrompt,
               },
               first_message: 'こんにちは！本日はどのようなご用件でしょうか？',
               language: 'ja',
@@ -89,7 +166,7 @@ serve(async (req) => {
           conversation_config: {
             agent: {
               prompt: {
-                prompt: agentConfig.system_prompt || `あなたは${agentConfig.name}です。${agentConfig.description || 'お客様のサポートを行うAIアシスタントです。'}`,
+                prompt: fullPrompt,
               },
               language: 'ja',
             },
@@ -107,7 +184,7 @@ serve(async (req) => {
         throw new Error(`Failed to update agent: ${response.status} - ${errorText}`);
       }
 
-      console.log('Agent updated successfully');
+      console.log('Agent updated successfully with knowledge base content');
 
       return new Response(JSON.stringify({ 
         success: true, 
@@ -140,6 +217,44 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({ 
         success: true 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+
+    } else if (action === 'sync_knowledge') {
+      // Sync knowledge base content to existing agent
+      if (!elevenlabsAgentId) {
+        throw new Error('ElevenLabs agent ID is required for knowledge sync');
+      }
+
+      const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${elevenlabsAgentId}`, {
+        method: 'PATCH',
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversation_config: {
+            agent: {
+              prompt: {
+                prompt: fullPrompt,
+              },
+            },
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs sync knowledge error:', response.status, errorText);
+        throw new Error(`Failed to sync knowledge: ${response.status} - ${errorText}`);
+      }
+
+      console.log('Knowledge base synced successfully');
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        knowledge_items_count: knowledgeContent ? knowledgeContent.split('###').length - 1 : 0
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

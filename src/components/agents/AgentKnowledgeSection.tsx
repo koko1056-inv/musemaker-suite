@@ -9,14 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Plus, X, Loader2 } from "lucide-react";
+import { BookOpen, Plus, X, Loader2, RefreshCw, Check } from "lucide-react";
 import { useKnowledgeBases } from "@/hooks/useKnowledgeBase";
 import {
   useAgentKnowledgeBases,
   useLinkKnowledgeBase,
   useUnlinkKnowledgeBase,
 } from "@/hooks/useAgentKnowledgeBases";
+import { useAgents } from "@/hooks/useAgents";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 interface AgentKnowledgeSectionProps {
   agentId: string | undefined;
@@ -25,11 +27,14 @@ interface AgentKnowledgeSectionProps {
 
 export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionProps) {
   const [selectedKbId, setSelectedKbId] = useState<string>("");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [lastSynced, setLastSynced] = useState<Date | null>(null);
 
   const { data: allKnowledgeBases = [], isLoading: isLoadingKbs } = useKnowledgeBases();
   const { data: linkedKbs = [], isLoading: isLoadingLinked } = useAgentKnowledgeBases(agentId);
   const linkKb = useLinkKnowledgeBase();
   const unlinkKb = useUnlinkKnowledgeBase();
+  const { syncKnowledgeBase } = useAgents();
 
   const linkedKbIds = linkedKbs.map((link) => link.knowledge_base_id);
   const availableKbs = allKnowledgeBases.filter((kb) => !linkedKbIds.includes(kb.id));
@@ -43,6 +48,19 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
   const handleUnlink = async (linkId: string) => {
     if (!agentId) return;
     await unlinkKb.mutateAsync({ id: linkId, agent_id: agentId });
+  };
+
+  const handleSyncKnowledge = async () => {
+    if (!agentId) return;
+    setIsSyncing(true);
+    try {
+      await syncKnowledgeBase(agentId);
+      setLastSynced(new Date());
+    } catch (error) {
+      console.error("Failed to sync knowledge:", error);
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   if (isNew) {
@@ -76,9 +94,11 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
               エージェントが参照するナレッジを選択します
             </CardDescription>
           </div>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/knowledge">管理</Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/knowledge">管理</Link>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -118,6 +138,34 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
                 </Button>
               </div>
             ))}
+
+            {/* Sync Button */}
+            <div className="pt-2 border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-2"
+                onClick={handleSyncKnowledge}
+                disabled={isSyncing}
+              >
+                {isSyncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : lastSynced ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                {isSyncing ? "同期中..." : "ナレッジを同期"}
+              </Button>
+              {lastSynced && (
+                <p className="text-xs text-muted-foreground text-center mt-2">
+                  最終同期: {lastSynced.toLocaleTimeString("ja-JP")}
+                </p>
+              )}
+              <p className="text-xs text-muted-foreground text-center mt-1">
+                ナレッジベースの内容を変更したら同期してください
+              </p>
+            </div>
           </div>
         ) : (
           <div className="text-center py-4 text-muted-foreground text-sm">
@@ -164,11 +212,11 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
               </Link>
             </Button>
           </div>
-        ) : (
+        ) : linkedKbs.length > 0 ? (
           <Badge variant="secondary" className="w-full justify-center py-2">
             すべてのナレッジベースが紐付け済みです
           </Badge>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
