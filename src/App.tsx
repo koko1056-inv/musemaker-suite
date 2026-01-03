@@ -12,6 +12,7 @@ import Conversations from "./pages/Conversations";
 import Analytics from "./pages/Analytics";
 import Usage from "./pages/Usage";
 import AuditLogs from "./pages/AuditLogs";
+import KnowledgeBase from "./pages/KnowledgeBase";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
           <Route path="/usage" element={<ProtectedRoute><Usage /></ProtectedRoute>} />
           <Route path="/audit-logs" element={<ProtectedRoute><AuditLogs /></ProtectedRoute>} />
+          <Route path="/knowledge" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
           <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />

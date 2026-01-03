@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_knowledge_bases: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          knowledge_base_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          knowledge_base_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          knowledge_base_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_knowledge_bases_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agent_knowledge_bases_knowledge_base_id_fkey"
+            columns: ["knowledge_base_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_bases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string
@@ -205,6 +241,88 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_bases: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_bases_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      knowledge_items: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          knowledge_base_id: string
+          metadata: Json | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          knowledge_base_id: string
+          metadata?: Json | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          knowledge_base_id?: string
+          metadata?: Json | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_items_knowledge_base_id_fkey"
+            columns: ["knowledge_base_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_bases"
             referencedColumns: ["id"]
           },
         ]
