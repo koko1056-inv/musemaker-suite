@@ -51,98 +51,102 @@ export default function Settings() {
 
   return (
     <AppLayout>
-      <div className="p-8 max-w-4xl">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground">設定</h1>
-          <p className="mt-1 text-muted-foreground">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">設定</h1>
+          <p className="mt-1 text-sm sm:text-base text-muted-foreground">
             ワークスペースの設定と連携機能を管理
           </p>
         </div>
 
-        <Tabs defaultValue="workspace" className="space-y-6">
-          <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
-            <TabsTrigger value="workspace" className="gap-2">
-              <Building className="h-4 w-4" />
-              ワークスペース
-            </TabsTrigger>
-            <TabsTrigger value="integrations" className="gap-2">
-              <Key className="h-4 w-4" />
-              連携
-            </TabsTrigger>
-            <TabsTrigger value="voice-tools" className="gap-2">
-              <Wand2 className="h-4 w-4" />
-              音声ツール
-            </TabsTrigger>
-            <TabsTrigger value="webhooks" className="gap-2">
-              <Webhook className="h-4 w-4" />
-              Webhook
-            </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
-              <Bell className="h-4 w-4" />
-              通知
-            </TabsTrigger>
-            <TabsTrigger value="billing" className="gap-2">
-              <CreditCard className="h-4 w-4" />
-              請求
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="workspace" className="space-y-4 sm:space-y-6">
+          {/* Mobile: Horizontal scrollable tabs */}
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
+            <TabsList className="bg-muted/50 inline-flex sm:flex sm:flex-wrap h-auto gap-1 p-1 min-w-max sm:min-w-0">
+              <TabsTrigger value="workspace" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <Building className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="hidden xs:inline">ワークスペース</span>
+                <span className="xs:hidden">WS</span>
+              </TabsTrigger>
+              <TabsTrigger value="integrations" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <Key className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                連携
+              </TabsTrigger>
+              <TabsTrigger value="voice-tools" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <Wand2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                音声
+              </TabsTrigger>
+              <TabsTrigger value="webhooks" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <Webhook className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Webhook
+              </TabsTrigger>
+              <TabsTrigger value="notifications" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                通知
+              </TabsTrigger>
+              <TabsTrigger value="billing" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
+                <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                請求
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Workspace Tab */}
-          <TabsContent value="workspace" className="space-y-6">
-            <div className="glass rounded-xl card-shadow p-6 space-y-6">
+          <TabsContent value="workspace" className="space-y-4 sm:space-y-6">
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div>
-                <h3 className="font-semibold text-foreground mb-4">ワークスペース情報</h3>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-name">ワークスペース名</Label>
-                    <Input id="workspace-name" defaultValue="株式会社サンプル" />
+                <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">ワークスペース情報</h3>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="workspace-name" className="text-sm">ワークスペース名</Label>
+                    <Input id="workspace-name" defaultValue="株式会社サンプル" className="h-9 sm:h-10 text-sm" />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="workspace-slug">ワークスペースURL</Label>
-                    <div className="flex">
-                      <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-input bg-muted text-sm text-muted-foreground">
+                  <div className="space-y-1.5 sm:space-y-2">
+                    <Label htmlFor="workspace-slug" className="text-sm">ワークスペースURL</Label>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+                      <span className="inline-flex items-center px-3 py-2 sm:py-0 rounded-md sm:rounded-l-md sm:rounded-r-none border sm:border-r-0 border-input bg-muted text-xs sm:text-sm text-muted-foreground">
                         voiceforge.ai/
                       </span>
                       <Input
                         id="workspace-slug"
                         defaultValue="sample-corp"
-                        className="rounded-l-none"
+                        className="rounded-md sm:rounded-l-none h-9 sm:h-10 text-sm"
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-border">
-                <Button>変更を保存</Button>
+              <div className="pt-3 sm:pt-4 border-t border-border">
+                <Button className="w-full sm:w-auto text-sm h-9 sm:h-10">変更を保存</Button>
               </div>
             </div>
 
             {/* Danger Zone */}
-            <div className="glass rounded-xl card-shadow p-6 border-destructive/50">
-              <h3 className="font-semibold text-destructive mb-4 flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6 border-destructive/50">
+              <h3 className="font-semibold text-destructive mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
                 危険な操作
               </h3>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
                 ワークスペースと関連するすべてのデータを完全に削除します。
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive">ワークスペースを削除</Button>
+                  <Button variant="destructive" className="w-full sm:w-auto text-sm h-9 sm:h-10">ワークスペースを削除</Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>ワークスペースを削除</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="text-base sm:text-lg">ワークスペースを削除</AlertDialogTitle>
+                    <AlertDialogDescription className="text-sm">
                       この操作は取り消せません。ワークスペース、すべてのエージェント、
                       会話、データが完全に削除されます。
                     </AlertDialogDescription>
                   </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                    <AlertDialogAction className="bg-destructive hover:bg-destructive/90">
+                  <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                    <AlertDialogCancel className="w-full sm:w-auto">キャンセル</AlertDialogCancel>
+                    <AlertDialogAction className="w-full sm:w-auto bg-destructive hover:bg-destructive/90">
                       削除
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -152,35 +156,35 @@ export default function Settings() {
           </TabsContent>
 
           {/* Integrations Tab */}
-          <TabsContent value="integrations" className="space-y-6">
+          <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
             {/* ElevenLabs */}
-            <div className="glass rounded-xl card-shadow p-6">
-              <div className="flex items-start justify-between mb-4">
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <span className="text-white font-bold text-lg">XI</span>
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-base sm:text-lg">XI</span>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground">ElevenLabs</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">ElevenLabs</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                       音声合成と音声認識
                     </p>
                   </div>
                 </div>
                 {apiKeySaved ? (
-                  <Badge className="bg-success/10 text-success gap-1">
+                  <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
                     <Check className="h-3 w-3" />
                     接続済み
                   </Badge>
                 ) : (
-                  <Badge variant="outline">未接続</Badge>
+                  <Badge variant="outline" className="self-start text-xs">未接続</Badge>
                 )}
               </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="elevenlabs-key">APIキー</Label>
-                  <div className="flex gap-2">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="elevenlabs-key" className="text-sm">APIキー</Label>
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
                       <Input
                         id="elevenlabs-key"
@@ -188,7 +192,7 @@ export default function Settings() {
                         placeholder="ElevenLabsのAPIキーを入力"
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
-                        className="pr-10"
+                        className="pr-10 h-9 sm:h-10 text-sm"
                       />
                       <Button
                         type="button"
@@ -204,17 +208,17 @@ export default function Settings() {
                         )}
                       </Button>
                     </div>
-                    <Button onClick={handleSaveApiKey}>保存</Button>
+                    <Button onClick={handleSaveApiKey} className="w-full sm:w-auto h-9 sm:h-10 text-sm">保存</Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     APIキーは暗号化されて安全に保存されます。
                   </p>
                 </div>
 
-                <Button variant="outline" className="gap-2" asChild>
+                <Button variant="outline" className="gap-2 w-full sm:w-auto text-sm h-9 sm:h-10" asChild>
                   <a href="https://elevenlabs.io/api" target="_blank" rel="noopener noreferrer">
                     APIキーを取得
-                    <ExternalLink className="h-4 w-4" />
+                    <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </a>
                 </Button>
               </div>
@@ -223,8 +227,8 @@ export default function Settings() {
           </TabsContent>
 
           {/* Voice Tools Tab */}
-          <TabsContent value="voice-tools" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
               <SpeechToText />
               <VoiceClone />
             </div>
@@ -236,22 +240,22 @@ export default function Settings() {
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-6">メール通知</h3>
-              <div className="space-y-4">
+          <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6">
+              <h3 className="font-semibold text-foreground mb-4 sm:mb-6 text-sm sm:text-base">メール通知</h3>
+              <div className="space-y-3 sm:space-y-4">
                 {[
                   { id: "new-conversation", label: "新しい会話", description: "新しい会話が開始された際に通知" },
                   { id: "failed-calls", label: "失敗した通話", description: "通話が失敗または転送された際にアラート" },
                   { id: "weekly-report", label: "週次分析レポート", description: "エージェントのパフォーマンスのサマリーを受信" },
                   { id: "team-updates", label: "チームの更新", description: "メンバーがワークスペースに参加または退出した際" },
                 ].map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-2">
-                    <div>
-                      <p className="font-medium text-foreground">{item.label}</p>
-                      <p className="text-sm text-muted-foreground">{item.description}</p>
+                  <div key={item.id} className="flex items-center justify-between py-2 gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-foreground text-sm sm:text-base">{item.label}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                     </div>
-                    <Switch defaultChecked={item.id !== "team-updates"} />
+                    <Switch defaultChecked={item.id !== "team-updates"} className="shrink-0" />
                   </div>
                 ))}
               </div>
@@ -259,49 +263,49 @@ export default function Settings() {
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing" className="space-y-6">
-            <div className="glass rounded-xl card-shadow p-6">
-              <div className="flex items-center justify-between mb-6">
+          <TabsContent value="billing" className="space-y-4 sm:space-y-6">
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                 <div>
-                  <h3 className="font-semibold text-foreground">現在のプラン</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-foreground text-sm sm:text-base">現在のプラン</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     現在Proプランをご利用中です
                   </p>
                 </div>
-                <Badge className="bg-primary/10 text-primary text-lg px-4 py-1">Pro</Badge>
+                <Badge className="bg-primary/10 text-primary text-base sm:text-lg px-3 sm:px-4 py-0.5 sm:py-1 self-start sm:self-auto">Pro</Badge>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-3 mb-6">
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-2xl font-bold text-foreground">10,000</p>
-                  <p className="text-sm text-muted-foreground">API呼び出し / 月</p>
+              <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-3 mb-4 sm:mb-6">
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">10,000</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">API呼び出し / 月</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-2xl font-bold text-foreground">5</p>
-                  <p className="text-sm text-muted-foreground">チームメンバー</p>
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">5</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">チームメンバー</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
-                  <p className="text-2xl font-bold text-foreground">無制限</p>
-                  <p className="text-sm text-muted-foreground">エージェント</p>
+                <div className="bg-muted/50 rounded-lg p-3 sm:p-4">
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">無制限</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">エージェント</p>
                 </div>
               </div>
 
-              <div className="flex gap-3">
-                <Button>プランをアップグレード</Button>
-                <Button variant="outline">請求を管理</Button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button className="w-full sm:w-auto text-sm h-9 sm:h-10">プランをアップグレード</Button>
+                <Button variant="outline" className="w-full sm:w-auto text-sm h-9 sm:h-10">請求を管理</Button>
               </div>
             </div>
 
             {/* Usage */}
-            <div className="glass rounded-xl card-shadow p-6">
-              <h3 className="font-semibold text-foreground mb-4">今月の使用量</h3>
-              <div className="space-y-4">
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6">
+              <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">今月の使用量</h3>
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
+                  <div className="flex justify-between text-xs sm:text-sm mb-1.5 sm:mb-2">
                     <span className="text-muted-foreground">API呼び出し</span>
                     <span className="font-medium text-foreground">6,234 / 10,000</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
                       style={{ width: "62.34%" }}
@@ -309,11 +313,11 @@ export default function Settings() {
                   </div>
                 </div>
                 <div>
-                  <div className="flex justify-between text-sm mb-2">
+                  <div className="flex justify-between text-xs sm:text-sm mb-1.5 sm:mb-2">
                     <span className="text-muted-foreground">音声分数</span>
                     <span className="font-medium text-foreground">1,450 / 5,000</span>
                   </div>
-                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
                       style={{ width: "29%" }}
