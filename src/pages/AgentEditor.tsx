@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { FlowCanvas } from "@/components/flow/FlowCanvas";
-import { NodeEditor } from "@/components/flow/NodeEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,22 +10,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Save,
   Play,
   Upload,
-  Code,
   Circle,
   Volume2,
   Loader2,
   Square,
   Phone,
   RefreshCw,
+  Mic,
+  MessageSquare,
+  Settings2,
+  HelpCircle,
+  CheckCircle2,
 } from "lucide-react";
-import { NodeType } from "@/components/flow/FlowNode";
 import {
   Dialog,
   DialogContent,
@@ -42,34 +42,14 @@ import { useElevenLabs } from "@/hooks/useElevenLabs";
 import { VoiceCallPanel } from "@/components/voice/VoiceCallPanel";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
-
-// Fallback voices if ElevenLabs API fails
-const fallbackVoices = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "サラ", category: "premade", labels: { accent: "american", gender: "female" } },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "ジョージ", category: "premade", labels: { accent: "british", gender: "male" } },
-  { id: "XrExE9yKIg1WjnnlVkGX", name: "マチルダ", category: "premade", labels: { accent: "american", gender: "female" } },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "ダニエル", category: "premade", labels: { accent: "british", gender: "male" } },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "リリー", category: "premade", labels: { accent: "british", gender: "female" } },
-];
-
-const voiceStyles = [
-  { id: "conversational", name: "会話的" },
-  { id: "professional", name: "プロフェッショナル" },
-  { id: "friendly", name: "フレンドリー" },
-  { id: "calm", name: "落ち着いた" },
-];
-
-const voiceSpeeds = [
-  { id: "slow", name: "ゆっくり" },
-  { id: "normal", name: "普通" },
-  { id: "fast", name: "速い" },
-];
-
-const fallbackOptions = [
-  { id: "transfer", name: "オペレーターに転送" },
-  { id: "retry", name: "3回リトライ" },
-  { id: "end", name: "通話終了" },
-];
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function AgentEditor() {
   const { id } = useParams();
@@ -78,34 +58,25 @@ export default function AgentEditor() {
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
   const [agentName, setAgentName] = useState("");
   const [description, setDescription] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
-  const [selectedVoice, setSelectedVoice] = useState(fallbackVoices[0].id);
-  const [voiceStyle, setVoiceStyle] = useState("conversational");
-  const [voiceSpeed, setVoiceSpeed] = useState("normal");
+  const [selectedVoice, setSelectedVoice] = useState("");
+  const [voiceSpeed, setVoiceSpeed] = useState(1.0);
   const [status, setStatus] = useState<"draft" | "published">("draft");
-  const [welcomeTimeout, setWelcomeTimeout] = useState(5);
   const [maxCallDuration, setMaxCallDuration] = useState(10);
-  const [fallbackBehavior, setFallbackBehavior] = useState("transfer");
   const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
   
-  const [selectedNode, setSelectedNode] = useState<{
-    id: string;
-    type: NodeType;
-    title: string;
-    description?: string;
-  } | null>(null);
-  const [previewText, setPreviewText] = useState("こんにちは！本日はどのようなご用件でしょうか？");
   const [showCallDialog, setShowCallDialog] = useState(false);
-  const [isLoadingVoices, setIsLoadingVoices] = useState(false);
-  const [availableVoices, setAvailableVoices] = useState(fallbackVoices);
+  const [isLoadingVoices, setIsLoadingVoices] = useState(true);
+  const [availableVoices, setAvailableVoices] = useState<any[]>([]);
   const [playingPreviewId, setPlayingPreviewId] = useState<string | null>(null);
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
 
-  const { isLoading: isPlayingAudio, voices, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
+  const { isLoading: isPlayingAudio, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
 
   // Fetch ElevenLabs voices on mount
@@ -116,6 +87,9 @@ export default function AgentEditor() {
         const fetchedVoices = await fetchVoices();
         if (fetchedVoices && fetchedVoices.length > 0) {
           setAvailableVoices(fetchedVoices);
+          if (!selectedVoice && fetchedVoices.length > 0) {
+            setSelectedVoice(fetchedVoices[0].id);
+          }
         }
       } finally {
         setIsLoadingVoices(false);
@@ -134,13 +108,11 @@ export default function AgentEditor() {
           setDescription(agent.description || "");
           setSystemPrompt((agent as any).system_prompt || "");
           setSelectedVoice(agent.voice_id);
-          setVoiceStyle(agent.voice_style || "conversational");
-          setVoiceSpeed(agent.voice_speed || "normal");
+          setVoiceSpeed(parseFloat(agent.voice_speed || "1.0"));
           setStatus(agent.status as "draft" | "published");
-          setWelcomeTimeout(agent.welcome_timeout || 5);
           setMaxCallDuration(agent.max_call_duration || 10);
-          setFallbackBehavior(agent.fallback_behavior || "transfer");
           setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
+          setCurrentStep(3); // Go to final step for existing agents
         })
         .catch(() => {
           navigate("/agents");
@@ -157,6 +129,11 @@ export default function AgentEditor() {
       return;
     }
 
+    if (!selectedVoice) {
+      toast.error("音声を選択してください");
+      return;
+    }
+
     setIsSaving(true);
     try {
       const agentData = {
@@ -164,64 +141,50 @@ export default function AgentEditor() {
         description: description || null,
         system_prompt: systemPrompt || null,
         voice_id: selectedVoice,
-        voice_style: voiceStyle,
-        voice_speed: voiceSpeed,
+        voice_style: "conversational",
+        voice_speed: voiceSpeed.toString(),
         status: newStatus || status,
-        welcome_timeout: welcomeTimeout,
+        welcome_timeout: 5,
         max_call_duration: maxCallDuration,
-        fallback_behavior: fallbackBehavior,
+        fallback_behavior: "end",
       };
 
       if (isNew) {
         const newAgent = await createAgent(agentData as any);
         setElevenLabsAgentId(newAgent.elevenlabs_agent_id || null);
+        toast.success("エージェントを作成しました！");
         navigate(`/agents/${newAgent.id}`, { replace: true });
       } else if (id) {
         const updatedAgent = await updateAgent(id, agentData as any);
         if (newStatus) setStatus(newStatus);
         setElevenLabsAgentId(updatedAgent.elevenlabs_agent_id || null);
+        toast.success("保存しました");
       }
     } finally {
       setIsSaving(false);
     }
   }, [
-    agentName, description, systemPrompt, selectedVoice, voiceStyle, voiceSpeed, 
-    status, welcomeTimeout, maxCallDuration, fallbackBehavior,
-    isNew, id, createAgent, updateAgent, navigate
+    agentName, description, systemPrompt, selectedVoice, voiceSpeed,
+    status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate
   ]);
 
-  const handlePublish = async () => {
-    await handleSave("published");
-  };
-
-  const handlePlaySample = async () => {
-    if (isPlayingAudio) {
-      stopAudio();
-      return;
-    }
-    await generateSpeech(previewText, selectedVoice);
-  };
-
-  const handleVoicePreview = (e: React.MouseEvent, voice: typeof availableVoices[0]) => {
+  const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
     e.preventDefault();
     e.stopPropagation();
     
-    // Stop current preview if playing
     if (previewAudio) {
       previewAudio.pause();
       previewAudio.currentTime = 0;
     }
     
-    // If clicking the same voice, just stop
     if (playingPreviewId === voice.id) {
       setPlayingPreviewId(null);
       setPreviewAudio(null);
       return;
     }
     
-    // Play preview from ElevenLabs preview_url
-    if ((voice as any).preview_url) {
-      const audio = new Audio((voice as any).preview_url);
+    if (voice.preview_url) {
+      const audio = new Audio(voice.preview_url);
       setPreviewAudio(audio);
       setPlayingPreviewId(voice.id);
       
@@ -244,17 +207,18 @@ export default function AgentEditor() {
   };
 
   const selectedVoiceData = availableVoices.find(v => v.id === selectedVoice);
-
-  const embedCode = `<script src="https://voiceforge.ai/embed.js"></script>
-<voice-agent id="agent_${id || 'xxx'}" />`;
-
-  const apiEndpoint = `https://api.voiceforge.ai/v1/agents/${id || 'xxx'}/call`;
+  
+  const canProceedToStep2 = agentName.trim().length > 0;
+  const canProceedToStep3 = canProceedToStep2 && selectedVoice;
 
   if (isLoadingAgent) {
     return (
       <AppLayout>
         <div className="flex h-screen items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="text-center space-y-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+            <p className="text-muted-foreground">読み込み中...</p>
+          </div>
         </div>
       </AppLayout>
     );
@@ -262,380 +226,423 @@ export default function AgentEditor() {
 
   return (
     <AppLayout>
-      <div className="flex h-screen flex-col">
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-border bg-background px-6 py-3">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/agents">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-            </Button>
-            <Input
-              value={agentName}
-              onChange={(e) => setAgentName(e.target.value)}
-              placeholder="エージェント名"
-              className="w-64 border-0 bg-transparent text-lg font-semibold focus-visible:ring-0"
-            />
-            <Badge
-              variant={status === "published" ? "default" : "secondary"}
-              className="gap-1"
-            >
-              <Circle
-                className={`h-1.5 w-1.5 ${
-                  status === "published"
-                    ? "fill-primary-foreground"
-                    : "fill-muted-foreground"
-                }`}
-              />
-              {status === "published" ? "公開中" : "下書き"}
-            </Badge>
-          </div>
+      <TooltipProvider>
+        <div className="flex h-screen flex-col bg-muted/30">
+          {/* Header */}
+          <header className="flex items-center justify-between border-b border-border bg-background px-6 py-4">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" asChild>
+                <Link to="/agents">
+                  <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </Button>
+              <div>
+                <h1 className="text-lg font-semibold">
+                  {isNew ? "新しいエージェントを作成" : agentName || "エージェント編集"}
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  {isNew ? "AIアシスタントを簡単に設定できます" : "エージェントの設定を編集"}
+                </p>
+              </div>
+            </div>
 
-          <div className="flex items-center gap-2">
-            <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Phone className="h-4 w-4" />
-                  通話テスト
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>音声通話テスト</DialogTitle>
-                  <DialogDescription>
-                    {elevenlabsAgentId 
-                      ? 'ElevenLabsと同期済みのエージェントで通話をテストできます'
-                      : 'エージェントを保存してElevenLabsと同期してから通話をテストしてください'
-                    }
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-2">
-                  {elevenlabsAgentId ? (
-                    <>
-                      <div className="space-y-2">
-                        <Label>ElevenLabs Agent ID</Label>
-                        <Input
-                          value={elevenlabsAgentId}
-                          readOnly
-                          className="bg-muted"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          このエージェントはElevenLabsと同期されています
-                        </p>
-                      </div>
-                      <VoiceCallPanel
-                        agentId={id || 'test'}
-                        elevenLabsAgentId={elevenlabsAgentId}
-                        agentName={agentName || 'テストエージェント'}
-                        onCallEnd={() => {
-                          // Optionally close dialog or refresh data
-                        }}
-                      />
-                    </>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      エージェントを保存するとElevenLabsに自動的に同期され、通話テストが可能になります。
-                    </p>
-                  )}
-                </div>
-              </DialogContent>
-            </Dialog>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="gap-2"
-              onClick={() => handleSave()}
-              disabled={isSaving}
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
+            <div className="flex items-center gap-3">
+              {!isNew && (
+                <Badge
+                  variant={status === "published" ? "default" : "secondary"}
+                  className="gap-1"
+                >
+                  <Circle
+                    className={`h-1.5 w-1.5 ${
+                      status === "published"
+                        ? "fill-primary-foreground"
+                        : "fill-muted-foreground"
+                    }`}
+                  />
+                  {status === "published" ? "公開中" : "下書き"}
+                </Badge>
               )}
-              保存
-            </Button>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button size="sm" className="gap-2" disabled={isSaving}>
-                  <Upload className="h-4 w-4" />
-                  公開
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>エージェントを公開</DialogTitle>
-                  <DialogDescription>
-                    このエージェントを本番環境で利用可能にします。
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label>埋め込みコード</Label>
-                    <Textarea
-                      readOnly
-                      value={embedCode}
-                      className="font-mono text-sm"
-                      rows={3}
-                    />
+              
+              {elevenlabsAgentId && (
+                <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+                  <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
-                      <Code className="h-4 w-4" />
-                      コードをコピー
+                      <Phone className="h-4 w-4" />
+                      テスト通話
                     </Button>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>APIエンドポイント</Label>
-                    <Input readOnly value={apiEndpoint} className="font-mono text-sm" />
-                  </div>
-                  <Button
-                    className="w-full"
-                    onClick={handlePublish}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    ) : null}
-                    今すぐ公開
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left Panel - Settings */}
-          <div className="w-72 border-r border-border bg-card overflow-auto">
-            <Tabs defaultValue="voice" className="h-full">
-              <TabsList className="w-full rounded-none border-b border-border bg-transparent p-0">
-                <TabsTrigger
-                  value="voice"
-                  className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                >
-                  音声
-                </TabsTrigger>
-                <TabsTrigger
-                  value="settings"
-                  className="flex-1 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
-                >
-                  設定
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="voice" className="p-4 space-y-4 mt-0">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label>音声を選択</Label>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={async () => {
-                        setIsLoadingVoices(true);
-                        const fetchedVoices = await fetchVoices();
-                        if (fetchedVoices && fetchedVoices.length > 0) {
-                          setAvailableVoices(fetchedVoices);
-                        }
-                        setIsLoadingVoices(false);
-                      }}
-                      disabled={isLoadingVoices}
-                      className="h-6 px-2 text-xs"
-                    >
-                      {isLoadingVoices ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <RefreshCw className="h-3 w-3" />
-                      )}
-                    </Button>
-                  </div>
-                  <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={isLoadingVoices ? "読み込み中..." : "音声を選択"} />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[300px]">
-                      {availableVoices.map((voice) => (
-                        <SelectItem key={voice.id} value={voice.id} className="pr-2">
-                          <div className="flex items-center gap-2 w-full min-w-0">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0 flex-shrink-0"
-                              onClick={(e) => handleVoicePreview(e, voice)}
-                            >
-                              {playingPreviewId === voice.id ? (
-                                <Square className="h-3 w-3" />
-                              ) : (
-                                <Play className="h-3 w-3" />
-                              )}
-                            </Button>
-                            <div className="flex flex-col min-w-0 flex-1">
-                              <span className="truncate text-sm">{voice.name}</span>
-                              <span className="text-xs text-muted-foreground truncate">
-                                {voice.category} • {voice.labels?.gender || "unknown"}
-                              </span>
-                            </div>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    {availableVoices.length}個の音声が利用可能
-                  </p>
-                </div>
-
-                <div className="glass rounded-lg p-4 space-y-3">
-                  <h4 className="font-medium text-foreground">音声プレビュー</h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedVoiceData?.name}の音声でサンプルを再生
-                  </p>
-                  <div className="space-y-2">
-                    <Textarea
-                      value={previewText}
-                      onChange={(e) => setPreviewText(e.target.value)}
-                      placeholder="プレビューするテキストを入力..."
-                      rows={2}
-                      className="text-sm"
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>テスト通話</DialogTitle>
+                      <DialogDescription>
+                        作成したエージェントと会話してみましょう
+                      </DialogDescription>
+                    </DialogHeader>
+                    <VoiceCallPanel
+                      agentId={id || 'test'}
+                      elevenLabsAgentId={elevenlabsAgentId}
+                      agentName={agentName || 'テストエージェント'}
+                      onCallEnd={() => {}}
                     />
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="gap-2 w-full"
-                      onClick={handlePlaySample}
-                      disabled={!previewText.trim()}
-                    >
-                      {isPlayingAudio ? (
-                        <>
-                          <Square className="h-4 w-4" />
-                          停止
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="h-4 w-4" />
-                          サンプル再生
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>話し方スタイル</Label>
-                  <Select value={voiceStyle} onValueChange={setVoiceStyle}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {voiceStyles.map((style) => (
-                        <SelectItem key={style.id} value={style.id}>
-                          {style.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>話す速度</Label>
-                  <Select value={voiceSpeed} onValueChange={setVoiceSpeed}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {voiceSpeeds.map((speed) => (
-                        <SelectItem key={speed.id} value={speed.id}>
-                          {speed.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="settings" className="p-4 space-y-4 mt-0">
-                {elevenlabsAgentId && (
-                  <div className="glass rounded-lg p-3 space-y-1">
-                    <Label className="text-xs text-muted-foreground">ElevenLabs Agent ID</Label>
-                    <p className="text-sm font-mono break-all">{elevenlabsAgentId}</p>
-                  </div>
+                  </DialogContent>
+                </Dialog>
+              )}
+              
+              <Button 
+                onClick={() => handleSave()}
+                disabled={isSaving || !canProceedToStep3}
+                className="gap-2"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
                 )}
+                {isNew ? "作成" : "保存"}
+              </Button>
+            </div>
+          </header>
 
-                <div className="space-y-2">
-                  <Label>エージェントの説明</Label>
-                  <Textarea
-                    placeholder="このエージェントの役割を説明..."
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>システムプロンプト</Label>
-                  <Textarea
-                    placeholder="エージェントの振る舞いを定義するプロンプトを入力..."
-                    rows={4}
-                    value={systemPrompt}
-                    onChange={(e) => setSystemPrompt(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    空の場合、エージェント名と説明から自動生成されます
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>ウェルカムタイムアウト（秒）</Label>
-                  <Input 
-                    type="number" 
-                    value={welcomeTimeout}
-                    onChange={(e) => setWelcomeTimeout(parseInt(e.target.value) || 5)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>最大通話時間（分）</Label>
-                  <Input 
-                    type="number" 
-                    value={maxCallDuration}
-                    onChange={(e) => setMaxCallDuration(parseInt(e.target.value) || 10)}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>フォールバック動作</Label>
-                  <Select value={fallbackBehavior} onValueChange={setFallbackBehavior}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fallbackOptions.map((option) => (
-                        <SelectItem key={option.id} value={option.id}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Center - Flow Canvas */}
-          <div className="flex-1 bg-muted/30">
-            <FlowCanvas onNodeSelect={setSelectedNode} />
-          </div>
-
-          {/* Right Panel - Node Editor */}
-          {selectedNode && (
-            <div className="w-80 border-l border-border bg-card animate-slide-in-right">
-              <NodeEditor
-                node={selectedNode}
-                onClose={() => setSelectedNode(null)}
-              />
+          {/* Progress Steps */}
+          {isNew && (
+            <div className="bg-background border-b border-border px-6 py-3">
+              <div className="flex items-center justify-center gap-8 max-w-2xl mx-auto">
+                {[
+                  { num: 1, label: "基本情報", icon: MessageSquare },
+                  { num: 2, label: "音声設定", icon: Mic },
+                  { num: 3, label: "確認", icon: CheckCircle2 },
+                ].map((step, idx) => (
+                  <div key={step.num} className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (step.num === 1) setCurrentStep(1);
+                        else if (step.num === 2 && canProceedToStep2) setCurrentStep(2);
+                        else if (step.num === 3 && canProceedToStep3) setCurrentStep(3);
+                      }}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors ${
+                        currentStep === step.num
+                          ? "bg-primary text-primary-foreground"
+                          : currentStep > step.num
+                          ? "bg-primary/20 text-primary"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <step.icon className="h-4 w-4" />
+                      <span className="text-sm font-medium">{step.label}</span>
+                    </button>
+                    {idx < 2 && (
+                      <div className={`w-12 h-0.5 ${currentStep > step.num ? "bg-primary" : "bg-border"}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
+
+          {/* Main Content */}
+          <div className="flex-1 overflow-auto py-8">
+            <div className="max-w-2xl mx-auto px-6 space-y-6">
+              
+              {/* Step 1: Basic Info */}
+              {(currentStep === 1 || !isNew) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                      基本情報
+                    </CardTitle>
+                    <CardDescription>
+                      エージェントの名前と役割を設定します
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="flex items-center gap-2">
+                        エージェント名
+                        <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="name"
+                        value={agentName}
+                        onChange={(e) => setAgentName(e.target.value)}
+                        placeholder="例: カスタマーサポート担当"
+                        className="text-base"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        お客様に表示される名前です
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="flex items-center gap-2">
+                        役割・説明
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">エージェントがどんな役割を果たすか説明してください。これがAIの振る舞いに影響します。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </Label>
+                      <Textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="例: お客様からの問い合わせに丁寧に対応し、製品の質問や注文状況の確認をサポートします"
+                        rows={3}
+                        className="resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="prompt" className="flex items-center gap-2">
+                        詳細な指示（オプション）
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">より詳細な振る舞いを指定したい場合に入力してください。空欄の場合は役割・説明から自動生成されます。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </Label>
+                      <Textarea
+                        id="prompt"
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
+                        placeholder="より詳しい指示を入力（省略可）"
+                        rows={4}
+                        className="resize-none"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 2: Voice Settings */}
+              {(currentStep === 2 || !isNew) && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Mic className="h-5 w-5 text-primary" />
+                      音声設定
+                    </CardTitle>
+                    <CardDescription>
+                      エージェントの声を選びます
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label className="flex items-center gap-2">
+                          音声を選択
+                          <span className="text-destructive">*</span>
+                        </Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={async () => {
+                            setIsLoadingVoices(true);
+                            const fetchedVoices = await fetchVoices();
+                            if (fetchedVoices && fetchedVoices.length > 0) {
+                              setAvailableVoices(fetchedVoices);
+                            }
+                            setIsLoadingVoices(false);
+                          }}
+                          disabled={isLoadingVoices}
+                          className="h-8 px-2 text-xs gap-1"
+                        >
+                          {isLoadingVoices ? (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="h-3 w-3" />
+                          )}
+                          更新
+                        </Button>
+                      </div>
+
+                      {isLoadingVoices ? (
+                        <div className="flex items-center justify-center py-8">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 gap-2 max-h-64 overflow-auto p-1">
+                          {availableVoices.slice(0, 20).map((voice) => (
+                            <button
+                              key={voice.id}
+                              onClick={() => setSelectedVoice(voice.id)}
+                              className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                                selectedVoice === voice.id
+                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                  : "border-border hover:border-primary/50 hover:bg-muted/50"
+                              }`}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 flex-shrink-0 rounded-full"
+                                onClick={(e) => handleVoicePreview(e, voice)}
+                              >
+                                {playingPreviewId === voice.id ? (
+                                  <Square className="h-4 w-4" />
+                                ) : (
+                                  <Play className="h-4 w-4" />
+                                )}
+                              </Button>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium truncate">{voice.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {voice.labels?.gender === "female" ? "女性" : voice.labels?.gender === "male" ? "男性" : ""} 
+                                  {voice.labels?.accent ? ` • ${voice.labels.accent}` : ""}
+                                </p>
+                              </div>
+                              {selectedVoice === voice.id && (
+                                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                              )}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {availableVoices.length > 20 && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          上位20件を表示中（全{availableVoices.length}件）
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        話す速度
+                        <span className="text-sm font-normal text-muted-foreground">
+                          {voiceSpeed.toFixed(1)}x
+                        </span>
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground">ゆっくり</span>
+                        <Slider
+                          value={[voiceSpeed]}
+                          onValueChange={([val]) => setVoiceSpeed(val)}
+                          min={0.7}
+                          max={1.3}
+                          step={0.1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground">速い</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2">
+                        最大通話時間
+                        <span className="text-sm font-normal text-muted-foreground">
+                          {maxCallDuration}分
+                        </span>
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground">1分</span>
+                        <Slider
+                          value={[maxCallDuration]}
+                          onValueChange={([val]) => setMaxCallDuration(val)}
+                          min={1}
+                          max={30}
+                          step={1}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground">30分</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Step 3: Review */}
+              {currentStep === 3 && isNew && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                      確認
+                    </CardTitle>
+                    <CardDescription>
+                      設定内容を確認してエージェントを作成します
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="rounded-lg border p-4 space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">エージェント名</span>
+                        <span className="font-medium">{agentName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">音声</span>
+                        <span className="font-medium">{selectedVoiceData?.name || "未選択"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">話す速度</span>
+                        <span className="font-medium">{voiceSpeed.toFixed(1)}x</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">最大通話時間</span>
+                        <span className="font-medium">{maxCallDuration}分</span>
+                      </div>
+                      {description && (
+                        <div className="pt-2 border-t">
+                          <span className="text-muted-foreground text-sm">役割・説明</span>
+                          <p className="mt-1 text-sm">{description}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <Button
+                      onClick={() => handleSave()}
+                      disabled={isSaving}
+                      className="w-full gap-2"
+                      size="lg"
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4" />
+                      )}
+                      エージェントを作成
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Navigation Buttons */}
+              {isNew && (
+                <div className="flex justify-between pt-4">
+                  {currentStep > 1 ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                    >
+                      戻る
+                    </Button>
+                  ) : (
+                    <div />
+                  )}
+                  
+                  {currentStep < 3 && (
+                    <Button
+                      onClick={() => setCurrentStep(currentStep + 1)}
+                      disabled={
+                        (currentStep === 1 && !canProceedToStep2) ||
+                        (currentStep === 2 && !canProceedToStep3)
+                      }
+                    >
+                      次へ
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
     </AppLayout>
   );
 }
