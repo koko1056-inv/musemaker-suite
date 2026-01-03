@@ -3,34 +3,26 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
   Save,
   Play,
-  Upload,
   Circle,
-  Volume2,
   Loader2,
   Square,
   Phone,
   RefreshCw,
   Mic,
   MessageSquare,
-  Settings2,
   HelpCircle,
   CheckCircle2,
   Sparkles,
   PartyPopper,
   ArrowRight,
+  LayoutTemplate,
 } from "lucide-react";
+import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +53,7 @@ export default function AgentEditor() {
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(isNew);
   const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
@@ -248,6 +241,21 @@ export default function AgentEditor() {
     }
   };
 
+  const handleSelectTemplate = (template: AgentTemplate) => {
+    setAgentName(template.defaultValues.name);
+    setDescription(template.defaultValues.description);
+    setSystemPrompt(template.defaultValues.systemPrompt);
+    setMaxCallDuration(template.defaultValues.maxCallDuration);
+    setVoiceSpeed(template.defaultValues.voiceSpeed);
+    setShowTemplates(false);
+    setCurrentStep(1);
+  };
+
+  const handleSkipTemplates = () => {
+    setShowTemplates(false);
+    setCurrentStep(1);
+  };
+
   return (
     <AppLayout>
       <TooltipProvider>
@@ -381,7 +389,7 @@ export default function AgentEditor() {
           </header>
 
           {/* Progress Steps */}
-          {isNew && (
+          {isNew && !showTemplates && (
             <div className="bg-background border-b border-border px-6 py-3">
               <div className="flex items-center justify-center gap-8 max-w-2xl mx-auto">
                 {[
@@ -420,8 +428,16 @@ export default function AgentEditor() {
           <div className="flex-1 overflow-auto py-8">
             <div className="max-w-2xl mx-auto px-6 space-y-6">
               
+              {/* Template Selection (only for new agents) */}
+              {isNew && showTemplates && (
+                <AgentTemplates
+                  onSelectTemplate={handleSelectTemplate}
+                  onSkip={handleSkipTemplates}
+                />
+              )}
+
               {/* Step 1: Basic Info */}
-              {(currentStep === 1 || !isNew) && (
+              {!showTemplates && (currentStep === 1 || !isNew) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -498,7 +514,7 @@ export default function AgentEditor() {
               )}
 
               {/* Step 2: Voice Settings */}
-              {(currentStep === 2 || !isNew) && (
+              {!showTemplates && (currentStep === 2 || !isNew) && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -635,7 +651,7 @@ export default function AgentEditor() {
               )}
 
               {/* Step 3: Review */}
-              {currentStep === 3 && isNew && (
+              {!showTemplates && currentStep === 3 && isNew && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -690,7 +706,7 @@ export default function AgentEditor() {
               )}
 
               {/* Navigation Buttons */}
-              {isNew && (
+              {isNew && !showTemplates && (
                 <div className="flex justify-between pt-4">
                   {currentStep > 1 ? (
                     <Button
@@ -700,7 +716,14 @@ export default function AgentEditor() {
                       戻る
                     </Button>
                   ) : (
-                    <div />
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowTemplates(true)}
+                      className="gap-2"
+                    >
+                      <LayoutTemplate className="h-4 w-4" />
+                      テンプレート一覧
+                    </Button>
                   )}
                   
                   {currentStep < 3 && (
