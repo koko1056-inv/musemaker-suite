@@ -1,5 +1,6 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 import {
   LayoutDashboard,
   Bot,
@@ -10,12 +11,16 @@ import {
   ChevronDown,
   Mic,
   Zap,
+  Shield,
+  Gauge,
+  LogOut,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -24,12 +29,23 @@ const navigation = [
   { name: "エージェント", href: "/agents", icon: Bot },
   { name: "会話履歴", href: "/conversations", icon: MessageSquare },
   { name: "分析", href: "/analytics", icon: BarChart3 },
+  { name: "利用量", href: "/usage", icon: Gauge },
+  { name: "監査ログ", href: "/audit-logs", icon: Shield },
   { name: "チーム", href: "/team", icon: Users },
   { name: "設定", href: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
+  const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
@@ -96,18 +112,24 @@ export function AppSidebar() {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-lg p-2 transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-sm">山田</AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary text-sm">{userInitials}</AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">山田 太郎</p>
-              <p className="text-xs text-muted-foreground truncate">yamada@example.com</p>
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "ユーザー"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>プロフィール</DropdownMenuItem>
-            <DropdownMenuItem>請求</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">ログアウト</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/settings")}>プロフィール</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/usage")}>利用状況</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+              <LogOut className="mr-2 h-4 w-4" />
+              ログアウト
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
