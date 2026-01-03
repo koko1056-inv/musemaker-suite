@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.elevenlabs-transcribe]
 verify_jwt = false
 
+[functions.elevenlabs-voice-clone]
+verify_jwt = false
+
 [functions.save-conversation]
 verify_jwt = false
 

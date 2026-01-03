@@ -27,9 +27,12 @@ import {
   Check,
   AlertTriangle,
   Webhook,
+  Wand2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
+import { SpeechToText } from "@/components/voice-tools/SpeechToText";
+import { VoiceClone } from "@/components/voice-tools/VoiceClone";
 
 // Demo workspace ID for testing
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -58,7 +61,7 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="workspace" className="space-y-6">
-          <TabsList className="bg-muted/50">
+          <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
             <TabsTrigger value="workspace" className="gap-2">
               <Building className="h-4 w-4" />
               ワークスペース
@@ -66,6 +69,10 @@ export default function Settings() {
             <TabsTrigger value="integrations" className="gap-2">
               <Key className="h-4 w-4" />
               連携
+            </TabsTrigger>
+            <TabsTrigger value="voice-tools" className="gap-2">
+              <Wand2 className="h-4 w-4" />
+              音声ツール
             </TabsTrigger>
             <TabsTrigger value="webhooks" className="gap-2">
               <Webhook className="h-4 w-4" />
@@ -213,6 +220,14 @@ export default function Settings() {
               </div>
             </div>
 
+          </TabsContent>
+
+          {/* Voice Tools Tab */}
+          <TabsContent value="voice-tools" className="space-y-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <SpeechToText />
+              <VoiceClone />
+            </div>
           </TabsContent>
 
           {/* Webhooks Tab */}
