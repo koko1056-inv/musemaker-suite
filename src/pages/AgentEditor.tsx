@@ -575,41 +575,108 @@ export default function AgentEditor() {
                           <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 gap-2 max-h-80 overflow-auto p-1">
-                          {availableVoices.map((voice) => (
-                            <button
-                              key={voice.id}
-                              onClick={() => setSelectedVoice(voice.id)}
-                              className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
-                                selectedVoice === voice.id
-                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                                  : "border-border hover:border-primary/50 hover:bg-muted/50"
-                              }`}
-                            >
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 flex-shrink-0 rounded-full"
-                                onClick={(e) => handleVoicePreview(e, voice)}
-                              >
-                                {playingPreviewId === voice.id ? (
-                                  <Square className="h-4 w-4" />
-                                ) : (
-                                  <Play className="h-4 w-4" />
-                                )}
-                              </Button>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium truncate">{voice.name}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {voice.labels?.gender === "female" ? "女性" : voice.labels?.gender === "male" ? "男性" : ""} 
-                                  {voice.labels?.accent ? ` • ${voice.labels.accent}` : ""}
-                                </p>
+                        <div className="space-y-4 max-h-80 overflow-auto p-1">
+                          {/* Cloned Voices Section */}
+                          {availableVoices.some(v => v.isCloned) && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary" className="gap-1">
+                                  <Mic className="h-3 w-3" />
+                                  クローン音声
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  設定で作成したカスタム音声
+                                </span>
                               </div>
-                              {selectedVoice === voice.id && (
-                                <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                              )}
-                            </button>
-                          ))}
+                              <div className="grid grid-cols-1 gap-2">
+                                {availableVoices.filter(v => v.isCloned).map((voice) => (
+                                  <button
+                                    key={voice.id}
+                                    onClick={() => setSelectedVoice(voice.id)}
+                                    className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                                      selectedVoice === voice.id
+                                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                        : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 flex-shrink-0 rounded-full bg-primary/10"
+                                      onClick={(e) => handleVoicePreview(e, voice)}
+                                    >
+                                      {playingPreviewId === voice.id ? (
+                                        <Square className="h-4 w-4" />
+                                      ) : (
+                                        <Play className="h-4 w-4" />
+                                      )}
+                                    </Button>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="font-medium truncate flex items-center gap-2">
+                                        {voice.name}
+                                        <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                                          カスタム
+                                        </Badge>
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        あなたが作成した音声クローン
+                                      </p>
+                                    </div>
+                                    {selectedVoice === voice.id && (
+                                      <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Standard Voices Section */}
+                          <div className="space-y-2">
+                            {availableVoices.some(v => v.isCloned) && (
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="gap-1">
+                                  標準音声
+                                </Badge>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 gap-2">
+                              {availableVoices.filter(v => !v.isCloned).map((voice) => (
+                                <button
+                                  key={voice.id}
+                                  onClick={() => setSelectedVoice(voice.id)}
+                                  className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                                    selectedVoice === voice.id
+                                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                  }`}
+                                >
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 flex-shrink-0 rounded-full"
+                                    onClick={(e) => handleVoicePreview(e, voice)}
+                                  >
+                                    {playingPreviewId === voice.id ? (
+                                      <Square className="h-4 w-4" />
+                                    ) : (
+                                      <Play className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium truncate">{voice.name}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                      {voice.labels?.gender === "female" ? "女性" : voice.labels?.gender === "male" ? "男性" : ""} 
+                                      {voice.labels?.accent ? ` • ${voice.labels.accent}` : ""}
+                                    </p>
+                                  </div>
+                                  {selectedVoice === voice.id && (
+                                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       )}
                     </div>

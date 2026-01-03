@@ -36,14 +36,22 @@ serve(async (req) => {
     const data = await response.json();
     console.log(`Fetched ${data.voices?.length || 0} voices`);
 
-    // Map to simplified voice data
+    // Map to simplified voice data and separate cloned voices
     const voices = data.voices.map((voice: any) => ({
       id: voice.voice_id,
       name: voice.name,
       category: voice.category,
       labels: voice.labels,
       preview_url: voice.preview_url,
+      isCloned: voice.category === 'cloned',
     }));
+
+    // Sort: cloned voices first, then others
+    voices.sort((a: any, b: any) => {
+      if (a.isCloned && !b.isCloned) return -1;
+      if (!a.isCloned && b.isCloned) return 1;
+      return a.name.localeCompare(b.name);
+    });
 
     return new Response(
       JSON.stringify({ voices }),
