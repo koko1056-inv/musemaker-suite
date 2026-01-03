@@ -412,9 +412,9 @@ export default function AgentEditor() {
                     <SelectContent className="max-h-[300px]">
                       {availableVoices.map((voice) => (
                         <SelectItem key={voice.id} value={voice.id}>
-                          <div className="flex flex-col">
-                            <span>{voice.name}</span>
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-col min-w-0">
+                            <span className="truncate">{voice.name}</span>
+                            <span className="text-xs text-muted-foreground truncate">
                               {voice.category} • {voice.labels?.gender || "unknown"}
                             </span>
                           </div>
