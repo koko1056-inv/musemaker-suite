@@ -60,11 +60,11 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col lg:w-64">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-sidebar-border px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
           <Mic className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="text-lg font-semibold text-sidebar-foreground">VoiceForge</span>
+        <span className="text-lg font-bold text-sidebar-foreground tracking-tight">VoiceForge</span>
       </div>
 
       {/* Workspace Selector */}
