@@ -204,6 +204,71 @@ export function useAgents() {
     }
   }, [agents]);
 
+  // Sync knowledge base using ElevenLabs Knowledge Base API (document-based)
+  const syncKnowledgeBaseAPI = useCallback(async (id: string) => {
+    try {
+      const agent = agents.find(a => a.id === id);
+      if (!agent?.elevenlabs_agent_id) {
+        throw new Error('エージェントがElevenLabsと同期されていません');
+      }
+
+      // Get linked knowledge bases and their items
+      const { data: links, error: linksError } = await supabase
+        .from('agent_knowledge_bases')
+        .select('knowledge_base_id')
+        .eq('agent_id', id);
+
+      if (linksError) throw linksError;
+
+      const kbIds = links?.map(l => l.knowledge_base_id) || [];
+      
+      if (kbIds.length === 0) {
+        toast.info('リンクされたナレッジベースがありません');
+        return { documents_count: 0 };
+      }
+
+      // Get all knowledge items with their ElevenLabs document IDs
+      const { data: items, error: itemsError } = await supabase
+        .from('knowledge_items')
+        .select('id, title, elevenlabs_document_id')
+        .in('knowledge_base_id', kbIds)
+        .not('elevenlabs_document_id', 'is', null);
+
+      if (itemsError) throw itemsError;
+
+      // Build document IDs array for sync
+      const documentIds = (items || []).map(item => ({
+        id: item.elevenlabs_document_id!,
+        name: item.title,
+        type: 'text' as const,
+      }));
+
+      if (documentIds.length === 0) {
+        toast.info('同期可能なドキュメントがありません。ナレッジアイテムを追加してください。');
+        return { documents_count: 0 };
+      }
+
+      // Sync to ElevenLabs agent
+      const { data, error } = await supabase.functions.invoke('elevenlabs-knowledge-sync', {
+        body: { 
+          action: 'sync_agent',
+          agentId: id,
+          elevenlabsAgentId: agent.elevenlabs_agent_id,
+          documentIds,
+        }
+      });
+
+      if (error) throw error;
+
+      toast.success(`ElevenLabs Knowledge Baseと同期しました（${documentIds.length}件のドキュメント）`);
+      return { documents_count: documentIds.length };
+    } catch (error) {
+      console.error('Error syncing knowledge base API:', error);
+      toast.error('Knowledge Base APIの同期に失敗しました');
+      throw error;
+    }
+  }, [agents]);
+
   return {
     agents,
     isLoading,
@@ -213,5 +278,6 @@ export function useAgents() {
     deleteAgent,
     getAgent,
     syncKnowledgeBase,
+    syncKnowledgeBaseAPI,
   };
 }

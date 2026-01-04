@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BookOpen, Plus, X, Loader2, RefreshCw, Check, Zap } from "lucide-react";
+import { BookOpen, Plus, X, Loader2, RefreshCw, Check, Zap, CloudUpload } from "lucide-react";
 import { useKnowledgeBases } from "@/hooks/useKnowledgeBase";
 import {
   useAgentKnowledgeBases,
@@ -19,6 +19,12 @@ import {
 import { useAgents } from "@/hooks/useAgents";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface AgentKnowledgeSectionProps {
   agentId: string | undefined;
@@ -28,7 +34,9 @@ interface AgentKnowledgeSectionProps {
 export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionProps) {
   const [selectedKbId, setSelectedKbId] = useState<string>("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingAPI, setIsSyncingAPI] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date | null>(null);
+  const [lastSyncedAPI, setLastSyncedAPI] = useState<Date | null>(null);
   const [autoSyncEnabled, setAutoSyncEnabled] = useState(true);
   const prevLinkedKbsRef = useRef<string[]>([]);
 
@@ -36,7 +44,7 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
   const { data: linkedKbs = [], isLoading: isLoadingLinked } = useAgentKnowledgeBases(agentId);
   const linkKb = useLinkKnowledgeBase();
   const unlinkKb = useUnlinkKnowledgeBase();
-  const { syncKnowledgeBase } = useAgents();
+  const { syncKnowledgeBase, syncKnowledgeBaseAPI } = useAgents();
 
   const linkedKbIds = linkedKbs.map((link) => link.knowledge_base_id);
   const availableKbs = allKnowledgeBases.filter((kb) => !linkedKbIds.includes(kb.id));
@@ -91,6 +99,20 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
       console.error("Failed to sync knowledge:", error);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Sync using ElevenLabs Knowledge Base API
+  const handleSyncKnowledgeAPI = async () => {
+    if (!agentId) return;
+    setIsSyncingAPI(true);
+    try {
+      await syncKnowledgeBaseAPI(agentId);
+      setLastSyncedAPI(new Date());
+    } catch (error) {
+      console.error("Failed to sync knowledge API:", error);
+    } finally {
+      setIsSyncingAPI(false);
     }
   };
 
@@ -170,8 +192,42 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
               </div>
             ))}
 
-            {/* Sync Button */}
-            <div className="pt-2 border-t">
+            {/* Sync Buttons */}
+            <div className="pt-2 border-t space-y-2">
+              <TooltipProvider>
+                {/* ElevenLabs Knowledge Base API Sync */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="w-full gap-2"
+                      onClick={handleSyncKnowledgeAPI}
+                      disabled={isSyncingAPI}
+                    >
+                      {isSyncingAPI ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : lastSyncedAPI ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <CloudUpload className="h-4 w-4" />
+                      )}
+                      {isSyncingAPI ? "同期中..." : "ElevenLabs KBに同期"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>ElevenLabsのKnowledge Base APIと連携し、RAG検索で回答精度が向上します</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              {lastSyncedAPI && (
+                <p className="text-xs text-muted-foreground text-center">
+                  ElevenLabs KB同期: {lastSyncedAPI.toLocaleTimeString("ja-JP")}
+                </p>
+              )}
+
+              {/* Prompt-based Sync (legacy) */}
               <Button
                 variant="outline"
                 size="sm"
@@ -186,13 +242,14 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
                 ) : (
                   <RefreshCw className="h-4 w-4" />
                 )}
-                {isSyncing ? "同期中..." : "ナレッジを同期"}
+                {isSyncing ? "同期中..." : "プロンプトに同期"}
               </Button>
               {lastSynced && (
-                <p className="text-xs text-muted-foreground text-center mt-2">
-                  最終同期: {lastSynced.toLocaleTimeString("ja-JP")}
+                <p className="text-xs text-muted-foreground text-center">
+                  プロンプト同期: {lastSynced.toLocaleTimeString("ja-JP")}
                 </p>
               )}
+              
               <div className="flex items-center justify-center gap-2 mt-2">
                 <Zap className={`h-3 w-3 ${autoSyncEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
                 <span className="text-xs text-muted-foreground">
