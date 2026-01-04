@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Bot, MessageSquare, Mic, ArrowRight, Sparkles, Phone } from "lucide-react";
 
-const STORAGE_KEY = "voiceforge_welcome_shown";
+const STORAGE_KEY = "callcenter_ex_welcome_shown";
 
 interface WelcomeDialogProps {
   onComplete?: () => void;
@@ -37,7 +37,7 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
   const steps = [
     {
       icon: Bot,
-      title: "ようこそ！VoiceForgeへ",
+      title: "ようこそ！コールセンターEXへ",
       description: "プログラミング不要で、あなただけのAI音声アシスタントを作成できます。",
       features: [
         { icon: Mic, text: "自然な音声で会話" },

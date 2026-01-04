@@ -64,7 +64,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
           <Mic className="h-5 w-5 text-primary-foreground" />
         </div>
-        <span className="text-lg font-bold text-sidebar-foreground tracking-tight">VoiceForge</span>
+        <span className="text-lg font-bold text-sidebar-foreground tracking-tight">コールセンターEX</span>
       </div>
 
       {/* Workspace Selector */}

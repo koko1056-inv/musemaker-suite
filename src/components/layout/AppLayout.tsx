@@ -34,7 +34,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </SheetContent>
           </Sheet>
           
-          <span className="text-lg font-semibold">VoiceForge</span>
+          <span className="text-lg font-semibold">コールセンターEX</span>
           
           <div className="w-10" /> {/* Spacer for balance */}
         </div>

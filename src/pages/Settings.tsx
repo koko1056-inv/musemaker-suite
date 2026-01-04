@@ -187,7 +187,7 @@ export default function Settings() {
                     <Label htmlFor="workspace-slug" className="text-sm">ワークスペースURL</Label>
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
                       <span className="inline-flex items-center px-3 py-2 sm:py-0 rounded-md sm:rounded-l-md sm:rounded-r-none border sm:border-r-0 border-input bg-muted text-xs sm:text-sm text-muted-foreground">
-                        voiceforge.ai/
+                        callcenter-ex.ai/
                       </span>
                       <Input
                         id="workspace-slug"
