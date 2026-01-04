@@ -674,37 +674,42 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
 
   const renderTemplateGrid = (templates: AgentTemplate[]) => (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {templates.map((template) => (
+      {templates.map((template, index) => (
         <Card
           key={template.id}
-          className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40 group border-2 hover:-translate-y-1"
+          className="cursor-pointer transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:border-primary/50 group border-2 hover:-translate-y-1 bg-card/80 backdrop-blur-sm animate-in fade-in slide-in-from-bottom-4"
+          style={{ animationDelay: `${index * 50}ms` }}
           onClick={() => onSelectTemplate(template)}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${template.color} transition-transform group-hover:scale-110`}>
-                <template.icon className="h-6 w-6" />
+              <div className={`relative flex h-14 w-14 items-center justify-center rounded-2xl ${template.color} transition-all group-hover:scale-110 group-hover:shadow-lg`}>
+                <template.icon className="h-7 w-7" />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/20 to-transparent" />
               </div>
-              <Badge variant="secondary" className="text-[10px] font-medium">
+              <Badge variant="secondary" className="text-[10px] font-semibold px-2.5 py-1 rounded-full">
                 {template.category}
               </Badge>
             </div>
-            <CardTitle className="text-base mt-3 group-hover:text-primary transition-colors">
+            <CardTitle className="text-base mt-4 group-hover:text-primary transition-colors font-bold">
               {template.name}
             </CardTitle>
-            <CardDescription className="line-clamp-2 text-sm">
+            <CardDescription className="line-clamp-2 text-sm leading-relaxed">
               {template.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1.5 bg-muted/60 px-2 py-1 rounded-full">
-                  <Clock className="h-3 w-3" />
-                  {template.defaultValues.maxCallDuration}分
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1.5 bg-muted/80 px-3 py-1.5 rounded-full text-xs font-medium">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-foreground">{template.defaultValues.maxCallDuration}分</span>
                 </span>
               </div>
-              <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-primary" />
+              <div className="flex items-center gap-1 text-primary opacity-0 group-hover:opacity-100 transition-all">
+                <span className="text-xs font-semibold">選択</span>
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -712,53 +717,100 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
     </div>
   );
 
+  const tabConfig = [
+    { 
+      value: "scene" as const, 
+      icon: MessageSquare, 
+      label: "シーン別", 
+      desc: "予約受付、問い合わせ対応など",
+      gradient: "from-blue-500 to-indigo-600",
+      bgActive: "bg-gradient-to-br from-blue-500/10 to-indigo-500/5",
+    },
+    { 
+      value: "industry" as const, 
+      icon: Building2, 
+      label: "業種別", 
+      desc: "医療、飲食、不動産など",
+      gradient: "from-orange-500 to-pink-600",
+      bgActive: "bg-gradient-to-br from-orange-500/10 to-pink-500/5",
+    },
+    { 
+      value: "ai" as const, 
+      icon: Wand2, 
+      label: "AIで構築", 
+      desc: "対話しながら作成",
+      gradient: "from-purple-500 to-violet-600",
+      bgActive: "bg-gradient-to-br from-purple-500/10 to-violet-500/5",
+    },
+  ];
+
   return (
     <div className="space-y-8">
-      {/* Header with gradient background */}
-      <div className="text-center relative">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent rounded-3xl" />
-        <div className="pt-8 pb-6">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
-            <Sparkles className="h-8 w-8 text-primary-foreground" />
+      {/* Header with enhanced gradient background */}
+      <div className="text-center relative overflow-hidden">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/8 via-primary/3 to-transparent rounded-3xl" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
+        <div className="pt-10 pb-8">
+          <div className="mx-auto mb-5 relative">
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-2xl shadow-primary/30 mx-auto">
+              <Sparkles className="h-10 w-10 text-primary-foreground" />
+            </div>
+            <div className="absolute -inset-2 rounded-[28px] bg-gradient-to-br from-primary/20 to-transparent -z-10 blur-xl" />
           </div>
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight">
             エージェントを作成
           </h2>
-          <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base">
-            テンプレートから選んですぐに始めるか、AIと対話して理想のエージェントを構築できます
+          <p className="text-muted-foreground max-w-md mx-auto text-sm sm:text-base leading-relaxed">
+            テンプレートから選んですぐに始めるか、
+            <br className="hidden sm:block" />
+            AIと対話して理想のエージェントを構築できます
           </p>
         </div>
       </div>
 
-      {/* Tab Selection Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { value: "scene", icon: MessageSquare, label: "シーン別", desc: "利用場面から選ぶ" },
-          { value: "industry", icon: Building2, label: "業種別", desc: "業界から選ぶ" },
-          { value: "ai", icon: Wand2, label: "AIで構築", desc: "対話で作成" },
-        ].map((tab) => (
+      {/* Enhanced Tab Selection Cards */}
+      <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        {tabConfig.map((tab) => (
           <button
             key={tab.value}
-            onClick={() => setActiveTab(tab.value as any)}
-            className={`relative flex flex-col items-center gap-2 p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 ${
+            onClick={() => setActiveTab(tab.value)}
+            className={`relative flex flex-col items-center gap-2.5 p-4 sm:p-6 rounded-2xl border-2 transition-all duration-300 overflow-hidden ${
               activeTab === tab.value
-                ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
-                : "border-border hover:border-primary/30 hover:bg-muted/50"
+                ? `border-primary/50 shadow-lg shadow-primary/15 ${tab.bgActive}`
+                : "border-border/60 hover:border-primary/30 hover:bg-muted/30 hover:shadow-md"
             }`}
           >
-            <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl transition-colors ${
-              activeTab === tab.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            {/* Active glow effect */}
+            {activeTab === tab.value && (
+              <div className="absolute inset-0 -z-10">
+                <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-24 h-24 bg-gradient-to-br ${tab.gradient} opacity-10 blur-2xl rounded-full`} />
+              </div>
+            )}
+            
+            {/* Icon */}
+            <div className={`flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl transition-all duration-300 ${
+              activeTab === tab.value 
+                ? `bg-gradient-to-br ${tab.gradient} text-white shadow-lg` 
+                : "bg-muted/80 text-muted-foreground group-hover:bg-muted"
             }`}>
-              <tab.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+              <tab.icon className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
+            
+            {/* Text */}
             <div className="text-center">
-              <p className={`font-semibold text-sm sm:text-base ${activeTab === tab.value ? "text-primary" : "text-foreground"}`}>
+              <p className={`font-bold text-sm sm:text-base transition-colors ${
+                activeTab === tab.value ? "text-foreground" : "text-foreground/80"
+              }`}>
                 {tab.label}
               </p>
-              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{tab.desc}</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 hidden sm:block">
+                {tab.desc}
+              </p>
             </div>
+            
+            {/* Active indicator */}
             {activeTab === tab.value && (
-              <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-t-full" />
+              <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r ${tab.gradient} rounded-t-full`} />
             )}
           </button>
         ))}
@@ -767,45 +819,72 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
       {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === "scene" && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 border border-primary/10">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">💼 シーン別テンプレート</span> — 
-                予約受付、問い合わせ対応、案内など、よくある利用シーンに最適化されています
-              </p>
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-500/8 via-indigo-500/5 to-purple-500/8 border border-blue-500/20 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+                  <MessageSquare className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground text-sm sm:text-base">シーン別テンプレート</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                    予約受付、問い合わせ対応、案内など、よくある利用シーンに最適化されています
+                  </p>
+                </div>
+              </div>
             </div>
             {renderTemplateGrid(sceneTemplates)}
           </div>
         )}
 
         {activeTab === "industry" && (
-          <div className="space-y-4 animate-fade-in">
-            <div className="p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-pink-500/5 border border-primary/10">
-              <p className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">🏢 業種別テンプレート</span> — 
-                医療、不動産、飲食など、特定の業界に特化した専門的な設定が入っています
-              </p>
+          <div className="space-y-5 animate-in fade-in duration-300">
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/8 via-pink-500/5 to-rose-500/8 border border-orange-500/20 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-lg">
+                  <Building2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground text-sm sm:text-base">業種別テンプレート</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                    医療、不動産、飲食など、特定の業界に特化した専門的な設定が入っています
+                  </p>
+                </div>
+              </div>
             </div>
             {renderTemplateGrid(industryTemplates)}
           </div>
         )}
 
         {activeTab === "ai" && (
-          <div className="animate-fade-in">
+          <div className="animate-in fade-in duration-300">
+            <div className="mb-5 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-500/8 via-violet-500/5 to-indigo-500/8 border border-purple-500/20 backdrop-blur-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-lg">
+                  <Wand2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground text-sm sm:text-base">AIアシスタントで構築</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+                    どんなエージェントを作りたいか教えてください。AIが最適な設定を提案します
+                  </p>
+                </div>
+              </div>
+            </div>
             <AIAgentBuilder onConfigReady={onSelectTemplate} />
           </div>
         )}
       </div>
 
-      {/* Skip Option */}
-      <div className="text-center pt-6 border-t border-border/60">
+      {/* Skip Option - Enhanced */}
+      <div className="text-center pt-6 border-t border-border/40">
         <Button
           variant="ghost"
           onClick={onSkip}
-          className="gap-2 text-muted-foreground hover:text-foreground group"
+          className="gap-2.5 text-muted-foreground hover:text-foreground group px-6 py-3 h-auto rounded-xl hover:bg-muted/50"
         >
           <ClipboardList className="h-4 w-4" />
-          テンプレートを使わず、白紙から作成する
+          <span>テンプレートを使わず、白紙から作成する</span>
           <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </Button>
       </div>
