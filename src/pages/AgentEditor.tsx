@@ -495,53 +495,73 @@ export default function AgentEditor() {
                       onColorChange={setIconColor}
                     />
 
-                    <div className="space-y-3">
-                      <Label htmlFor="description" className="flex items-center gap-2 text-base font-semibold">
-                        どんな役割ですか？
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">AIに「何をしてほしいか」を教えてください。これがAIの性格や話し方に影響します。</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </Label>
+                    <div className="space-y-4 p-4 rounded-xl bg-muted/30 border border-border/50">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0 mt-0.5">
+                          <Bot className="h-4 w-4 text-primary" />
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <Label htmlFor="description" className="flex items-center gap-2 text-base font-bold text-foreground">
+                            どんな役割ですか？
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-xs">
+                                <p>AIに「何をしてほしいか」を教えてください。これがAIの性格や話し方に影響します。</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            このエージェントは何をする人ですか？
+                          </p>
+                        </div>
+                      </div>
                       <Textarea
                         id="description"
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="例: 美容室の予約受付をする。空き時間を確認して予約を取る。丁寧で親しみやすい対応をする。"
-                        rows={3}
-                        className="resize-none text-base"
+                        placeholder="例: お客様の予約・日程調整をサポートするAIアシスタントです。空き状況の確認や予約の変更にも対応します。"
+                        rows={4}
+                        className="resize-none text-base bg-background border-2 border-border focus:border-primary transition-colors"
                       />
-                      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-amber-500/10 text-amber-700 dark:text-amber-400 px-3 py-2 rounded-lg border border-amber-500/20">
                         💡 具体的に書くほど、AIが正確に動作します
                       </p>
                     </div>
 
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label htmlFor="prompt" className="flex items-center gap-2 text-base font-semibold">
-                          詳細な指示（上級者向け）
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">省略OK！空欄の場合は上の「役割」から自動で作成されます。</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </Label>
-                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium">省略可</span>
+                    <div className="space-y-4 p-4 rounded-xl bg-muted/20 border border-dashed border-border/50">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0 mt-0.5">
+                            <Sparkles className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <Label htmlFor="prompt" className="flex items-center gap-2 text-base font-bold text-foreground">
+                              詳細な指示（上級者向け）
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-xs">
+                                  <p>省略OK！空欄の場合は上の「役割」から自動で作成されます。</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              より細かい動作を指定したい場合
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium shrink-0">省略可</span>
                       </div>
                       <Textarea
                         id="prompt"
                         value={systemPrompt}
                         onChange={(e) => setSystemPrompt(e.target.value)}
-                        placeholder="より詳しい指示を入力したい場合はここに記入"
-                        rows={4}
-                        className="resize-none"
+                        placeholder="例: あなたは親切で効率的な日程調整アシスタントです。&#10;&#10;【役割】&#10;お客様からの予約や日程調整のリクエストに対応します。"
+                        rows={6}
+                        className="resize-none text-sm bg-background border-2 border-border focus:border-primary transition-colors font-mono"
                       />
                     </div>
                   </CardContent>
