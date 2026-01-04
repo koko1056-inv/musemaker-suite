@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,26 +28,81 @@ import {
   AlertTriangle,
   Webhook,
   Wand2,
+  Loader2,
+  Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
+import { useWorkspace } from "@/hooks/useWorkspace";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Demo workspace ID for testing
+// Demo workspace ID for testing when not authenticated
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function Settings() {
+  const {
+    workspace,
+    isLoading,
+    isSaving,
+    isAdmin,
+    updateWorkspace,
+    updateElevenLabsApiKey,
+    isAuthenticated,
+  } = useWorkspace();
+
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiKey, setApiKey] = useState("");
-  const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [workspaceSlug, setWorkspaceSlug] = useState("");
+  const [hasChanges, setHasChanges] = useState(false);
 
-  const handleSaveApiKey = () => {
-    if (apiKey.trim()) {
-      setApiKeySaved(true);
-      // In production, this would save to the backend
+  // Initialize form values when workspace loads
+  useEffect(() => {
+    if (workspace) {
+      setWorkspaceName(workspace.name);
+      setWorkspaceSlug(workspace.slug);
+      // If there's an API key saved, show placeholder
+      if (workspace.elevenlabs_api_key) {
+        setApiKey("••••••••••••••••");
+      }
+    }
+  }, [workspace]);
+
+  // Track changes
+  useEffect(() => {
+    if (workspace) {
+      setHasChanges(
+        workspaceName !== workspace.name || workspaceSlug !== workspace.slug
+      );
+    }
+  }, [workspaceName, workspaceSlug, workspace]);
+
+  const handleSaveWorkspace = async () => {
+    const success = await updateWorkspace({
+      name: workspaceName,
+      slug: workspaceSlug,
+    });
+    if (success) {
+      setHasChanges(false);
     }
   };
+
+  const handleSaveApiKey = async () => {
+    // Don't save if it's the placeholder
+    if (apiKey === "••••••••••••••••") return;
+    
+    if (apiKey.trim()) {
+      const success = await updateElevenLabsApiKey(apiKey);
+      if (success) {
+        setApiKey("••••••••••••••••");
+      }
+    }
+  };
+
+  const workspaceId = workspace?.id || DEMO_WORKSPACE_ID;
+  const hasApiKey = workspace?.elevenlabs_api_key || apiKey === "••••••••••••••••";
 
   return (
     <AppLayout>
@@ -58,6 +113,11 @@ export default function Settings() {
           <p className="mt-1 text-sm sm:text-base text-muted-foreground">
             ワークスペースの設定と連携機能を管理
           </p>
+          {!isAuthenticated && (
+            <Badge variant="outline" className="mt-2 text-xs">
+              デモモード - ログインすると保存できます
+            </Badge>
+          )}
         </div>
 
         <Tabs defaultValue="workspace" className="space-y-4 sm:space-y-6">
@@ -95,12 +155,33 @@ export default function Settings() {
           {/* Workspace Tab */}
           <TabsContent value="workspace" className="space-y-4 sm:space-y-6">
             <div className="glass rounded-xl card-shadow p-4 sm:p-6 space-y-4 sm:space-y-6">
-              <div>
-                <h3 className="font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">ワークスペース情報</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-foreground text-sm sm:text-base">ワークスペース情報</h3>
+                {isAdmin && (
+                  <Badge variant="secondary" className="gap-1 text-xs">
+                    <Shield className="h-3 w-3" />
+                    管理者
+                  </Badge>
+                )}
+              </div>
+              
+              {isLoading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : (
                 <div className="space-y-3 sm:space-y-4">
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="workspace-name" className="text-sm">ワークスペース名</Label>
-                    <Input id="workspace-name" defaultValue="株式会社サンプル" className="h-9 sm:h-10 text-sm" />
+                    <Input
+                      id="workspace-name"
+                      value={workspaceName}
+                      onChange={(e) => setWorkspaceName(e.target.value)}
+                      placeholder="ワークスペース名を入力"
+                      className="h-9 sm:h-10 text-sm"
+                      disabled={!isAuthenticated}
+                    />
                   </div>
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="workspace-slug" className="text-sm">ワークスペースURL</Label>
@@ -110,16 +191,32 @@ export default function Settings() {
                       </span>
                       <Input
                         id="workspace-slug"
-                        defaultValue="sample-corp"
+                        value={workspaceSlug}
+                        onChange={(e) => setWorkspaceSlug(e.target.value)}
+                        placeholder="workspace-url"
                         className="rounded-md sm:rounded-l-none h-9 sm:h-10 text-sm"
+                        disabled={!isAuthenticated}
                       />
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
 
               <div className="pt-3 sm:pt-4 border-t border-border">
-                <Button className="w-full sm:w-auto text-sm h-9 sm:h-10">変更を保存</Button>
+                <Button
+                  className="w-full sm:w-auto text-sm h-9 sm:h-10"
+                  onClick={handleSaveWorkspace}
+                  disabled={!hasChanges || isSaving || !isAuthenticated}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      保存中...
+                    </>
+                  ) : (
+                    "変更を保存"
+                  )}
+                </Button>
               </div>
             </div>
 
@@ -134,7 +231,9 @@ export default function Settings() {
               </p>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full sm:w-auto text-sm h-9 sm:h-10">ワークスペースを削除</Button>
+                  <Button variant="destructive" className="w-full sm:w-auto text-sm h-9 sm:h-10" disabled={!isAdmin}>
+                    ワークスペースを削除
+                  </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
                   <AlertDialogHeader>
@@ -171,7 +270,7 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                {apiKeySaved ? (
+                {hasApiKey ? (
                   <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
                     <Check className="h-3 w-3" />
                     接続済み
@@ -193,6 +292,7 @@ export default function Settings() {
                         value={apiKey}
                         onChange={(e) => setApiKey(e.target.value)}
                         className="pr-10 h-9 sm:h-10 text-sm"
+                        disabled={!isAuthenticated}
                       />
                       <Button
                         type="button"
@@ -208,7 +308,17 @@ export default function Settings() {
                         )}
                       </Button>
                     </div>
-                    <Button onClick={handleSaveApiKey} className="w-full sm:w-auto h-9 sm:h-10 text-sm">保存</Button>
+                    <Button
+                      onClick={handleSaveApiKey}
+                      className="w-full sm:w-auto h-9 sm:h-10 text-sm"
+                      disabled={isSaving || !isAuthenticated || apiKey === "••••••••••••••••"}
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        "保存"
+                      )}
+                    </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     APIキーは暗号化されて安全に保存されます。
@@ -223,7 +333,6 @@ export default function Settings() {
                 </Button>
               </div>
             </div>
-
           </TabsContent>
 
           {/* Voice Tools Tab */}
@@ -236,7 +345,7 @@ export default function Settings() {
 
           {/* Webhooks Tab */}
           <TabsContent value="webhooks">
-            <WebhookManager workspaceId={DEMO_WORKSPACE_ID} />
+            <WebhookManager workspaceId={workspaceId} />
           </TabsContent>
 
           {/* Notifications Tab */}
@@ -269,10 +378,12 @@ export default function Settings() {
                 <div>
                   <h3 className="font-semibold text-foreground text-sm sm:text-base">現在のプラン</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    現在Proプランをご利用中です
+                    現在{workspace?.plan === "pro" ? "Pro" : workspace?.plan === "enterprise" ? "Enterprise" : "Free"}プランをご利用中です
                   </p>
                 </div>
-                <Badge className="bg-primary/10 text-primary text-base sm:text-lg px-3 sm:px-4 py-0.5 sm:py-1 self-start sm:self-auto">Pro</Badge>
+                <Badge className="bg-primary/10 text-primary text-base sm:text-lg px-3 sm:px-4 py-0.5 sm:py-1 self-start sm:self-auto capitalize">
+                  {workspace?.plan || "Free"}
+                </Badge>
               </div>
 
               <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-3 mb-4 sm:mb-6">
