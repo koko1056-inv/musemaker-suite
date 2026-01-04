@@ -24,6 +24,7 @@ import {
   Bot,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
+import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
 import {
   Dialog,
@@ -67,6 +68,8 @@ export default function AgentEditor() {
   const [status, setStatus] = useState<"draft" | "published">("draft");
   const [maxCallDuration, setMaxCallDuration] = useState(10);
   const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
+  const [iconName, setIconName] = useState("bot");
+  const [iconColor, setIconColor] = useState("#10b981");
   
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
@@ -112,6 +115,8 @@ export default function AgentEditor() {
           setStatus(agent.status as "draft" | "published");
           setMaxCallDuration(agent.max_call_duration || 10);
           setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
+          setIconName((agent as any).icon_name || "bot");
+          setIconColor((agent as any).icon_color || "#10b981");
           setCurrentStep(3); // Go to final step for existing agents
         })
         .catch(() => {
@@ -147,6 +152,8 @@ export default function AgentEditor() {
         welcome_timeout: 5,
         max_call_duration: maxCallDuration,
         fallback_behavior: "end",
+        icon_name: iconName,
+        icon_color: iconColor,
       };
 
       if (isNew) {
@@ -166,7 +173,8 @@ export default function AgentEditor() {
     }
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
-    status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate
+    status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
+    iconName, iconColor
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
@@ -478,6 +486,14 @@ export default function AgentEditor() {
                         💡 お客様に表示される名前です。わかりやすい名前をつけましょう
                       </p>
                     </div>
+
+                    {/* Icon Picker */}
+                    <AgentIconPicker
+                      iconName={iconName}
+                      iconColor={iconColor}
+                      onIconChange={setIconName}
+                      onColorChange={setIconColor}
+                    />
 
                     <div className="space-y-3">
                       <Label htmlFor="description" className="flex items-center gap-2 text-base font-semibold">

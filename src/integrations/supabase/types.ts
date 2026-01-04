@@ -57,6 +57,8 @@ export type Database = {
           description: string | null
           elevenlabs_agent_id: string | null
           fallback_behavior: string | null
+          icon_color: string | null
+          icon_name: string | null
           id: string
           max_call_duration: number | null
           name: string
@@ -75,6 +77,8 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          icon_color?: string | null
+          icon_name?: string | null
           id?: string
           max_call_duration?: number | null
           name: string
@@ -93,6 +97,8 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          icon_color?: string | null
+          icon_name?: string | null
           id?: string
           max_call_duration?: number | null
           name?: string

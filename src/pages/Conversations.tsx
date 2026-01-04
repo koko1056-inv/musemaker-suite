@@ -29,6 +29,7 @@ import { useConversations } from "@/hooks/useConversations";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Slider } from "@/components/ui/slider";
+import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 
 interface TranscriptMessage {
   role: 'agent' | 'user';
@@ -52,6 +53,8 @@ interface ConversationDisplay {
   keyPoints: string[];
   sentiment: string | null;
   actionItems: string[];
+  iconName: string;
+  iconColor: string;
 }
 
 interface AgentConversations {
@@ -60,6 +63,8 @@ interface AgentConversations {
   conversations: ConversationDisplay[];
   lastConversation: ConversationDisplay;
   totalConversations: number;
+  iconName: string;
+  iconColor: string;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -82,20 +87,6 @@ function formatRelativeDate(date: Date): string {
   return format(date, 'yyyy/MM/dd', { locale: ja });
 }
 
-function getAgentColor(agentName: string): string {
-  const colors = [
-    'bg-emerald-500',
-    'bg-blue-500',
-    'bg-purple-500',
-    'bg-orange-500',
-    'bg-pink-500',
-    'bg-cyan-500',
-    'bg-amber-500',
-    'bg-indigo-500',
-  ];
-  const hash = agentName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return colors[hash % colors.length];
-}
 
 function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -196,7 +187,7 @@ function AgentListItem({
   onClick: () => void;
 }) {
   const lastConv = agent.lastConversation;
-  const agentColor = getAgentColor(agent.agentName);
+  const IconComponent = getAgentIcon(agent.iconName);
   
   return (
     <div
@@ -209,11 +200,12 @@ function AgentListItem({
     >
       {/* Agent Avatar */}
       <div className="relative">
-        <Avatar className="h-14 w-14">
-          <AvatarFallback className={`${agentColor} text-white text-lg font-semibold`}>
-            {agent.agentName.slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+        <div 
+          className="h-14 w-14 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: agent.iconColor }}
+        >
+          <IconComponent className="h-7 w-7 text-white" />
+        </div>
         {lastConv.status === 'in_progress' && (
           <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
         )}
@@ -277,7 +269,7 @@ function ChatView({
   setStatusFilter: (value: "all" | "completed" | "failed" | "in_progress") => void;
 }) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
-  const agentColor = getAgentColor(agent.agentName);
+  const IconComponent = getAgentIcon(agent.iconName);
   
   // Filter conversations for this agent
   const filteredConversations = agent.conversations.filter((conv) => {
@@ -317,11 +309,12 @@ function ChatView({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         
-        <Avatar className="h-10 w-10">
-          <AvatarFallback className={`${agentColor} text-white font-semibold`}>
-            {agent.agentName.slice(0, 2)}
-          </AvatarFallback>
-        </Avatar>
+        <div 
+          className="h-10 w-10 rounded-full flex items-center justify-center"
+          style={{ backgroundColor: agent.iconColor }}
+        >
+          <IconComponent className="h-5 w-5 text-white" />
+        </div>
         
         <div className="flex-1 min-w-0">
           <h2 className="font-semibold text-foreground truncate">{agent.agentName}</h2>
@@ -393,7 +386,8 @@ function ChatView({
                 onToggle={() => setSelectedConversationId(
                   selectedConversationId === conv.id ? null : conv.id
                 )}
-                agentColor={agentColor}
+                agentIconName={agent.iconName}
+                agentIconColor={agent.iconColor}
               />
             ))
           )}
@@ -408,13 +402,16 @@ function ConversationCard({
   conversation,
   isExpanded,
   onToggle,
-  agentColor,
+  agentIconName,
+  agentIconColor,
 }: {
   conversation: ConversationDisplay;
   isExpanded: boolean;
   onToggle: () => void;
-  agentColor: string;
+  agentIconName: string;
+  agentIconColor: string;
 }) {
+  const IconComponent = getAgentIcon(agentIconName);
   return (
     <div 
       className={`bg-background rounded-2xl overflow-hidden transition-all duration-300 ${
@@ -554,11 +551,12 @@ function ConversationCard({
                     className={`flex ${msg.role === "agent" ? "justify-start" : "justify-end"}`}
                   >
                     {msg.role === "agent" && (
-                      <Avatar className="h-8 w-8 mr-2 shrink-0">
-                        <AvatarFallback className={`${agentColor} text-white text-xs`}>
-                          AI
-                        </AvatarFallback>
-                      </Avatar>
+                      <div 
+                        className="h-8 w-8 rounded-full flex items-center justify-center mr-2 shrink-0"
+                        style={{ backgroundColor: agentIconColor }}
+                      >
+                        <IconComponent className="h-4 w-4 text-white" />
+                      </div>
                     )}
                     <div
                       className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
@@ -610,6 +608,8 @@ export default function Conversations() {
       keyPoints: conv.key_points || [],
       sentiment: conv.metadata?.sentiment || null,
       actionItems: conv.metadata?.action_items || [],
+      iconName: (conv.agent as any)?.icon_name || 'bot',
+      iconColor: (conv.agent as any)?.icon_color || '#10b981',
     })),
     [conversations]
   );
@@ -633,6 +633,8 @@ export default function Conversations() {
           conversations: sorted,
           lastConversation: sorted[0],
           totalConversations: sorted.length,
+          iconName: sorted[0].iconName,
+          iconColor: sorted[0].iconColor,
         };
       })
       .sort((a, b) => b.lastConversation.rawDate.getTime() - a.lastConversation.rawDate.getTime());

@@ -27,6 +27,8 @@ interface Conversation {
   } | null;
   agent?: {
     name: string;
+    icon_name?: string;
+    icon_color?: string;
   };
 }
 
@@ -41,7 +43,7 @@ export function useConversations() {
         .from('conversations')
         .select(`
           *,
-          agent:agents(name)
+          agent:agents(name, icon_name, icon_color)
         `)
         .order('started_at', { ascending: false });
 
