@@ -19,12 +19,40 @@ export interface KnowledgeItem {
   category: string | null;
   file_url: string | null;
   file_type: string | null;
+  elevenlabs_document_id: string | null;
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
 
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+
+// Helper function to sync knowledge item with ElevenLabs
+async function syncKnowledgeItemToElevenLabs(
+  action: 'create' | 'update' | 'delete',
+  knowledgeItem?: { id: string; title: string; content: string },
+  documentId?: string | null
+): Promise<{ document_id?: string } | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke('elevenlabs-knowledge-sync', {
+      body: { 
+        action, 
+        knowledgeItem,
+        documentId 
+      }
+    });
+
+    if (error) {
+      console.error('ElevenLabs sync error:', error);
+      return null;
+    }
+
+    return data;
+  } catch (err) {
+    console.error('Failed to sync with ElevenLabs:', err);
+    return null;
+  }
+}
 
 export function useKnowledgeBases() {
   return useQuery({
@@ -94,6 +122,21 @@ export function useDeleteKnowledgeBase() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // First, get all knowledge items to delete from ElevenLabs
+      const { data: items } = await supabase
+        .from("knowledge_items")
+        .select("id, elevenlabs_document_id")
+        .eq("knowledge_base_id", id);
+
+      // Delete each item from ElevenLabs
+      if (items) {
+        for (const item of items) {
+          if (item.elevenlabs_document_id) {
+            await syncKnowledgeItemToElevenLabs('delete', undefined, item.elevenlabs_document_id);
+          }
+        }
+      }
+
       const { error } = await supabase
         .from("knowledge_bases")
         .delete()
@@ -124,6 +167,7 @@ export function useCreateKnowledgeItem() {
       file_url?: string;
       file_type?: string;
     }) => {
+      // First create in Supabase
       const { data: result, error } = await supabase
         .from("knowledge_items")
         .insert(data)
@@ -131,11 +175,23 @@ export function useCreateKnowledgeItem() {
         .single();
 
       if (error) throw error;
+
+      // Sync to ElevenLabs (async, don't block)
+      syncKnowledgeItemToElevenLabs('create', {
+        id: result.id,
+        title: result.title,
+        content: result.content,
+      }).then(response => {
+        if (response?.document_id) {
+          console.log('Synced to ElevenLabs with document ID:', response.document_id);
+        }
+      });
+
       return result;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["knowledge-items", variables.knowledge_base_id] });
-      toast.success("ナレッジアイテムを追加しました");
+      toast.success("ナレッジアイテムを追加しました（ElevenLabsに同期中...）");
     },
     onError: (error) => {
       toast.error("ナレッジアイテムの追加に失敗しました");
@@ -154,19 +210,33 @@ export function useUpdateKnowledgeItem() {
       title: string;
       content: string;
       category?: string;
+      elevenlabs_document_id?: string | null;
     }) => {
-      const { id, knowledge_base_id, ...updateData } = data;
+      const { id, knowledge_base_id, elevenlabs_document_id, ...updateData } = data;
+      
       const { error } = await supabase
         .from("knowledge_items")
         .update(updateData)
         .eq("id", id);
 
       if (error) throw error;
+
+      // Sync to ElevenLabs (async, don't block)
+      syncKnowledgeItemToElevenLabs('update', {
+        id: id,
+        title: data.title,
+        content: data.content,
+      }, elevenlabs_document_id).then(response => {
+        if (response?.document_id) {
+          console.log('Updated in ElevenLabs with new document ID:', response.document_id);
+        }
+      });
+
       return { id, knowledge_base_id };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["knowledge-items", result.knowledge_base_id] });
-      toast.success("ナレッジアイテムを更新しました");
+      toast.success("ナレッジアイテムを更新しました（ElevenLabsに同期中...）");
     },
     onError: (error) => {
       toast.error("ナレッジアイテムの更新に失敗しました");
@@ -179,7 +249,12 @@ export function useDeleteKnowledgeItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: string; knowledge_base_id: string }) => {
+    mutationFn: async (data: { id: string; knowledge_base_id: string; elevenlabs_document_id?: string | null }) => {
+      // Delete from ElevenLabs first
+      if (data.elevenlabs_document_id) {
+        await syncKnowledgeItemToElevenLabs('delete', undefined, data.elevenlabs_document_id);
+      }
+
       const { error } = await supabase
         .from("knowledge_items")
         .delete()
@@ -224,6 +299,36 @@ export function useUploadKnowledgeFile() {
     },
     onError: (error) => {
       toast.error("ファイルのアップロードに失敗しました");
+      console.error(error);
+    },
+  });
+}
+
+// Hook to sync agent's knowledge base with ElevenLabs
+export function useSyncAgentKnowledge() {
+  return useMutation({
+    mutationFn: async (data: {
+      agentId: string;
+      elevenlabsAgentId: string;
+      documentIds: { id: string; name: string; type?: string }[];
+    }) => {
+      const { data: result, error } = await supabase.functions.invoke('elevenlabs-knowledge-sync', {
+        body: { 
+          action: 'sync_agent',
+          agentId: data.agentId,
+          elevenlabsAgentId: data.elevenlabsAgentId,
+          documentIds: data.documentIds,
+        }
+      });
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("エージェントのナレッジベースを同期しました");
+    },
+    onError: (error) => {
+      toast.error("ナレッジベースの同期に失敗しました");
       console.error(error);
     },
   });

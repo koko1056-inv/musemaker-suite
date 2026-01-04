@@ -131,6 +131,7 @@ export default function KnowledgeBase() {
       title: itemTitle,
       content: itemContent,
       category: itemCategory || undefined,
+      elevenlabs_document_id: editingItem.elevenlabs_document_id,
     });
     setEditingItem(null);
     setItemTitle("");
@@ -144,6 +145,7 @@ export default function KnowledgeBase() {
       await deleteItem.mutateAsync({
         id: item.id,
         knowledge_base_id: item.knowledge_base_id,
+        elevenlabs_document_id: item.elevenlabs_document_id,
       });
     }
   };
