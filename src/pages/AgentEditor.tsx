@@ -325,23 +325,23 @@ export default function AgentEditor() {
           </Dialog>
           {/* Header */}
           <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur-sm px-4 md:px-6 py-4 sticky top-0 z-10">
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-3 sm:gap-4 min-h-[40px]">
               <Button variant="ghost" size="icon" asChild className="shrink-0 rounded-xl hover:bg-muted">
                 <Link to="/agents">
                   <ArrowLeft className="h-4 w-4" />
                 </Link>
               </Button>
-              <div className="min-w-0">
-                <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
+              <div className="min-w-0 flex flex-col justify-center">
+                <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight leading-tight">
                   {isNew ? "新しいエージェント" : agentName || "エージェント編集"}
                 </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                <p className="text-xs sm:text-sm text-muted-foreground truncate leading-tight">
                   {isNew ? "AIアシスタントを簡単に設定" : "エージェントの設定を編集"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end">
+            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end min-h-[40px]">
               {!isNew && (
                 <Badge
                   variant={status === "published" ? "default" : "secondary"}
