@@ -213,6 +213,56 @@ export type Database = {
           },
         ]
       }
+      escalation_rules: {
+        Row: {
+          action_type: string
+          agent_id: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          priority: number | null
+          transfer_number: string | null
+          trigger_type: string
+          trigger_value: string | null
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          action_type?: string
+          agent_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          transfer_number?: string | null
+          trigger_type?: string
+          trigger_value?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          action_type?: string
+          agent_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          priority?: number | null
+          transfer_number?: string | null
+          trigger_type?: string
+          trigger_value?: string | null
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalation_rules_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flow_nodes: {
         Row: {
           agent_id: string
@@ -342,6 +392,139 @@ export type Database = {
           },
         ]
       }
+      outbound_calls: {
+        Row: {
+          agent_id: string
+          call_sid: string | null
+          created_at: string
+          duration_seconds: number | null
+          ended_at: string | null
+          id: string
+          metadata: Json | null
+          phone_number_id: string | null
+          result: string | null
+          scheduled_at: string | null
+          started_at: string | null
+          status: string
+          to_number: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id: string
+          call_sid?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          phone_number_id?: string | null
+          result?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          to_number: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string
+          call_sid?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          ended_at?: string | null
+          id?: string
+          metadata?: Json | null
+          phone_number_id?: string | null
+          result?: string | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          to_number?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "outbound_calls_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_calls_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "phone_numbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_calls_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phone_numbers: {
+        Row: {
+          agent_id: string | null
+          capabilities: Json | null
+          created_at: string
+          id: string
+          label: string | null
+          phone_number: string
+          phone_number_sid: string
+          provider: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          capabilities?: Json | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone_number: string
+          phone_number_sid: string
+          provider?: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          capabilities?: Json | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          phone_number?: string
+          phone_number_sid?: string
+          provider?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_numbers_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -368,6 +551,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      pronunciation_rules: {
+        Row: {
+          agent_id: string | null
+          created_at: string
+          id: string
+          is_global: boolean | null
+          original_text: string
+          phoneme_type: string | null
+          pronunciation: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          is_global?: boolean | null
+          original_text: string
+          phoneme_type?: string | null
+          pronunciation: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          created_at?: string
+          id?: string
+          is_global?: boolean | null
+          original_text?: string
+          phoneme_type?: string | null
+          pronunciation?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pronunciation_rules_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pronunciation_rules_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_logs: {
         Row: {
