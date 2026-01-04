@@ -136,24 +136,29 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-            <Bot className="h-8 w-8 text-primary" />
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      {/* Subtle gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/10 pointer-events-none" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl pointer-events-none" />
+      
+      <Card className="relative w-full max-w-md border-2 shadow-xl">
+        <CardHeader className="text-center space-y-4 pb-2">
+          <div className="mx-auto w-14 h-14 rounded-2xl flex items-center justify-center bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+            <Bot className="h-7 w-7 text-primary-foreground" />
           </div>
-          <div>
-            <CardTitle className="text-2xl font-bold">Voice AI Platform</CardTitle>
-            <CardDescription className="mt-2">
+          <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold tracking-tight">Voice AI Platform</CardTitle>
+            <CardDescription className="text-base">
               音声AIエージェント管理プラットフォーム
             </CardDescription>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-4">
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">ログイン</TabsTrigger>
-              <TabsTrigger value="signup">新規登録</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-muted/50">
+              <TabsTrigger value="login" className="text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg">ログイン</TabsTrigger>
+              <TabsTrigger value="signup" className="text-sm font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm rounded-lg">新規登録</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
