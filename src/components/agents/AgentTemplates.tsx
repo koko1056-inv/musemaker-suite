@@ -673,42 +673,38 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
   const industryTemplates = agentTemplates.filter(t => t.categoryType === "industry");
 
   const renderTemplateGrid = (templates: AgentTemplate[]) => (
-    <div className="grid gap-4 md:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {templates.map((template) => (
         <Card
           key={template.id}
-          className="cursor-pointer transition-all hover:shadow-md hover:border-primary/50 group"
+          className="cursor-pointer transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40 group border-2 hover:-translate-y-1"
           onClick={() => onSelectTemplate(template)}
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between">
-              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${template.color}`}>
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${template.color} transition-transform group-hover:scale-110`}>
                 <template.icon className="h-6 w-6" />
               </div>
-              <Badge variant="secondary" className="text-xs">
+              <Badge variant="secondary" className="text-[10px] font-medium">
                 {template.category}
               </Badge>
             </div>
-            <CardTitle className="text-lg mt-3 group-hover:text-primary transition-colors">
+            <CardTitle className="text-base mt-3 group-hover:text-primary transition-colors">
               {template.name}
             </CardTitle>
-            <CardDescription className="line-clamp-2">
+            <CardDescription className="line-clamp-2 text-sm">
               {template.description}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5 bg-muted/60 px-2 py-1 rounded-full">
                   <Clock className="h-3 w-3" />
                   {template.defaultValues.maxCallDuration}分
                 </span>
-                <span className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3" />
-                  設定済み
-                </span>
               </div>
-              <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ArrowRight className="h-4 w-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -717,72 +713,100 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
   );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="text-center">
-        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          <Sparkles className="h-8 w-8 text-primary" />
+    <div className="space-y-8">
+      {/* Header with gradient background */}
+      <div className="text-center relative">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-primary/5 to-transparent rounded-3xl" />
+        <div className="pt-8 pb-6">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+            <Sparkles className="h-8 w-8 text-primary-foreground" />
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2 tracking-tight">
+            エージェントを作成
+          </h2>
+          <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base">
+            テンプレートから選んですぐに始めるか、AIと対話して理想のエージェントを構築できます
+          </p>
         </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">
-          エージェントを作成
-        </h2>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          テンプレートから選ぶか、AIと対話して理想のエージェントを構築できます
-        </p>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="scene" className="gap-2">
-            <MessageSquare className="h-4 w-4" />
-            シーン別
-          </TabsTrigger>
-          <TabsTrigger value="industry" className="gap-2">
-            <Building2 className="h-4 w-4" />
-            業種別
-          </TabsTrigger>
-          <TabsTrigger value="ai" className="gap-2">
-            <Wand2 className="h-4 w-4" />
-            AIで構築
-          </TabsTrigger>
-        </TabsList>
+      {/* Tab Selection Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { value: "scene", icon: MessageSquare, label: "シーン別", desc: "利用場面から選ぶ" },
+          { value: "industry", icon: Building2, label: "業種別", desc: "業界から選ぶ" },
+          { value: "ai", icon: Wand2, label: "AIで構築", desc: "対話で作成" },
+        ].map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setActiveTab(tab.value as any)}
+            className={`relative flex flex-col items-center gap-2 p-4 sm:p-5 rounded-xl border-2 transition-all duration-200 ${
+              activeTab === tab.value
+                ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
+                : "border-border hover:border-primary/30 hover:bg-muted/50"
+            }`}
+          >
+            <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl transition-colors ${
+              activeTab === tab.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            }`}>
+              <tab.icon className="h-5 w-5 sm:h-6 sm:w-6" />
+            </div>
+            <div className="text-center">
+              <p className={`font-semibold text-sm sm:text-base ${activeTab === tab.value ? "text-primary" : "text-foreground"}`}>
+                {tab.label}
+              </p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{tab.desc}</p>
+            </div>
+            {activeTab === tab.value && (
+              <div className="absolute -bottom-px left-1/2 -translate-x-1/2 w-12 h-1 bg-primary rounded-t-full" />
+            )}
+          </button>
+        ))}
+      </div>
 
-        <TabsContent value="scene" className="mt-6">
-          <div className="mb-4 p-4 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">シーン別テンプレート</span> — 
-              予約受付、問い合わせ対応、案内など、よくある利用シーンに最適化されたテンプレートです。
-            </p>
+      {/* Tab Content */}
+      <div className="min-h-[400px]">
+        {activeTab === "scene" && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/5 to-purple-500/5 border border-primary/10">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">💼 シーン別テンプレート</span> — 
+                予約受付、問い合わせ対応、案内など、よくある利用シーンに最適化されています
+              </p>
+            </div>
+            {renderTemplateGrid(sceneTemplates)}
           </div>
-          {renderTemplateGrid(sceneTemplates)}
-        </TabsContent>
+        )}
 
-        <TabsContent value="industry" className="mt-6">
-          <div className="mb-4 p-4 rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">業種別テンプレート</span> — 
-              医療、不動産、飲食など、特定の業界に特化した専門的なテンプレートです。
-            </p>
+        {activeTab === "industry" && (
+          <div className="space-y-4 animate-fade-in">
+            <div className="p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-pink-500/5 border border-primary/10">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">🏢 業種別テンプレート</span> — 
+                医療、不動産、飲食など、特定の業界に特化した専門的な設定が入っています
+              </p>
+            </div>
+            {renderTemplateGrid(industryTemplates)}
           </div>
-          {renderTemplateGrid(industryTemplates)}
-        </TabsContent>
+        )}
 
-        <TabsContent value="ai" className="mt-6">
-          <AIAgentBuilder onConfigReady={onSelectTemplate} />
-        </TabsContent>
-      </Tabs>
+        {activeTab === "ai" && (
+          <div className="animate-fade-in">
+            <AIAgentBuilder onConfigReady={onSelectTemplate} />
+          </div>
+        )}
+      </div>
 
       {/* Skip Option */}
-      <div className="text-center pt-4 border-t">
+      <div className="text-center pt-6 border-t border-border/60">
         <Button
           variant="ghost"
           onClick={onSkip}
-          className="gap-2 text-muted-foreground hover:text-foreground"
+          className="gap-2 text-muted-foreground hover:text-foreground group"
         >
           <ClipboardList className="h-4 w-4" />
           テンプレートを使わず、白紙から作成する
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
         </Button>
       </div>
     </div>

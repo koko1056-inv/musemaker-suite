@@ -316,15 +316,15 @@ export default function AgentEditor() {
             </DialogContent>
           </Dialog>
           {/* Header */}
-          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border bg-background px-4 md:px-6 py-4">
+          <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur-sm px-4 md:px-6 py-4 sticky top-0 z-10">
             <div className="flex items-center gap-3 sm:gap-4">
-              <Button variant="ghost" size="icon" asChild className="shrink-0">
+              <Button variant="ghost" size="icon" asChild className="shrink-0 rounded-xl hover:bg-muted">
                 <Link to="/agents">
                   <ArrowLeft className="h-4 w-4" />
                 </Link>
               </Button>
               <div className="min-w-0">
-                <h1 className="text-base sm:text-lg font-semibold truncate">
+                <h1 className="text-lg sm:text-xl font-bold truncate tracking-tight">
                   {isNew ? "新しいエージェント" : agentName || "エージェント編集"}
                 </h1>
                 <p className="text-xs sm:text-sm text-muted-foreground truncate">
@@ -337,10 +337,10 @@ export default function AgentEditor() {
               {!isNew && (
                 <Badge
                   variant={status === "published" ? "default" : "secondary"}
-                  className="gap-1 hidden sm:flex"
+                  className="gap-1.5 hidden sm:flex px-3 py-1"
                 >
                   <Circle
-                    className={`h-1.5 w-1.5 ${
+                    className={`h-2 w-2 ${
                       status === "published"
                         ? "fill-primary-foreground"
                         : "fill-muted-foreground"
@@ -353,7 +353,7 @@ export default function AgentEditor() {
               {elevenlabsAgentId && (
                 <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2">
+                    <Button variant="outline" size="sm" className="gap-2 rounded-xl border-2">
                       <Phone className="h-4 w-4" />
                       <span className="hidden sm:inline">テスト通話</span>
                     </Button>
@@ -378,7 +378,7 @@ export default function AgentEditor() {
               <Button 
                 onClick={() => handleSave()}
                 disabled={isSaving || !canProceedToStep3}
-                className="gap-2"
+                className="gap-2 rounded-xl shadow-md shadow-primary/20"
                 size="sm"
               >
                 {isSaving ? (
@@ -393,33 +393,41 @@ export default function AgentEditor() {
 
           {/* Progress Steps */}
           {isNew && !showTemplates && (
-            <div className="bg-background border-b border-border px-4 py-3 overflow-x-auto">
-              <div className="flex items-center justify-center gap-3 sm:gap-8 max-w-2xl mx-auto min-w-max">
+            <div className="bg-background/80 backdrop-blur-sm border-b border-border px-4 py-4 sticky top-[73px] z-10">
+              <div className="flex items-center justify-center gap-2 sm:gap-4 max-w-xl mx-auto">
                 {[
                   { num: 1, label: "基本情報", icon: MessageSquare },
                   { num: 2, label: "音声設定", icon: Mic },
                   { num: 3, label: "確認", icon: CheckCircle2 },
                 ].map((step, idx) => (
-                  <div key={step.num} className="flex items-center gap-1 sm:gap-2">
+                  <div key={step.num} className="flex items-center gap-2 sm:gap-3">
                     <button
                       onClick={() => {
                         if (step.num === 1) setCurrentStep(1);
                         else if (step.num === 2 && canProceedToStep2) setCurrentStep(2);
                         else if (step.num === 3 && canProceedToStep3) setCurrentStep(3);
                       }}
-                      className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 rounded-full transition-colors ${
+                      className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl transition-all duration-200 ${
                         currentStep === step.num
-                          ? "bg-primary text-primary-foreground"
+                          ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                           : currentStep > step.num
-                          ? "bg-primary/20 text-primary"
+                          ? "bg-primary/15 text-primary"
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      <step.icon className="h-4 w-4" />
-                      <span className="text-xs sm:text-sm font-medium">{step.label}</span>
+                      <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                        currentStep === step.num
+                          ? "bg-primary-foreground/20"
+                          : currentStep > step.num
+                          ? "bg-primary/20"
+                          : "bg-muted-foreground/20"
+                      }`}>
+                        {currentStep > step.num ? "✓" : step.num}
+                      </div>
+                      <span className="text-xs sm:text-sm font-semibold hidden sm:block">{step.label}</span>
                     </button>
                     {idx < 2 && (
-                      <div className={`w-6 sm:w-12 h-0.5 ${currentStep > step.num ? "bg-primary" : "bg-border"}`} />
+                      <div className={`w-6 sm:w-10 h-0.5 rounded-full transition-colors ${currentStep > step.num ? "bg-primary" : "bg-border"}`} />
                     )}
                   </div>
                 ))}
@@ -441,19 +449,21 @@ export default function AgentEditor() {
 
               {/* Step 1: Basic Info */}
               {!showTemplates && (currentStep === 1 || !isNew) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <MessageSquare className="h-5 w-5 text-primary" />
+                <Card className="border-2 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                        <MessageSquare className="h-5 w-5 text-primary" />
+                      </div>
                       基本情報
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-base">
                       エージェントの名前と役割を設定します
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
                     <div className="space-y-3">
-                      <Label htmlFor="name" className="flex items-center gap-2 text-base font-medium">
+                      <Label htmlFor="name" className="flex items-center gap-2 text-base font-semibold">
                         エージェントの名前
                         <span className="text-destructive">*</span>
                       </Label>
@@ -464,13 +474,13 @@ export default function AgentEditor() {
                         placeholder="例: 受付担当アシスタント"
                         className="text-base h-12"
                       />
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg">
                         💡 お客様に表示される名前です。わかりやすい名前をつけましょう
                       </p>
                     </div>
 
                     <div className="space-y-3">
-                      <Label htmlFor="description" className="flex items-center gap-2 text-base font-medium">
+                      <Label htmlFor="description" className="flex items-center gap-2 text-base font-semibold">
                         どんな役割ですか？
                         <Tooltip>
                           <TooltipTrigger>
@@ -489,14 +499,14 @@ export default function AgentEditor() {
                         rows={3}
                         className="resize-none text-base"
                       />
-                      <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg">
                         💡 具体的に書くほど、AIが正確に動作します
                       </p>
                     </div>
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <Label htmlFor="prompt" className="flex items-center gap-2 text-base font-medium">
+                        <Label htmlFor="prompt" className="flex items-center gap-2 text-base font-semibold">
                           詳細な指示（上級者向け）
                           <Tooltip>
                             <TooltipTrigger>
@@ -507,7 +517,7 @@ export default function AgentEditor() {
                             </TooltipContent>
                           </Tooltip>
                         </Label>
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">省略可</span>
+                        <span className="text-xs text-muted-foreground bg-muted px-2.5 py-1 rounded-full font-medium">省略可</span>
                       </div>
                       <Textarea
                         id="prompt"
@@ -524,20 +534,22 @@ export default function AgentEditor() {
 
               {/* Step 2: Voice Settings */}
               {!showTemplates && (currentStep === 2 || !isNew) && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Mic className="h-5 w-5 text-primary" />
+                <Card className="border-2 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                        <Mic className="h-5 w-5 text-primary" />
+                      </div>
                       声を選ぶ
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-base">
                       再生ボタン（▶）を押して、声を試聴してみましょう
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-primary/5 to-accent/5 border border-primary/10">
                       <p className="text-sm text-muted-foreground flex items-center gap-2">
-                        🎧 <span className="font-medium text-foreground">ヒント:</span> 各音声の横にある再生ボタンを押すと、声を確認できます
+                        🎧 <span className="font-semibold text-foreground">ヒント:</span> 各音声の横にある再生ボタンを押すと、声を確認できます
                       </p>
                     </div>
                     

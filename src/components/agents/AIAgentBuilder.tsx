@@ -165,15 +165,15 @@ export function AIAgentBuilder({ onConfigReady }: AIAgentBuilderProps) {
   };
 
   return (
-    <Card className="overflow-hidden">
-      <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 p-4 border-b">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/20">
-            <Sparkles className="h-5 w-5 text-primary" />
+    <Card className="overflow-hidden border-2 shadow-lg">
+      <div className="bg-gradient-to-r from-primary/10 via-purple-500/10 to-pink-500/10 p-5 border-b">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 shadow-lg shadow-primary/20">
+            <Sparkles className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>
-            <h3 className="font-semibold">AIアシスタント</h3>
-            <p className="text-xs text-muted-foreground">
+            <h3 className="font-bold text-lg">AIアシスタント</h3>
+            <p className="text-sm text-muted-foreground">
               対話を通じて最適なエージェント設定を提案します
             </p>
           </div>
@@ -188,33 +188,37 @@ export function AIAgentBuilder({ onConfigReady }: AIAgentBuilderProps) {
               className={`flex gap-3 ${message.role === "user" ? "justify-end" : ""}`}
             >
               {message.role === "assistant" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
+                  <Bot className="h-5 w-5 text-primary" />
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[80%] rounded-2xl px-4 py-3 ${
                   message.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
+                    : "bg-muted/70 border border-border/50"
                 }`}
               >
-                <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
               </div>
               {message.role === "user" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted">
-                  <User className="h-4 w-4" />
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  <User className="h-5 w-5 text-muted-foreground" />
                 </div>
               )}
             </div>
           ))}
           {isLoading && (
             <div className="flex gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                <Bot className="h-4 w-4 text-primary" />
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
+                <Bot className="h-5 w-5 text-primary" />
               </div>
-              <div className="bg-muted rounded-lg p-3">
-                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+              <div className="bg-muted/70 border border-border/50 rounded-2xl px-4 py-3">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-2 h-2 bg-primary/40 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
               </div>
             </div>
           )}
@@ -222,31 +226,33 @@ export function AIAgentBuilder({ onConfigReady }: AIAgentBuilderProps) {
       </ScrollArea>
 
       {configReady && (
-        <div className="p-4 border-t bg-green-50 dark:bg-green-950/30">
-          <div className="flex items-center gap-3 mb-3">
-            <CheckCircle2 className="h-5 w-5 text-green-600" />
-            <span className="font-medium text-green-700 dark:text-green-400">
+        <div className="p-5 border-t bg-gradient-to-r from-green-500/5 to-emerald-500/5">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-500/20">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+            </div>
+            <span className="font-bold text-green-700 dark:text-green-400">
               設定が完成しました！
             </span>
           </div>
-          <div className="bg-background rounded-lg p-3 mb-3 text-sm">
-            <p className="font-medium">{configReady.name}</p>
-            <p className="text-muted-foreground text-xs mt-1">{configReady.description}</p>
+          <div className="bg-background rounded-xl p-4 mb-4 border-2 border-green-500/20">
+            <p className="font-semibold text-base">{configReady.name}</p>
+            <p className="text-muted-foreground text-sm mt-1">{configReady.description}</p>
           </div>
-          <Button onClick={handleUseConfig} className="w-full gap-2">
-            <Sparkles className="h-4 w-4" />
+          <Button onClick={handleUseConfig} className="w-full gap-2 h-12 rounded-xl shadow-md shadow-primary/20">
+            <Sparkles className="h-5 w-5" />
             この設定でエージェントを作成
           </Button>
         </div>
       )}
 
-      <div className="p-4 border-t">
+      <div className="p-4 border-t bg-muted/30">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             sendMessage();
           }}
-          className="flex gap-2"
+          className="flex gap-3"
         >
           <Input
             ref={inputRef}
@@ -254,13 +260,13 @@ export function AIAgentBuilder({ onConfigReady }: AIAgentBuilderProps) {
             onChange={(e) => setInput(e.target.value)}
             placeholder="メッセージを入力..."
             disabled={isLoading}
-            className="flex-1"
+            className="flex-1 h-11"
           />
-          <Button type="submit" disabled={isLoading || !input.trim()}>
+          <Button type="submit" disabled={isLoading || !input.trim()} className="h-11 w-11 rounded-xl" size="icon">
             {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             )}
           </Button>
         </form>
