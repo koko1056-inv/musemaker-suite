@@ -92,6 +92,41 @@ serve(async (req) => {
 
     console.log(`Processing ${action} action for agent`, { agentId, elevenlabsAgentId });
 
+    // For delete action, we don't need agent config or knowledge
+    if (action === 'delete') {
+      if (!elevenlabsAgentId) {
+        throw new Error('ElevenLabs agent ID is required for delete');
+      }
+
+      // Delete agent from ElevenLabs
+      const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${elevenlabsAgentId}`, {
+        method: 'DELETE',
+        headers: {
+          'xi-api-key': ELEVENLABS_API_KEY,
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('ElevenLabs delete agent error:', response.status, errorText);
+        // Don't throw error for delete - agent might already be deleted
+        console.warn('Could not delete agent from ElevenLabs, continuing anyway');
+      }
+
+      console.log('Agent deleted successfully');
+
+      return new Response(JSON.stringify({ 
+        success: true 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // For other actions, we need agentConfig
+    if (!agentConfig) {
+      throw new Error('Agent config is required for this action');
+    }
+
     // Initialize Supabase client for fetching knowledge base
     let knowledgeContent = '';
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && agentId) {
@@ -189,34 +224,6 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         agent_id: elevenlabsAgentId 
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-
-    } else if (action === 'delete') {
-      if (!elevenlabsAgentId) {
-        throw new Error('ElevenLabs agent ID is required for delete');
-      }
-
-      // Delete agent from ElevenLabs
-      const response = await fetch(`https://api.elevenlabs.io/v1/convai/agents/${elevenlabsAgentId}`, {
-        method: 'DELETE',
-        headers: {
-          'xi-api-key': ELEVENLABS_API_KEY,
-        },
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('ElevenLabs delete agent error:', response.status, errorText);
-        // Don't throw error for delete - agent might already be deleted
-        console.warn('Could not delete agent from ElevenLabs, continuing anyway');
-      }
-
-      console.log('Agent deleted successfully');
-
-      return new Response(JSON.stringify({ 
-        success: true 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
