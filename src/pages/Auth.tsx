@@ -148,7 +148,7 @@ const Auth = () => {
             <Bot className="h-7 w-7 text-primary-foreground" />
           </div>
           <div className="space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">Voice AI Platform</CardTitle>
+            <CardTitle className="text-2xl font-bold tracking-tight">コールセンターEX</CardTitle>
             <CardDescription className="text-base">
               音声AIエージェント管理プラットフォーム
             </CardDescription>
