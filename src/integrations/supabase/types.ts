@@ -297,6 +297,7 @@ export type Database = {
           category: string | null
           content: string
           created_at: string
+          elevenlabs_document_id: string | null
           file_type: string | null
           file_url: string | null
           id: string
@@ -309,6 +310,7 @@ export type Database = {
           category?: string | null
           content: string
           created_at?: string
+          elevenlabs_document_id?: string | null
           file_type?: string | null
           file_url?: string | null
           id?: string
@@ -321,6 +323,7 @@ export type Database = {
           category?: string | null
           content?: string
           created_at?: string
+          elevenlabs_document_id?: string | null
           file_type?: string | null
           file_url?: string | null
           id?: string
