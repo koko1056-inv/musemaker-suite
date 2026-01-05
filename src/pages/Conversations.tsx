@@ -650,7 +650,7 @@ export default function Conversations() {
 
   return (
     <AppLayout>
-      <div className="h-[calc(100vh-4rem)] flex bg-background">
+      <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex bg-background">
         {/* Agent List (Left Panel) */}
         <div 
           className={`w-full md:w-96 lg:w-[420px] flex flex-col border-r border-border bg-background ${
