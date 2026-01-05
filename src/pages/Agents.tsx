@@ -113,8 +113,8 @@ export default function Agents() {
           <div className="mb-5 sm:mb-6 md:mb-8">
             <div className="flex flex-col gap-3 sm:gap-4">
               <div className="flex items-center gap-3 mb-1 sm:mb-2">
-                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-                  <Bot className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-muted/30 shrink-0 overflow-hidden">
+                  <img src={headsetIcon} alt="Headset" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
                 </div>
                 <div>
                   <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
