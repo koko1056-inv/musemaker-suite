@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import musaLogo from "@/assets/musa-logo.png";
 import {
   LayoutDashboard,
   Bot,
@@ -62,13 +63,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-foreground">
-          <Phone className="h-4 w-4 text-background" />
-        </div>
-        <span className="text-base font-semibold text-sidebar-foreground tracking-tight">
-          コールセンターEX
-        </span>
+      <div className="flex h-16 items-center px-6">
+        <img 
+          src={musaLogo} 
+          alt="MUSA" 
+          className="h-8 w-auto"
+        />
       </div>
 
       {/* Workspace Selector */}
