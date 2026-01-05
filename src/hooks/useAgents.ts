@@ -7,10 +7,22 @@ type Agent = Tables<'agents'>;
 type AgentInsert = TablesInsert<'agents'>;
 type AgentUpdate = TablesUpdate<'agents'>;
 
+// Agent config for ElevenLabs sync
+interface ElevenLabsAgentConfig {
+  name: string;
+  description?: string;
+  voice_id: string;
+  system_prompt?: string;
+  vad_mode?: string;
+  vad_threshold?: number;
+  vad_silence_duration_ms?: number;
+  vad_prefix_padding_ms?: number;
+}
+
 // Helper function to sync agent with ElevenLabs
 async function syncWithElevenLabs(
   action: 'create' | 'update' | 'delete' | 'sync_knowledge',
-  agentConfig?: { name: string; description?: string; voice_id: string; system_prompt?: string },
+  agentConfig?: ElevenLabsAgentConfig,
   elevenlabsAgentId?: string,
   agentId?: string
 ): Promise<{ agent_id: string | null; knowledge_items_count?: number }> {
@@ -70,6 +82,10 @@ export function useAgents() {
         description: agent.description || undefined,
         voice_id: agent.voice_id || 'EXAVITQu4vr4xnSDxMaL',
         system_prompt: (agent as any).system_prompt || undefined,
+        vad_mode: (agent as any).vad_mode || 'server_vad',
+        vad_threshold: (agent as any).vad_threshold ?? 0.5,
+        vad_silence_duration_ms: (agent as any).vad_silence_duration_ms ?? 500,
+        vad_prefix_padding_ms: (agent as any).vad_prefix_padding_ms ?? 300,
       });
 
       // Then save to database with the ElevenLabs agent ID
@@ -107,6 +123,10 @@ export function useAgents() {
           description: updates.description || currentAgent.description || undefined,
           voice_id: updates.voice_id || currentAgent.voice_id,
           system_prompt: (updates as any).system_prompt || (currentAgent as any).system_prompt || undefined,
+          vad_mode: (updates as any).vad_mode || (currentAgent as any).vad_mode || 'server_vad',
+          vad_threshold: (updates as any).vad_threshold ?? (currentAgent as any).vad_threshold ?? 0.5,
+          vad_silence_duration_ms: (updates as any).vad_silence_duration_ms ?? (currentAgent as any).vad_silence_duration_ms ?? 500,
+          vad_prefix_padding_ms: (updates as any).vad_prefix_padding_ms ?? (currentAgent as any).vad_prefix_padding_ms ?? 300,
         }, currentAgent.elevenlabs_agent_id, id);
       }
 
