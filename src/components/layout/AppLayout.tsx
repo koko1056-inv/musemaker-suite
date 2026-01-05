@@ -42,8 +42,8 @@ export function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="lg:pl-64 pt-14 lg:pt-0">
-        <div className="min-h-screen p-6 lg:p-8">{children}</div>
+      <main className="lg:pl-64 pt-14 lg:pt-0 min-h-screen">
+        {children}
       </main>
 
       {/* Mobile Bottom Navigation */}

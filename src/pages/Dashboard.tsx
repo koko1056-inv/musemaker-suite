@@ -43,7 +43,7 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <WelcomeDialog />
-      <div className="p-6 md:p-8 lg:p-12 mobile-safe-bottom max-w-4xl mx-auto">
+      <div className="p-6 md:p-8 lg:p-12 mobile-safe-bottom max-w-6xl">
         {/* Welcome Header */}
         <div className="mb-12">
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-2">
