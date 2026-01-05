@@ -74,7 +74,6 @@ export function OutboundCallDialog({
   };
 
   const formatPhoneNumber = (value: string) => {
-    // Remove non-digit characters except +
     const cleaned = value.replace(/[^\d+]/g, '');
     return cleaned;
   };
@@ -85,19 +84,19 @@ export function OutboundCallDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Phone className="h-5 w-5" />
-            アウトバウンドコール
+            新規発信
           </DialogTitle>
           <DialogDescription>
-            エージェントから顧客へ発信します
+            エージェントから発信します
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="agent">エージェント</Label>
             <Select value={agentId} onValueChange={setAgentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="エージェントを選択" />
+              <SelectTrigger className="h-11 rounded-xl">
+                <SelectValue placeholder="選択してください" />
               </SelectTrigger>
               <SelectContent>
                 {publishedAgents.map((agent) => (
@@ -109,43 +108,45 @@ export function OutboundCallDialog({
             </Select>
             {publishedAgents.length === 0 && (
               <p className="text-xs text-muted-foreground">
-                公開済みで通話可能なエージェントがありません
+                公開済みのエージェントがありません
               </p>
             )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="toNumber">発信先電話番号</Label>
+            <Label htmlFor="toNumber">発信先</Label>
             <Input
               id="toNumber"
               type="tel"
               placeholder="+819012345678"
               value={toNumber}
               onChange={(e) => setToNumber(formatPhoneNumber(e.target.value))}
+              className="h-11 rounded-xl font-mono"
               required
             />
             <p className="text-xs text-muted-foreground">
-              国際形式で入力してください（例: +819012345678）
+              国際形式で入力（例: +819012345678）
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="notes">メモ（任意）</Label>
+            <Label htmlFor="notes">メモ</Label>
             <Textarea
               id="notes"
-              placeholder="コールに関するメモを入力..."
+              placeholder="任意のメモを入力..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={2}
+              className="rounded-xl resize-none"
             />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+          <div className="flex items-center justify-between rounded-xl border p-4">
+            <div className="flex items-center gap-3">
+              <Calendar className="h-5 w-5 text-muted-foreground" />
               <div>
                 <p className="text-sm font-medium">スケジュール発信</p>
-                <p className="text-xs text-muted-foreground">指定した日時に発信</p>
+                <p className="text-xs text-muted-foreground">指定日時に発信</p>
               </div>
             </div>
             <Switch
@@ -164,6 +165,7 @@ export function OutboundCallDialog({
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
                   min={new Date().toISOString().split('T')[0]}
+                  className="h-11 rounded-xl"
                   required={isScheduled}
                 />
               </div>
@@ -174,23 +176,26 @@ export function OutboundCallDialog({
                   type="time"
                   value={scheduledTime}
                   onChange={(e) => setScheduledTime(e.target.value)}
+                  className="h-11 rounded-xl"
                   required={isScheduled}
                 />
               </div>
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
-              variant="outline"
+              variant="ghost"
               onClick={() => onOpenChange(false)}
+              className="rounded-xl"
             >
               キャンセル
             </Button>
             <Button
               type="submit"
               disabled={!toNumber || !agentId || isInitiating}
+              className="rounded-xl"
             >
               {isInitiating ? (
                 <>
