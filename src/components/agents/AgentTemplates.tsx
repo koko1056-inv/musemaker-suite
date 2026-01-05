@@ -1,4 +1,5 @@
 import { useState } from "react";
+import microphoneIcon from "@/assets/microphone-icon.png";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -752,10 +753,10 @@ export function AgentTemplates({ onSelectTemplate, onSkip }: AgentTemplatesProps
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
         <div className="pt-10 pb-8">
           <div className="mx-auto mb-5 relative">
-            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-primary via-primary/90 to-primary/70 shadow-2xl shadow-primary/30 mx-auto">
-              <Sparkles className="h-10 w-10 text-primary-foreground" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-muted/50 to-muted/30 mx-auto overflow-hidden">
+              <img src={microphoneIcon} alt="Microphone" className="h-16 w-16 object-contain" />
             </div>
-            <div className="absolute -inset-2 rounded-[28px] bg-gradient-to-br from-primary/20 to-transparent -z-10 blur-xl" />
+            <div className="absolute -inset-2 rounded-[28px] bg-gradient-to-br from-foreground/10 to-transparent -z-10 blur-xl" />
           </div>
           <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-3 tracking-tight">
             エージェントを作成
