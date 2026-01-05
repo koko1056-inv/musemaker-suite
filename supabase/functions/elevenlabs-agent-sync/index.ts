@@ -12,6 +12,11 @@ interface AgentConfig {
   voice_id: string;
   system_prompt?: string;
   max_call_duration?: number;
+  // VAD settings
+  vad_mode?: string;
+  vad_threshold?: number;
+  vad_silence_duration_ms?: number;
+  vad_prefix_padding_ms?: number;
 }
 
 interface KnowledgeItem {
@@ -164,6 +169,15 @@ serve(async (req) => {
               model_id: 'eleven_turbo_v2_5',
               voice_id: agentConfig.voice_id,
             },
+            turn: {
+              mode: agentConfig.vad_mode || 'server_vad',
+              turn_detection: {
+                type: 'server_vad',
+                threshold: agentConfig.vad_threshold ?? 0.5,
+                silence_duration_ms: agentConfig.vad_silence_duration_ms ?? 500,
+                prefix_padding_ms: agentConfig.vad_prefix_padding_ms ?? 300,
+              },
+            },
           },
         }),
       });
@@ -208,6 +222,15 @@ serve(async (req) => {
             tts: {
               model_id: 'eleven_turbo_v2_5',
               voice_id: agentConfig.voice_id,
+            },
+            turn: {
+              mode: agentConfig.vad_mode || 'server_vad',
+              turn_detection: {
+                type: 'server_vad',
+                threshold: agentConfig.vad_threshold ?? 0.5,
+                silence_duration_ms: agentConfig.vad_silence_duration_ms ?? 500,
+                prefix_padding_ms: agentConfig.vad_prefix_padding_ms ?? 300,
+              },
             },
           },
         }),

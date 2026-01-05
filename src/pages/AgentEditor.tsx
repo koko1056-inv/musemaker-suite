@@ -22,6 +22,7 @@ import {
   ArrowRight,
   LayoutTemplate,
   Bot,
+  Volume2,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
@@ -71,6 +72,11 @@ export default function AgentEditor() {
   const [iconName, setIconName] = useState("bot");
   const [iconColor, setIconColor] = useState("#10b981");
   
+  // VAD settings
+  const [vadThreshold, setVadThreshold] = useState(0.5);
+  const [vadSilenceDuration, setVadSilenceDuration] = useState(500);
+  const [vadPrefixPadding, setVadPrefixPadding] = useState(300);
+  
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
   const [newlyCreatedAgentId, setNewlyCreatedAgentId] = useState<string | null>(null);
@@ -117,6 +123,10 @@ export default function AgentEditor() {
           setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
           setIconName((agent as any).icon_name || "bot");
           setIconColor((agent as any).icon_color || "#10b981");
+          // VAD settings
+          setVadThreshold((agent as any).vad_threshold ?? 0.5);
+          setVadSilenceDuration((agent as any).vad_silence_duration_ms ?? 500);
+          setVadPrefixPadding((agent as any).vad_prefix_padding_ms ?? 300);
           setCurrentStep(3); // Go to final step for existing agents
         })
         .catch(() => {
@@ -154,6 +164,11 @@ export default function AgentEditor() {
         fallback_behavior: "end",
         icon_name: iconName,
         icon_color: iconColor,
+        // VAD settings
+        vad_mode: "server_vad",
+        vad_threshold: vadThreshold,
+        vad_silence_duration_ms: vadSilenceDuration,
+        vad_prefix_padding_ms: vadPrefixPadding,
       };
 
       if (isNew) {
@@ -174,7 +189,7 @@ export default function AgentEditor() {
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
     status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
-    iconName, iconColor
+    iconName, iconColor, vadThreshold, vadSilenceDuration, vadPrefixPadding
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
@@ -775,6 +790,114 @@ export default function AgentEditor() {
                       <p className="text-sm text-muted-foreground">
                         💡 この時間を超えると通話が自動で終了します
                       </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* VAD Settings Section (only for existing agents) */}
+              {!showTemplates && !isNew && (
+                <Card className="border-2 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                        <Volume2 className="h-5 w-5 text-primary" />
+                      </div>
+                      ノイズ制御
+                    </CardTitle>
+                    <CardDescription className="text-base">
+                      周囲の雑音を拾いにくくする設定です
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2 text-base font-medium">
+                        音声検出の感度
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>値が高いほど、雑音を無視して明確な音声のみを検出します。雑音が多い環境では高めに設定してください。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <span className="text-sm font-normal text-primary bg-primary/10 px-2 py-0.5 rounded ml-auto">
+                          {vadThreshold.toFixed(2)}
+                        </span>
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground">敏感</span>
+                        <Slider
+                          value={[vadThreshold]}
+                          onValueChange={([val]) => setVadThreshold(val)}
+                          min={0.1}
+                          max={0.9}
+                          step={0.05}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground">鈍感</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground bg-muted/50 px-3 py-2 rounded-lg">
+                        💡 雑音が多い環境では 0.6〜0.8 に設定すると効果的です
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2 text-base font-medium">
+                        無音判定時間
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>発話終了と判定するまでの無音時間です。長くすると話し終わりの間を多く取れます。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <span className="text-sm font-normal text-primary bg-primary/10 px-2 py-0.5 rounded ml-auto">
+                          {vadSilenceDuration}ms
+                        </span>
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground">短い</span>
+                        <Slider
+                          value={[vadSilenceDuration]}
+                          onValueChange={([val]) => setVadSilenceDuration(val)}
+                          min={200}
+                          max={1500}
+                          step={100}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground">長い</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2 text-base font-medium">
+                        発話開始パディング
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary transition-colors" />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs">
+                            <p>発話検出前の音声も録音に含める時間です。冒頭が切れる場合は長くしてください。</p>
+                          </TooltipContent>
+                        </Tooltip>
+                        <span className="text-sm font-normal text-primary bg-primary/10 px-2 py-0.5 rounded ml-auto">
+                          {vadPrefixPadding}ms
+                        </span>
+                      </Label>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs text-muted-foreground">短い</span>
+                        <Slider
+                          value={[vadPrefixPadding]}
+                          onValueChange={([val]) => setVadPrefixPadding(val)}
+                          min={100}
+                          max={800}
+                          step={50}
+                          className="flex-1"
+                        />
+                        <span className="text-xs text-muted-foreground">長い</span>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

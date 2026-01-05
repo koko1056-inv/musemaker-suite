@@ -65,6 +65,10 @@ export type Database = {
           status: Database["public"]["Enums"]["agent_status"]
           system_prompt: string | null
           updated_at: string
+          vad_mode: string | null
+          vad_prefix_padding_ms: number | null
+          vad_silence_duration_ms: number | null
+          vad_threshold: number | null
           voice_id: string
           voice_speed: string | null
           voice_style: string | null
@@ -85,6 +89,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"]
           system_prompt?: string | null
           updated_at?: string
+          vad_mode?: string | null
+          vad_prefix_padding_ms?: number | null
+          vad_silence_duration_ms?: number | null
+          vad_threshold?: number | null
           voice_id?: string
           voice_speed?: string | null
           voice_style?: string | null
@@ -105,6 +113,10 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"]
           system_prompt?: string | null
           updated_at?: string
+          vad_mode?: string | null
+          vad_prefix_padding_ms?: number | null
+          vad_silence_duration_ms?: number | null
+          vad_threshold?: number | null
           voice_id?: string
           voice_speed?: string | null
           voice_style?: string | null
