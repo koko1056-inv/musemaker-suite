@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Phone, RefreshCw, Bot, Tag, Unlink, Phone as PhoneIcon, MessageSquare } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Phone, RefreshCw, Bot, Tag, Unlink, Phone as PhoneIcon, MessageSquare, Settings } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePhoneNumbers } from "@/hooks/usePhoneNumbers";
 import { useAgents } from "@/hooks/useAgents";
@@ -39,24 +37,25 @@ export default function PhoneNumbers() {
 
   if (!workspace?.twilio_account_sid || !workspace?.twilio_auth_token) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">電話番号管理</h1>
-          <p className="text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
+          <h1 className="text-4xl font-serif font-medium tracking-tight">電話番号</h1>
+          <p className="text-muted-foreground mt-2">Twilioの電話番号を管理し、エージェントに割り当てます</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Phone className="h-5 w-5" />
-              Twilio連携が必要です
-            </CardTitle>
-            <CardDescription>
+        {/* Empty State */}
+        <Card className="border-0 bg-card/50">
+          <CardContent className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-6">
+              <Phone className="h-8 w-8 text-muted-foreground" />
+            </div>
+            <h2 className="text-xl font-serif font-medium mb-2">Twilio連携が必要です</h2>
+            <p className="text-muted-foreground text-center max-w-md mb-8">
               電話番号を管理するには、設定画面でTwilioの認証情報を設定してください。
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="outline" onClick={() => window.location.href = "/settings"}>
+            </p>
+            <Button variant="elegant" onClick={() => window.location.href = "/settings"}>
+              <Settings className="h-4 w-4 mr-2" />
               設定画面へ
             </Button>
           </CardContent>
@@ -66,66 +65,59 @@ export default function PhoneNumbers() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">電話番号管理</h1>
-          <p className="text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
+          <h1 className="text-4xl font-serif font-medium tracking-tight">電話番号</h1>
+          <p className="text-muted-foreground mt-2">Twilioの電話番号を管理し、エージェントに割り当てます</p>
         </div>
-        <Button onClick={syncFromTwilio} disabled={isSyncing}>
-          <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+        <Button variant="elegant" onClick={syncFromTwilio} disabled={isSyncing}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
           Twilioと同期
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Phone className="h-5 w-5" />
-            電話番号一覧
-          </CardTitle>
-          <CardDescription>
-            Twilioアカウントに登録されている電話番号とエージェントへの割り当て状況
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-16 w-full" />
-              ))}
+      {/* Content */}
+      {isLoading ? (
+        <div className="grid gap-4">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+          ))}
+        </div>
+      ) : phoneNumbers.length === 0 ? (
+        <Card className="border-0 bg-card/50">
+          <CardContent className="flex flex-col items-center justify-center py-20">
+            <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-6">
+              <Phone className="h-8 w-8 text-muted-foreground" />
             </div>
-          ) : phoneNumbers.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Phone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>電話番号が見つかりません</p>
-              <p className="text-sm">「Twilioと同期」をクリックして電話番号を取得してください</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>電話番号</TableHead>
-                  <TableHead>ラベル</TableHead>
-                  <TableHead>機能</TableHead>
-                  <TableHead>割り当てエージェント</TableHead>
-                  <TableHead>ステータス</TableHead>
-                  <TableHead className="text-right">アクション</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {phoneNumbers.map((phone) => (
-                  <TableRow key={phone.id}>
-                    <TableCell className="font-mono font-medium">
-                      {phone.phone_number}
-                    </TableCell>
-                    <TableCell>
+            <h2 className="text-xl font-serif font-medium mb-2">電話番号がありません</h2>
+            <p className="text-muted-foreground text-center max-w-md mb-8">
+              「Twilioと同期」をクリックして電話番号を取得してください
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {phoneNumbers.map((phone) => (
+            <Card key={phone.id} className="border-0 bg-card/50 hover:bg-card/80 transition-colors">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  {/* Left: Phone number and label */}
+                  <div className="flex items-center gap-6">
+                    <div className="w-12 h-12 rounded-2xl bg-foreground/5 flex items-center justify-center">
+                      <Phone className="h-5 w-5 text-foreground/60" />
+                    </div>
+                    <div>
+                      <p className="text-lg font-mono font-medium tracking-wide">
+                        {phone.phone_number}
+                      </p>
                       {editingLabel === phone.phone_number_sid ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 mt-1">
                           <Input
                             value={labelValue}
                             onChange={(e) => setLabelValue(e.target.value)}
-                            className="h-8 w-40"
+                            className="h-8 w-40 text-sm"
                             placeholder="ラベルを入力"
                           />
                           <Button size="sm" variant="ghost" onClick={() => handleLabelSave(phone.phone_number_sid)}>
@@ -138,76 +130,79 @@ export default function PhoneNumbers() {
                       ) : (
                         <button
                           onClick={() => startEditLabel(phone)}
-                          className="flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors mt-1"
                         >
                           <Tag className="h-3 w-3" />
-                          {phone.label || "ラベルなし"}
+                          {phone.label || "ラベルを追加"}
                         </button>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        {phone.capabilities?.voice && (
-                          <Badge variant="outline" className="text-xs">
-                            <PhoneIcon className="h-3 w-3 mr-1" />
-                            音声
-                          </Badge>
-                        )}
-                        {phone.capabilities?.sms && (
-                          <Badge variant="outline" className="text-xs">
-                            <MessageSquare className="h-3 w-3 mr-1" />
-                            SMS
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select
-                        value={phone.agent_id || "none"}
-                        onValueChange={(value) => handleAssign(phone.phone_number_sid, value)}
-                      >
-                        <SelectTrigger className="w-48">
-                          <SelectValue placeholder="エージェントを選択" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">
-                            <span className="text-muted-foreground">未割り当て</span>
-                          </SelectItem>
-                          {agents.map((agent) => (
-                            <SelectItem key={agent.id} value={agent.id}>
-                              <div className="flex items-center gap-2">
-                                <Bot className="h-4 w-4" />
-                                {agent.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={phone.status === "active" ? "default" : "secondary"}>
-                        {phone.status === "active" ? "アクティブ" : phone.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {phone.agent_id && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => unassignFromAgent(phone.phone_number_sid)}
-                        >
-                          <Unlink className="h-4 w-4 mr-1" />
-                          解除
-                        </Button>
+                    </div>
+                  </div>
+
+                  {/* Center: Capabilities and Status */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex gap-2">
+                      {phone.capabilities?.voice && (
+                        <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-normal border-foreground/10">
+                          <PhoneIcon className="h-3 w-3 mr-1.5" />
+                          音声
+                        </Badge>
                       )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                      {phone.capabilities?.sms && (
+                        <Badge variant="outline" className="rounded-full px-3 py-1 text-xs font-normal border-foreground/10">
+                          <MessageSquare className="h-3 w-3 mr-1.5" />
+                          SMS
+                        </Badge>
+                      )}
+                    </div>
+                    <Badge 
+                      variant={phone.status === "active" ? "default" : "secondary"}
+                      className="rounded-full px-3 py-1 text-xs font-normal"
+                    >
+                      {phone.status === "active" ? "アクティブ" : phone.status}
+                    </Badge>
+                  </div>
+
+                  {/* Right: Agent assignment */}
+                  <div className="flex items-center gap-3">
+                    <Select
+                      value={phone.agent_id || "none"}
+                      onValueChange={(value) => handleAssign(phone.phone_number_sid, value)}
+                    >
+                      <SelectTrigger className="w-52 rounded-xl border-foreground/10">
+                        <SelectValue placeholder="エージェントを選択" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">
+                          <span className="text-muted-foreground">未割り当て</span>
+                        </SelectItem>
+                        {agents.map((agent) => (
+                          <SelectItem key={agent.id} value={agent.id}>
+                            <div className="flex items-center gap-2">
+                              <Bot className="h-4 w-4" />
+                              {agent.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {phone.agent_id && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => unassignFromAgent(phone.phone_number_sid)}
+                        className="text-muted-foreground hover:text-destructive"
+                      >
+                        <Unlink className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
