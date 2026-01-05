@@ -63,11 +63,11 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
       {/* Logo */}
-      <div className="flex h-16 items-center px-6">
+      <div className="flex h-20 items-center justify-center px-6">
         <img 
           src={musaLogo} 
           alt="MUSA" 
-          className="h-8 w-auto"
+          className="h-12 w-auto"
         />
       </div>
 
