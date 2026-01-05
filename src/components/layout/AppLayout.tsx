@@ -4,6 +4,7 @@ import { MobileNav } from "./MobileNav";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import musaLogo from "@/assets/musa-logo.png";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -34,7 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </SheetContent>
           </Sheet>
           
-          <span className="text-lg font-semibold">コールセンターEX</span>
+          <img src={musaLogo} alt="MUSA" className="h-6 w-auto" />
           
           <div className="w-10" /> {/* Spacer for balance */}
         </div>
@@ -42,7 +43,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Main Content */}
       <main className="lg:pl-64 pt-14 lg:pt-0">
-        <div className="min-h-screen">{children}</div>
+        <div className="min-h-screen p-6 lg:p-8">{children}</div>
       </main>
 
       {/* Mobile Bottom Navigation */}
