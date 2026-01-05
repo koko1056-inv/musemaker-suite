@@ -1,4 +1,5 @@
 import { useState } from "react";
+import headsetIcon from "@/assets/headset-icon.png";
 import { Link, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -240,8 +241,8 @@ export default function Agents() {
           ) : agents.length === 0 ? (
             /* Empty State - More Friendly */
             <div className="flex flex-col items-center justify-center py-12 text-center">
-              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 animate-pulse">
-                <Bot className="h-12 w-12 text-primary" />
+              <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-muted/30">
+                <img src={headsetIcon} alt="Headset" className="h-16 w-16 object-contain" />
               </div>
               <h2 className="text-2xl font-bold text-foreground mb-3">
                 AIアシスタントを作ってみましょう！
