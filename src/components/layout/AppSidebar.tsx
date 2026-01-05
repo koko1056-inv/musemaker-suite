@@ -15,6 +15,7 @@ import {
   Gauge,
   LogOut,
   BookOpen,
+  PhoneOutgoing,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ const navigation = [
   { name: "ホーム", href: "/", icon: LayoutDashboard, description: "概要を見る" },
   { name: "エージェント", href: "/agents", icon: Bot, description: "AI作成・管理" },
   { name: "ナレッジ", href: "/knowledge", icon: BookOpen, description: "知識を登録" },
+  { name: "発信", href: "/outbound-calls", icon: PhoneOutgoing, description: "アウトバウンド" },
   { name: "会話履歴", href: "/conversations", icon: MessageSquare, description: "通話記録" },
   { name: "分析", href: "/analytics", icon: BarChart3, description: "データ分析" },
   { name: "利用量", href: "/usage", icon: Gauge, description: "使用状況" },

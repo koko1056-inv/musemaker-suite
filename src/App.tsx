@@ -15,6 +15,7 @@ import AuditLogs from "./pages/AuditLogs";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import Team from "./pages/Team";
 import Settings from "./pages/Settings";
+import OutboundCalls from "./pages/OutboundCalls";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/knowledge" element={<ProtectedRoute><KnowledgeBase /></ProtectedRoute>} />
           <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/outbound-calls" element={<ProtectedRoute><OutboundCalls /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
