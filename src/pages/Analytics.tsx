@@ -37,7 +37,7 @@ export default function Analytics() {
 
   return (
     <AppLayout>
-      <div className="p-8">
+      <div className="p-6 md:p-8 lg:p-12">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground">分析</h1>

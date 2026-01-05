@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Phone, RefreshCw, Bot, Tag, Unlink, Phone as PhoneIcon, MessageSquare, Settings, MoreVertical } from "lucide-react";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -38,68 +39,74 @@ export default function PhoneNumbers() {
   // Empty state - no Twilio credentials
   if (!workspace?.twilio_account_sid || !workspace?.twilio_auth_token) {
     return (
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl lg:text-5xl font-serif font-medium tracking-tight mb-3">電話番号</h1>
-          <p className="text-lg text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
-        </div>
+      <AppLayout>
+        <div className="p-6 md:p-8 lg:p-12">
+          <div className="max-w-4xl mx-auto">
+            {/* Header */}
+            <div className="mb-12">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">電話番号</h1>
+              <p className="text-sm text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
+            </div>
 
-        {/* Empty State Card */}
-        <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-card to-card/50 p-12 lg:p-16 text-center">
-          <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-8">
-            <Phone className="h-10 w-10 text-muted-foreground/60" />
+            {/* Empty State Card */}
+            <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-card to-card/50 p-12 lg:p-16 text-center">
+              <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-8">
+                <Phone className="h-10 w-10 text-muted-foreground/60" />
+              </div>
+              <h2 className="text-2xl font-medium mb-3">Twilio連携が必要です</h2>
+              <p className="text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
+                電話番号を管理するには、設定画面でTwilioの認証情報を設定してください。
+              </p>
+              <Button onClick={() => window.location.href = "/settings"} className="px-8">
+                <Settings className="h-4 w-4 mr-2" />
+                設定画面へ
+              </Button>
+            </div>
           </div>
-          <h2 className="text-2xl font-serif font-medium mb-3">Twilio連携が必要です</h2>
-          <p className="text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
-            電話番号を管理するには、設定画面でTwilioの認証情報を設定してください。
-          </p>
-          <Button onClick={() => window.location.href = "/settings"} className="px-8">
-            <Settings className="h-4 w-4 mr-2" />
-            設定画面へ
-          </Button>
         </div>
-      </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
-        <div>
-          <h1 className="text-4xl lg:text-5xl font-serif font-medium tracking-tight mb-3">電話番号</h1>
-          <p className="text-lg text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
-        </div>
-        <Button 
-          variant="outline" 
-          onClick={syncFromTwilio} 
-          disabled={isSyncing}
-          className="shrink-0"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
-          Twilioと同期
-        </Button>
-      </div>
-
-      {/* Content */}
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 w-full rounded-2xl" />
-          ))}
-        </div>
-      ) : phoneNumbers.length === 0 ? (
-        <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-card to-card/50 p-12 lg:p-16 text-center">
-          <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-8">
-            <Phone className="h-10 w-10 text-muted-foreground/60" />
+    <AppLayout>
+      <div className="p-6 md:p-8 lg:p-12">
+        <div className="max-w-6xl mx-auto">
+          {/* Header */}
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">電話番号</h1>
+              <p className="text-sm text-muted-foreground">Twilioの電話番号を管理し、エージェントに割り当てます</p>
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={syncFromTwilio} 
+              disabled={isSyncing}
+              className="shrink-0"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+              Twilioと同期
+            </Button>
           </div>
-          <h2 className="text-2xl font-serif font-medium mb-3">電話番号がありません</h2>
-          <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
-            「Twilioと同期」をクリックして電話番号を取得してください
-          </p>
-        </div>
-      ) : (
+
+          {/* Content */}
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+              ))}
+            </div>
+          ) : phoneNumbers.length === 0 ? (
+            <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-card to-card/50 p-12 lg:p-16 text-center">
+              <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-8">
+                <Phone className="h-10 w-10 text-muted-foreground/60" />
+              </div>
+              <h2 className="text-2xl font-medium mb-3">電話番号がありません</h2>
+              <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                「Twilioと同期」をクリックして電話番号を取得してください
+              </p>
+            </div>
+          ) : (
         <div className="space-y-4">
           {phoneNumbers.map((phone) => {
             const assignedAgent = agents.find(a => a.id === phone.agent_id);
@@ -253,6 +260,8 @@ export default function PhoneNumbers() {
           </div>
         </div>
       )}
-    </div>
+        </div>
+      </div>
+    </AppLayout>
   );
 }

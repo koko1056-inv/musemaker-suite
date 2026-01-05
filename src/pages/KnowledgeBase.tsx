@@ -169,7 +169,7 @@ export default function KnowledgeBase() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-4rem)]">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] lg:h-screen">
         {/* Sidebar - Knowledge Base List */}
         <div className={`w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-border bg-muted/30 flex flex-col ${selectedKb ? 'hidden lg:flex' : 'flex'}`}>
           <div className="p-4 border-b border-border">
