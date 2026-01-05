@@ -49,6 +49,7 @@ export default function Settings() {
     isAdmin,
     updateWorkspace,
     updateElevenLabsApiKey,
+    updateTwilioCredentials,
     isAuthenticated,
   } = useWorkspace();
 
@@ -57,6 +58,12 @@ export default function Settings() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [workspaceSlug, setWorkspaceSlug] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Twilio credentials state
+  const [twilioAccountSid, setTwilioAccountSid] = useState("");
+  const [twilioAuthToken, setTwilioAuthToken] = useState("");
+  const [twilioSidVisible, setTwilioSidVisible] = useState(false);
+  const [twilioTokenVisible, setTwilioTokenVisible] = useState(false);
 
   // Initialize form values when workspace loads
   useEffect(() => {
@@ -66,6 +73,13 @@ export default function Settings() {
       // If there's an API key saved, show placeholder
       if (workspace.elevenlabs_api_key) {
         setApiKey("••••••••••••••••");
+      }
+      // If Twilio credentials saved, show placeholder
+      if (workspace.twilio_account_sid) {
+        setTwilioAccountSid("••••••••••••••••");
+      }
+      if (workspace.twilio_auth_token) {
+        setTwilioAuthToken("••••••••••••••••");
       }
     }
   }, [workspace]);
@@ -101,8 +115,25 @@ export default function Settings() {
     }
   };
 
+  const handleSaveTwilioCredentials = async () => {
+    // Don't save if both are placeholders
+    if (twilioAccountSid === "••••••••••••••••" && twilioAuthToken === "••••••••••••••••") return;
+    
+    const sidToSave = twilioAccountSid === "••••••••••••••••" ? workspace?.twilio_account_sid || "" : twilioAccountSid;
+    const tokenToSave = twilioAuthToken === "••••••••••••••••" ? workspace?.twilio_auth_token || "" : twilioAuthToken;
+    
+    if (sidToSave.trim() && tokenToSave.trim()) {
+      const success = await updateTwilioCredentials(sidToSave, tokenToSave);
+      if (success) {
+        setTwilioAccountSid("••••••••••••••••");
+        setTwilioAuthToken("••••••••••••••••");
+      }
+    }
+  };
+
   const workspaceId = workspace?.id || DEMO_WORKSPACE_ID;
   const hasApiKey = workspace?.elevenlabs_api_key || apiKey === "••••••••••••••••";
+  const hasTwilioCredentials = workspace?.twilio_account_sid && workspace?.twilio_auth_token;
 
   return (
     <AppLayout>
@@ -331,6 +362,117 @@ export default function Settings() {
                     <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </a>
                 </Button>
+              </div>
+            </div>
+
+            {/* Twilio Integration */}
+            <div className="glass rounded-xl card-shadow p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-lg bg-gradient-to-br from-red-500 to-pink-600 flex items-center justify-center shrink-0">
+                    <span className="text-white font-bold text-base sm:text-lg">TW</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">Twilio</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                      電話番号連携と通話機能
+                    </p>
+                  </div>
+                </div>
+                {hasTwilioCredentials ? (
+                  <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
+                    <Check className="h-3 w-3" />
+                    接続済み
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="self-start text-xs">未接続</Badge>
+                )}
+              </div>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="twilio-sid" className="text-sm">Account SID</Label>
+                  <div className="relative">
+                    <Input
+                      id="twilio-sid"
+                      type={twilioSidVisible ? "text" : "password"}
+                      placeholder="TwilioのAccount SIDを入力"
+                      value={twilioAccountSid}
+                      onChange={(e) => setTwilioAccountSid(e.target.value)}
+                      className="pr-10 h-9 sm:h-10 text-sm"
+                      disabled={!isAuthenticated}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setTwilioSidVisible(!twilioSidVisible)}
+                    >
+                      {twilioSidVisible ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 sm:space-y-2">
+                  <Label htmlFor="twilio-token" className="text-sm">Auth Token</Label>
+                  <div className="relative">
+                    <Input
+                      id="twilio-token"
+                      type={twilioTokenVisible ? "text" : "password"}
+                      placeholder="TwilioのAuth Tokenを入力"
+                      value={twilioAuthToken}
+                      onChange={(e) => setTwilioAuthToken(e.target.value)}
+                      className="pr-10 h-9 sm:h-10 text-sm"
+                      disabled={!isAuthenticated}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full px-3"
+                      onClick={() => setTwilioTokenVisible(!twilioTokenVisible)}
+                    >
+                      {twilioTokenVisible ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    認証情報は暗号化されて安全に保存されます。
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button
+                    onClick={handleSaveTwilioCredentials}
+                    className="w-full sm:w-auto h-9 sm:h-10 text-sm"
+                    disabled={
+                      isSaving || 
+                      !isAuthenticated || 
+                      (twilioAccountSid === "••••••••••••••••" && twilioAuthToken === "••••••••••••••••") ||
+                      (!twilioAccountSid.trim() || !twilioAuthToken.trim())
+                    }
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      "保存"
+                    )}
+                  </Button>
+                  <Button variant="outline" className="gap-2 w-full sm:w-auto text-sm h-9 sm:h-10" asChild>
+                    <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer">
+                      Twilioコンソール
+                      <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </TabsContent>
