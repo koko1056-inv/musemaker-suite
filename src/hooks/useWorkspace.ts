@@ -9,6 +9,8 @@ interface Workspace {
   slug: string;
   plan: string;
   elevenlabs_api_key: string | null;
+  twilio_account_sid: string | null;
+  twilio_auth_token: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -142,6 +144,39 @@ export const useWorkspace = () => {
     }
   };
 
+  // Update Twilio credentials
+  const updateTwilioCredentials = async (accountSid: string, authToken: string) => {
+    if (!workspace) return false;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("workspaces")
+        .update({
+          twilio_account_sid: accountSid,
+          twilio_auth_token: authToken,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", workspace.id);
+
+      if (error) {
+        console.error("Error updating Twilio credentials:", error);
+        toast.error("Twilio認証情報の保存に失敗しました");
+        return false;
+      }
+
+      setWorkspace({ ...workspace, twilio_account_sid: accountSid, twilio_auth_token: authToken });
+      toast.success("Twilio認証情報を保存しました");
+      return true;
+    } catch (error) {
+      console.error("Error in updateTwilioCredentials:", error);
+      toast.error("エラーが発生しました");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Check if user is admin
   const isAdmin = userRole === "admin" || userRole === "owner";
 
@@ -153,6 +188,7 @@ export const useWorkspace = () => {
     isAdmin,
     updateWorkspace,
     updateElevenLabsApiKey,
+    updateTwilioCredentials,
     isAuthenticated,
   };
 };
