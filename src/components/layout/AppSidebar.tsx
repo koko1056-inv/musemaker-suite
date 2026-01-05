@@ -76,10 +76,10 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3 text-left transition-colors hover:bg-sidebar-accent">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
-              <span className="text-xs font-medium">S</span>
+              <span className="text-xs font-serif font-medium">S</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <p className="text-sm font-serif font-medium text-sidebar-foreground truncate">
                 株式会社サンプル
               </p>
               <p className="text-xs text-muted-foreground">Pro</p>
@@ -87,8 +87,8 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem>株式会社サンプル</DropdownMenuItem>
-            <DropdownMenuItem>個人ワークスペース</DropdownMenuItem>
+            <DropdownMenuItem className="font-serif">株式会社サンプル</DropdownMenuItem>
+            <DropdownMenuItem className="font-serif">個人ワークスペース</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -106,7 +106,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
                 to={item.href}
                 onClick={handleNavClick}
                 className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-serif font-medium transition-all duration-200",
                   isActive
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
@@ -125,12 +125,12 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-foreground/10 text-foreground text-xs font-medium">
+              <AvatarFallback className="bg-foreground/10 text-foreground text-xs font-serif font-medium">
                 {userInitials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">
+              <p className="text-sm font-serif font-medium text-sidebar-foreground truncate">
                 {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "ユーザー"}
               </p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
@@ -138,14 +138,14 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => navigate("/settings")}>
+            <DropdownMenuItem onClick={() => navigate("/settings")} className="font-serif">
               プロフィール
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/usage")}>
+            <DropdownMenuItem onClick={() => navigate("/usage")} className="font-serif">
               利用状況
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+            <DropdownMenuItem onClick={handleSignOut} className="text-destructive font-serif">
               <LogOut className="mr-2 h-4 w-4" />
               ログアウト
             </DropdownMenuItem>
