@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_folders_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_knowledge_bases: {
         Row: {
           agent_id: string
@@ -57,6 +92,7 @@ export type Database = {
           description: string | null
           elevenlabs_agent_id: string | null
           fallback_behavior: string | null
+          folder_id: string | null
           icon_color: string | null
           icon_name: string | null
           id: string
@@ -81,6 +117,7 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          folder_id?: string | null
           icon_color?: string | null
           icon_name?: string | null
           id?: string
@@ -105,6 +142,7 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          folder_id?: string | null
           icon_color?: string | null
           icon_name?: string | null
           id?: string
@@ -124,6 +162,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "agents_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "agent_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "agents_workspace_id_fkey"
             columns: ["workspace_id"]

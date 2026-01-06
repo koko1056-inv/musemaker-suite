@@ -111,6 +111,27 @@ export function useAgents() {
     }
   }, []);
 
+  const moveToFolder = useCallback(async (agentId: string, folderId: string | null) => {
+    try {
+      const { data, error } = await supabase
+        .from('agents')
+        .update({ folder_id: folderId })
+        .eq('id', agentId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setAgents(prev => prev.map(a => a.id === agentId ? data : a));
+      toast.success(folderId ? 'フォルダに移動しました' : 'フォルダから削除しました');
+      return data;
+    } catch (error) {
+      console.error('Error moving agent to folder:', error);
+      toast.error('フォルダへの移動に失敗しました');
+      throw error;
+    }
+  }, []);
+
   const updateAgent = useCallback(async (id: string, updates: AgentUpdate) => {
     try {
       // Get current agent to check if it has an ElevenLabs agent ID
@@ -297,6 +318,7 @@ export function useAgents() {
     updateAgent,
     deleteAgent,
     getAgent,
+    moveToFolder,
     syncKnowledgeBase,
     syncKnowledgeBaseAPI,
   };
