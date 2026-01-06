@@ -44,6 +44,17 @@ import {
   useUploadKnowledgeFile,
   KnowledgeItem,
 } from "@/hooks/useKnowledgeBase";
+import { useKnowledgeBaseFolders } from "@/hooks/useKnowledgeBaseFolders";
+import { FolderManager, FolderItemMenu } from "@/components/agents/FolderManager";
+import { Folder, ChevronDown, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const CATEGORIES = [
   { value: "faq", label: "FAQ" },
@@ -60,6 +71,7 @@ export default function KnowledgeBase() {
   const [isCreateItemOpen, setIsCreateItemOpen] = useState(false);
   const [isEditItemOpen, setIsEditItemOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   // Form states
   const [kbName, setKbName] = useState("");
@@ -68,8 +80,9 @@ export default function KnowledgeBase() {
   const [itemContent, setItemContent] = useState("");
   const [itemCategory, setItemCategory] = useState("");
 
-  const { data: knowledgeBases = [], isLoading: isLoadingKbs } = useKnowledgeBases();
+  const { data: knowledgeBases = [], isLoading: isLoadingKbs, refetch: refetchKbs } = useKnowledgeBases();
   const { data: knowledgeItems = [], isLoading: isLoadingItems } = useKnowledgeItems(selectedKbId);
+  const { folders, createFolder, updateFolder, deleteFolder, moveToFolder } = useKnowledgeBaseFolders();
   
   const createKb = useCreateKnowledgeBase();
   const deleteKb = useDeleteKnowledgeBase();
@@ -79,6 +92,23 @@ export default function KnowledgeBase() {
   const uploadFile = useUploadKnowledgeFile();
 
   const selectedKb = knowledgeBases.find((kb) => kb.id === selectedKbId);
+  
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  };
+
+  const kbsInFolder = (folderId: string) => knowledgeBases.filter((kb: any) => kb.folder_id === folderId);
+  const kbsWithoutFolder = knowledgeBases.filter((kb: any) => !kb.folder_id);
+
+  const handleMoveToFolder = async (kbId: string, folderId: string | null) => {
+    await moveToFolder(kbId, folderId);
+    refetchKbs();
+  };
 
   const filteredItems = knowledgeItems.filter(
     (item) =>

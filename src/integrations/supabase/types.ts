@@ -364,10 +364,46 @@ export type Database = {
           },
         ]
       }
+      knowledge_base_folders: {
+        Row: {
+          color: string | null
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_base_folders_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_bases: {
         Row: {
           created_at: string
           description: string | null
+          folder_id: string | null
           id: string
           name: string
           updated_at: string
@@ -376,6 +412,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          folder_id?: string | null
           id?: string
           name: string
           updated_at?: string
@@ -384,12 +421,20 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          folder_id?: string | null
           id?: string
           name?: string
           updated_at?: string
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "knowledge_bases_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "knowledge_base_folders"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "knowledge_bases_workspace_id_fkey"
             columns: ["workspace_id"]
