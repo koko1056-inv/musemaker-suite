@@ -56,6 +56,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
+import { KnowledgeBaseFolder } from "@/hooks/useKnowledgeBaseFolders";
+import { MoreHorizontal } from "lucide-react";
+
 const CATEGORIES = [
   { value: "faq", label: "FAQ" },
   { value: "product", label: "製品情報" },
@@ -63,6 +66,72 @@ const CATEGORIES = [
   { value: "guide", label: "ガイド" },
   { value: "other", label: "その他" },
 ];
+
+interface KnowledgeBaseItemProps {
+  kb: { id: string; name: string; description: string | null };
+  isSelected: boolean;
+  onSelect: () => void;
+  onDelete: () => void;
+  folders: KnowledgeBaseFolder[];
+  onMoveToFolder: (kbId: string, folderId: string | null) => void;
+}
+
+function KnowledgeBaseItem({ kb, isSelected, onSelect, onDelete, folders, onMoveToFolder }: KnowledgeBaseItemProps) {
+  return (
+    <div
+      className={`group flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors min-h-[48px] ${
+        isSelected
+          ? "bg-primary text-primary-foreground"
+          : "hover:bg-muted active:bg-muted"
+      }`}
+      onClick={onSelect}
+    >
+      <div className="flex-1 min-w-0">
+        <p className="font-medium truncate text-sm">{kb.name}</p>
+        {kb.description && (
+          <p className={`text-xs truncate ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+            {kb.description}
+          </p>
+        )}
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+          <Button
+            variant="ghost"
+            size="icon"
+            className={`opacity-0 group-hover:opacity-100 h-8 w-8 ${isSelected ? "hover:bg-primary-foreground/10" : ""}`}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+          {folders.length > 0 && (
+            <>
+              <DropdownMenuItem disabled className="text-xs text-muted-foreground">
+                フォルダに移動
+              </DropdownMenuItem>
+              {folders.map((folder) => (
+                <DropdownMenuItem key={folder.id} onClick={() => onMoveToFolder(kb.id, folder.id)}>
+                  <Folder className="h-4 w-4 mr-2" style={{ color: folder.color || '#6366f1' }} />
+                  {folder.name}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuItem onClick={() => onMoveToFolder(kb.id, null)}>
+                <FolderOpen className="h-4 w-4 mr-2" />
+                フォルダから外す
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem onClick={onDelete} className="text-destructive">
+            <Trash2 className="h-4 w-4 mr-2" />
+            削除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
 
 export default function KnowledgeBase() {
   const [selectedKbId, setSelectedKbId] = useState<string | null>(null);
@@ -258,6 +327,14 @@ export default function KnowledgeBase() {
             <p className="text-xs sm:text-sm text-muted-foreground">
               AIに教える情報をここに登録します
             </p>
+            <div className="mt-3">
+              <FolderManager
+                folders={folders}
+                onCreateFolder={createFolder}
+                onUpdateFolder={updateFolder}
+                onDeleteFolder={deleteFolder}
+              />
+            </div>
           </div>
 
           <ScrollArea className="flex-1">
@@ -273,45 +350,73 @@ export default function KnowledgeBase() {
                   <p className="text-xs">「新規」ボタンで作成しましょう</p>
                 </div>
               ) : (
-                knowledgeBases.map((kb) => (
-                  <div
-                    key={kb.id}
-                    className={`group flex items-center justify-between p-3 sm:p-4 rounded-xl cursor-pointer transition-colors min-h-[56px] ${
-                      selectedKbId === kb.id
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted active:bg-muted"
-                    }`}
-                    onClick={() => setSelectedKbId(kb.id)}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate text-sm sm:text-base">{kb.name}</p>
-                      {kb.description && (
-                        <p
-                          className={`text-xs truncate ${
-                            selectedKbId === kb.id
-                              ? "text-primary-foreground/70"
-                              : "text-muted-foreground"
-                          }`}
-                        >
-                          {kb.description}
-                        </p>
-                      )}
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`opacity-0 group-hover:opacity-100 h-8 w-8 ${
-                        selectedKbId === kb.id ? "hover:bg-primary-foreground/10" : ""
-                      }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDeleteKb(kb.id);
-                      }}
+                <>
+                  {/* Folders */}
+                  {folders.map((folder) => (
+                    <Collapsible
+                      key={folder.id}
+                      open={expandedFolders.has(folder.id)}
+                      onOpenChange={() => toggleFolder(folder.id)}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))
+                      <div className="flex items-center gap-1 group">
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="flex-1 justify-start gap-2 h-10 px-3">
+                            {expandedFolders.has(folder.id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                            <Folder className="h-4 w-4" style={{ color: folder.color || '#6366f1' }} />
+                            <span className="truncate">{folder.name}</span>
+                            <Badge variant="secondary" className="ml-auto text-xs">
+                              {kbsInFolder(folder.id).length}
+                            </Badge>
+                          </Button>
+                        </CollapsibleTrigger>
+                        <FolderItemMenu
+                          folder={folder}
+                          onEdit={(f) => updateFolder(f.id, { name: f.name, color: f.color })}
+                          onDelete={(id) => deleteFolder(id)}
+                        />
+                      </div>
+                      <CollapsibleContent>
+                        <div className="ml-4 pl-2 border-l border-border space-y-1 mt-1">
+                          {kbsInFolder(folder.id).map((kb) => (
+                            <KnowledgeBaseItem
+                              key={kb.id}
+                              kb={kb}
+                              isSelected={selectedKbId === kb.id}
+                              onSelect={() => setSelectedKbId(kb.id)}
+                              onDelete={() => handleDeleteKb(kb.id)}
+                              folders={folders}
+                              onMoveToFolder={handleMoveToFolder}
+                            />
+                          ))}
+                        </div>
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ))}
+
+                  {/* Knowledge bases without folder */}
+                  {kbsWithoutFolder.length > 0 && (
+                    <div className="space-y-1">
+                      {folders.length > 0 && (
+                        <p className="text-xs text-muted-foreground px-3 py-2">フォルダなし</p>
+                      )}
+                      {kbsWithoutFolder.map((kb) => (
+                        <KnowledgeBaseItem
+                          key={kb.id}
+                          kb={kb}
+                          isSelected={selectedKbId === kb.id}
+                          onSelect={() => setSelectedKbId(kb.id)}
+                          onDelete={() => handleDeleteKb(kb.id)}
+                          folders={folders}
+                          onMoveToFolder={handleMoveToFolder}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </ScrollArea>
