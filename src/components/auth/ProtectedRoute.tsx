@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { AppLayout } from "@/components/layout/AppLayout";
 import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
@@ -30,7 +29,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return null;
   }
 
-  return <AppLayout>{children}</AppLayout>;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
