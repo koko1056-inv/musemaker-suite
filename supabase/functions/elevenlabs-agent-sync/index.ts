@@ -170,8 +170,11 @@ serve(async (req) => {
               voice_id: agentConfig.voice_id,
             },
             turn: {
-              mode: agentConfig.vad_mode || 'server_vad',
-              turn_detection: {
+              mode: 'turn',
+              turn_timeout: agentConfig.vad_silence_duration_ms ?? 500,
+            },
+            stt: {
+              vad: {
                 type: 'server_vad',
                 threshold: agentConfig.vad_threshold ?? 0.5,
                 silence_duration_ms: agentConfig.vad_silence_duration_ms ?? 500,
@@ -224,8 +227,11 @@ serve(async (req) => {
               voice_id: agentConfig.voice_id,
             },
             turn: {
-              mode: agentConfig.vad_mode || 'server_vad',
-              turn_detection: {
+              mode: 'turn',
+              turn_timeout: agentConfig.vad_silence_duration_ms ?? 500,
+            },
+            stt: {
+              vad: {
                 type: 'server_vad',
                 threshold: agentConfig.vad_threshold ?? 0.5,
                 silence_duration_ms: agentConfig.vad_silence_duration_ms ?? 500,
