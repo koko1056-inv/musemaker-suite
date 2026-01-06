@@ -9,6 +9,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
@@ -27,6 +31,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Plus,
   Search,
   Bot,
@@ -43,9 +52,15 @@ import {
   Mic,
   MessageSquare,
   ArrowRight,
+  Folder,
+  FolderOpen,
+  ChevronRight,
+  FolderInput,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAgents } from "@/hooks/useAgents";
+import { useAgentFolders } from "@/hooks/useAgentFolders";
+import { FolderManager } from "@/components/agents/FolderManager";
 import { toast } from "sonner";
 
 // Voice name mapping with friendly descriptions
@@ -63,14 +78,27 @@ export default function Agents() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
-  const { agents, isLoading, deleteAgent, createAgent } = useAgents();
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  
+  const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
+  const { folders, createFolder, updateFolder, deleteFolder } = useAgentFolders();
 
+  // Filter agents based on search and status
   const filteredAgents = agents.filter((agent) => {
     const matchesSearch = agent.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
     const matchesStatus = statusFilter === "all" || agent.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesFolder = selectedFolderId === null || agent.folder_id === selectedFolderId;
+    return matchesSearch && matchesStatus && matchesFolder;
   });
+
+  // Group agents by folder
+  const agentsWithoutFolder = filteredAgents.filter(a => !a.folder_id);
+  const agentsByFolder = folders.reduce((acc, folder) => {
+    acc[folder.id] = filteredAgents.filter(a => a.folder_id === folder.id);
+    return acc;
+  }, {} as Record<string, typeof agents>);
 
   const handleDelete = async () => {
     if (!deleteAgentId) return;
@@ -93,6 +121,7 @@ export default function Agents() {
         max_call_duration: agent.max_call_duration,
         welcome_timeout: agent.welcome_timeout,
         fallback_behavior: agent.fallback_behavior,
+        folder_id: agent.folder_id,
       });
       toast.success('エージェントを複製しました');
       navigate(`/agents/${newAgent.id}`);
@@ -101,8 +130,170 @@ export default function Agents() {
     }
   };
 
+  const handleMoveToFolder = async (agentId: string, folderId: string | null) => {
+    await moveToFolder(agentId, folderId);
+  };
+
+  const toggleFolder = (folderId: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev);
+      if (next.has(folderId)) {
+        next.delete(folderId);
+      } else {
+        next.add(folderId);
+      }
+      return next;
+    });
+  };
+
   const getVoiceInfo = (voiceId: string) => {
     return voiceData[voiceId] || { name: voiceId, description: '' };
+  };
+
+  // Agent Card Component
+  const AgentCard = ({ agent, index }: { agent: typeof agents[0]; index: number }) => {
+    const voiceInfo = getVoiceInfo(agent.voice_id);
+    const isPublished = agent.status === "published";
+    const isReady = !!agent.elevenlabs_agent_id;
+
+    return (
+      <div
+        className="glass rounded-xl card-shadow transition-all duration-200 hover:shadow-lg hover:border-primary/30 animate-fade-in group"
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        <div className="p-5">
+          {/* Header */}
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
+                isPublished ? 'bg-green-500/10 text-green-600' : 'bg-primary/10 text-primary'
+              }`}>
+                <Bot className="h-6 w-6" />
+              </div>
+              <div>
+                <Link to={`/agents/${agent.id}`}>
+                  <h3 className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-1">
+                    {agent.name}
+                  </h3>
+                </Link>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant={isPublished ? "default" : "secondary"}
+                        className="text-xs cursor-help"
+                      >
+                        {isPublished ? "公開中" : "下書き"}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isPublished 
+                        ? "このエージェントは公開されており、通話を受け付けられます" 
+                        : "このエージェントは下書き状態です。公開すると通話を受け付けられます"}
+                    </TooltipContent>
+                  </Tooltip>
+                  {isReady && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 cursor-help">
+                          通話可能
+                        </Badge>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        音声通話の準備が完了しています
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to={`/agents/${agent.id}`} className="flex items-center">
+                    <Edit className="mr-2 h-4 w-4" />
+                    編集する
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleDuplicate(agent)}>
+                  <Copy className="mr-2 h-4 w-4" />
+                  コピーを作成
+                </DropdownMenuItem>
+                {folders.length > 0 && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuSub>
+                      <DropdownMenuSubTrigger>
+                        <FolderInput className="mr-2 h-4 w-4" />
+                        フォルダに移動
+                      </DropdownMenuSubTrigger>
+                      <DropdownMenuSubContent>
+                        {agent.folder_id && (
+                          <DropdownMenuItem onClick={() => handleMoveToFolder(agent.id, null)}>
+                            <Folder className="mr-2 h-4 w-4" />
+                            フォルダから削除
+                          </DropdownMenuItem>
+                        )}
+                        {folders.map(folder => (
+                          <DropdownMenuItem
+                            key={folder.id}
+                            onClick={() => handleMoveToFolder(agent.id, folder.id)}
+                            disabled={agent.folder_id === folder.id}
+                          >
+                            <div
+                              className="mr-2 h-4 w-4 rounded-sm"
+                              style={{ backgroundColor: folder.color }}
+                            />
+                            {folder.name}
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuSub>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="text-destructive focus:text-destructive"
+                  onClick={() => setDeleteAgentId(agent.id)}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  削除する
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
+            {agent.description || '説明が設定されていません'}
+          </p>
+
+          {/* Voice Info */}
+          <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 mb-4">
+            <Mic className="h-4 w-4 text-muted-foreground" />
+            <div className="text-sm">
+              <span className="font-medium text-foreground">{voiceInfo.name}</span>
+              {voiceInfo.description && (
+                <span className="text-muted-foreground"> · {voiceInfo.description}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <Button asChild variant="outline" className="w-full gap-2 group/btn">
+            <Link to={`/agents/${agent.id}`}>
+              設定を確認
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+            </Link>
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -197,7 +388,7 @@ export default function Agents() {
                 className="pl-10 h-11 sm:h-10 text-sm"
               />
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex flex-wrap gap-2">
               <Button
                 variant={statusFilter === "all" ? "default" : "outline"}
                 size="sm"
@@ -224,8 +415,50 @@ export default function Agents() {
                 <FileEdit className="h-3.5 w-3.5" />
                 下書き
               </Button>
+              <div className="ml-auto">
+                <FolderManager
+                  folders={folders}
+                  onCreateFolder={createFolder}
+                  onUpdateFolder={updateFolder}
+                  onDeleteFolder={deleteFolder}
+                />
+              </div>
             </div>
           </div>
+
+          {/* Folder Filter Pills */}
+          {folders.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-5">
+              <Button
+                variant={selectedFolderId === null ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedFolderId(null)}
+                className="h-7 text-xs gap-1.5"
+              >
+                <Folder className="h-3.5 w-3.5" />
+                すべて
+              </Button>
+              {folders.map(folder => (
+                <Button
+                  key={folder.id}
+                  variant={selectedFolderId === folder.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedFolderId(folder.id)}
+                  className="h-7 text-xs gap-1.5"
+                >
+                  <div
+                    className="h-3 w-3 rounded-sm"
+                    style={{ backgroundColor: folder.color }}
+                  />
+                  {folder.name}
+                  <span className="text-muted-foreground ml-1">
+                    ({agents.filter(a => a.folder_id === folder.id).length})
+                  </span>
+                </Button>
+              ))}
+            </div>
+          )}
+
           {(searchQuery || statusFilter !== "all") && (
             <p className="mb-4 text-xs sm:text-sm text-muted-foreground">
               {filteredAgents.length}件のエージェントが見つかりました
@@ -313,122 +546,13 @@ export default function Agents() {
                 </div>
               </div>
             </div>
-          ) : (
-            /* Agent Grid */
+          ) : selectedFolderId !== null ? (
+            /* Show only selected folder's agents in grid */
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-              {filteredAgents.map((agent, index) => {
-                const voiceInfo = getVoiceInfo(agent.voice_id);
-                const isPublished = agent.status === "published";
-                const isReady = !!agent.elevenlabs_agent_id;
-
-                return (
-                  <div
-                    key={agent.id}
-                    className="glass rounded-xl card-shadow transition-all duration-200 hover:shadow-lg hover:border-primary/30 animate-fade-in group"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <div className="p-5">
-                      {/* Header */}
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
-                            isPublished ? 'bg-green-500/10 text-green-600' : 'bg-primary/10 text-primary'
-                          }`}>
-                            <Bot className="h-6 w-6" />
-                          </div>
-                          <div>
-                            <Link to={`/agents/${agent.id}`}>
-                              <h3 className="font-semibold text-foreground hover:text-primary transition-colors line-clamp-1">
-                                {agent.name}
-                              </h3>
-                            </Link>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  <Badge
-                                    variant={isPublished ? "default" : "secondary"}
-                                    className="text-xs cursor-help"
-                                  >
-                                    {isPublished ? "公開中" : "下書き"}
-                                  </Badge>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  {isPublished 
-                                    ? "このエージェントは公開されており、通話を受け付けられます" 
-                                    : "このエージェントは下書き状態です。公開すると通話を受け付けられます"}
-                                </TooltipContent>
-                              </Tooltip>
-                              {isReady && (
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30 cursor-help">
-                                      通話可能
-                                    </Badge>
-                                  </TooltipTrigger>
-                                  <TooltipContent>
-                                    音声通話の準備が完了しています
-                                  </TooltipContent>
-                                </Tooltip>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/agents/${agent.id}`} className="flex items-center">
-                                <Edit className="mr-2 h-4 w-4" />
-                                編集する
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDuplicate(agent)}>
-                              <Copy className="mr-2 h-4 w-4" />
-                              コピーを作成
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => setDeleteAgentId(agent.id)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              削除する
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-
-                      {/* Description */}
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
-                        {agent.description || '説明が設定されていません'}
-                      </p>
-
-                      {/* Voice Info */}
-                      <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 mb-4">
-                        <Mic className="h-4 w-4 text-muted-foreground" />
-                        <div className="text-sm">
-                          <span className="font-medium text-foreground">{voiceInfo.name}</span>
-                          {voiceInfo.description && (
-                            <span className="text-muted-foreground"> · {voiceInfo.description}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Action Button */}
-                      <Button asChild variant="outline" className="w-full gap-2 group/btn">
-                        <Link to={`/agents/${agent.id}`}>
-                          設定を確認
-                          <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-
+              {filteredAgents.map((agent, index) => (
+                <AgentCard key={agent.id} agent={agent} index={index} />
+              ))}
+              
               {/* Create New Card */}
               <Link
                 to="/agents/new"
@@ -445,6 +569,119 @@ export default function Agents() {
                   </p>
                 </div>
               </Link>
+            </div>
+          ) : (
+            /* Show folders with collapsible sections */
+            <div className="space-y-6">
+              {/* Folders */}
+              {folders.map(folder => {
+                const folderAgents = agentsByFolder[folder.id] || [];
+                const isExpanded = expandedFolders.has(folder.id);
+                
+                return (
+                  <Collapsible
+                    key={folder.id}
+                    open={isExpanded}
+                    onOpenChange={() => toggleFolder(folder.id)}
+                  >
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors group">
+                        <div
+                          className="h-8 w-8 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${folder.color}20` }}
+                        >
+                          {isExpanded ? (
+                            <FolderOpen className="h-4 w-4" style={{ color: folder.color }} />
+                          ) : (
+                            <Folder className="h-4 w-4" style={{ color: folder.color }} />
+                          )}
+                        </div>
+                        <span className="font-medium text-foreground">{folder.name}</span>
+                        <Badge variant="secondary" className="text-xs">
+                          {folderAgents.length}
+                        </Badge>
+                        <ChevronRight
+                          className={`h-4 w-4 text-muted-foreground ml-auto transition-transform ${
+                            isExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      {folderAgents.length === 0 ? (
+                        <div className="ml-11 py-4 text-sm text-muted-foreground">
+                          このフォルダにはエージェントがありません
+                        </div>
+                      ) : (
+                        <div className="ml-11 mt-3 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                          {folderAgents.map((agent, index) => (
+                            <AgentCard key={agent.id} agent={agent} index={index} />
+                          ))}
+                        </div>
+                      )}
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              })}
+
+              {/* Agents without folder */}
+              {agentsWithoutFolder.length > 0 && (
+                <div>
+                  {folders.length > 0 && (
+                    <div className="flex items-center gap-3 p-3 mb-3">
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center bg-muted">
+                        <Folder className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <span className="font-medium text-foreground">フォルダなし</span>
+                      <Badge variant="secondary" className="text-xs">
+                        {agentsWithoutFolder.length}
+                      </Badge>
+                    </div>
+                  )}
+                  <div className={`grid gap-5 md:grid-cols-2 lg:grid-cols-3 ${folders.length > 0 ? 'ml-11' : ''}`}>
+                    {agentsWithoutFolder.map((agent, index) => (
+                      <AgentCard key={agent.id} agent={agent} index={index} />
+                    ))}
+                    
+                    {/* Create New Card */}
+                    <Link
+                      to="/agents/new"
+                      className="glass rounded-xl card-shadow border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 animate-fade-in flex items-center justify-center min-h-[280px] group"
+                      style={{ animationDelay: `${agentsWithoutFolder.length * 50}ms` }}
+                    >
+                      <div className="text-center p-6">
+                        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                          <Plus className="h-7 w-7" />
+                        </div>
+                        <p className="font-semibold text-foreground mb-1">新しいエージェントを作成</p>
+                        <p className="text-sm text-muted-foreground">
+                          数分で音声AIを構築できます
+                        </p>
+                      </div>
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Show create card when only folders exist with no loose agents */}
+              {agentsWithoutFolder.length === 0 && folders.length > 0 && (
+                <div className="ml-11">
+                  <Link
+                    to="/agents/new"
+                    className="glass rounded-xl card-shadow border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 flex items-center justify-center min-h-[200px] group max-w-sm"
+                  >
+                    <div className="text-center p-6">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                        <Plus className="h-7 w-7" />
+                      </div>
+                      <p className="font-semibold text-foreground mb-1">新しいエージェントを作成</p>
+                      <p className="text-sm text-muted-foreground">
+                        数分で音声AIを構築できます
+                      </p>
+                    </div>
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
