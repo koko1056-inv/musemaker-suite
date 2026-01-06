@@ -171,7 +171,7 @@ serve(async (req) => {
             },
             turn: {
               mode: 'turn',
-              turn_timeout: agentConfig.vad_silence_duration_ms ?? 500,
+              turn_timeout: 10,
             },
             stt: {
               vad: {
@@ -228,7 +228,7 @@ serve(async (req) => {
             },
             turn: {
               mode: 'turn',
-              turn_timeout: agentConfig.vad_silence_duration_ms ?? 500,
+              turn_timeout: 10,
             },
             stt: {
               vad: {
