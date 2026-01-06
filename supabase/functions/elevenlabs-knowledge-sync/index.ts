@@ -21,11 +21,14 @@ serve(async (req) => {
       throw new Error('ElevenLabs API key is not configured');
     }
 
-    const { action, knowledgeItem, documentId } = await req.json();
+    const reqBody = await req.json();
+    const { action, knowledgeItem, documentId, agentId, elevenlabsAgentId, documentIds } = reqBody;
 
-    console.log(`Processing ${action} action for knowledge item`, { 
+    console.log(`Processing ${action} action`, { 
       itemId: knowledgeItem?.id, 
-      documentId 
+      documentId,
+      agentId,
+      elevenlabsAgentId 
     });
 
     if (action === 'create' || action === 'update') {
@@ -118,7 +121,7 @@ serve(async (req) => {
 
     } else if (action === 'sync_agent') {
       // Sync knowledge base documents to an agent
-      const { agentId, elevenlabsAgentId, documentIds } = await req.json();
+      // Variables already extracted from reqBody at the top
 
       if (!elevenlabsAgentId) {
         throw new Error('ElevenLabs agent ID is required');
