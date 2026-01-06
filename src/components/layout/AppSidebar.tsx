@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import musaLogo from "@/assets/musa-logo.png";
 import {
   LayoutDashboard,
@@ -48,6 +49,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   const currentLocation = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { workspace, isLoading: isWorkspaceLoading } = useWorkspace();
 
   const handleSignOut = async () => {
     await signOut();
@@ -55,6 +57,7 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
   };
 
   const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
+  const workspaceInitial = workspace?.name?.charAt(0).toUpperCase() || "W";
 
   const handleNavClick = () => {
     onNavigate?.();
@@ -72,26 +75,21 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
       </div>
 
       {/* Workspace Selector */}
-      <div className="px-4 py-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3 text-left transition-colors hover:bg-sidebar-accent">
+      {workspace && (
+        <div className="px-4 py-2">
+          <div className="flex w-full items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
-              <span className="text-xs font-serif font-medium">S</span>
+              <span className="text-xs font-serif font-medium">{workspaceInitial}</span>
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-serif font-medium text-sidebar-foreground truncate">
-                株式会社サンプル
+                {workspace.name}
               </p>
-              <p className="text-xs text-muted-foreground">Pro</p>
+              <p className="text-xs text-muted-foreground capitalize">{workspace.plan}</p>
             </div>
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem className="font-serif">株式会社サンプル</DropdownMenuItem>
-            <DropdownMenuItem className="font-serif">個人ワークスペース</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
