@@ -56,7 +56,6 @@ export default function Settings() {
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
-  const [workspaceSlug, setWorkspaceSlug] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
   
   // Twilio credentials state
@@ -69,7 +68,6 @@ export default function Settings() {
   useEffect(() => {
     if (workspace) {
       setWorkspaceName(workspace.name);
-      setWorkspaceSlug(workspace.slug);
       // If there's an API key saved, show placeholder
       if (workspace.elevenlabs_api_key) {
         setApiKey("••••••••••••••••");
@@ -87,16 +85,13 @@ export default function Settings() {
   // Track changes
   useEffect(() => {
     if (workspace) {
-      setHasChanges(
-        workspaceName !== workspace.name || workspaceSlug !== workspace.slug
-      );
+      setHasChanges(workspaceName !== workspace.name);
     }
-  }, [workspaceName, workspaceSlug, workspace]);
+  }, [workspaceName, workspace]);
 
   const handleSaveWorkspace = async () => {
     const success = await updateWorkspace({
       name: workspaceName,
-      slug: workspaceSlug,
     });
     if (success) {
       setHasChanges(false);
@@ -213,22 +208,6 @@ export default function Settings() {
                       className="h-9 sm:h-10 text-sm"
                       disabled={!isAuthenticated}
                     />
-                  </div>
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="workspace-slug" className="text-sm">ワークスペースURL</Label>
-                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
-                      <span className="inline-flex items-center px-3 py-2 sm:py-0 rounded-md sm:rounded-l-md sm:rounded-r-none border sm:border-r-0 border-input bg-muted text-xs sm:text-sm text-muted-foreground">
-                        callcenter-ex.ai/
-                      </span>
-                      <Input
-                        id="workspace-slug"
-                        value={workspaceSlug}
-                        onChange={(e) => setWorkspaceSlug(e.target.value)}
-                        placeholder="workspace-url"
-                        className="rounded-md sm:rounded-l-none h-9 sm:h-10 text-sm"
-                        disabled={!isAuthenticated}
-                      />
-                    </div>
                   </div>
                 </div>
               )}
