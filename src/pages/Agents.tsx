@@ -108,7 +108,7 @@ export default function Agents() {
   return (
     <AppLayout>
       <TooltipProvider>
-        <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto mobile-safe-bottom">
+        <div className="p-4 md:p-6 lg:p-8 max-w-6xl mobile-safe-bottom">
           {/* Header with welcome message */}
           <div className="mb-5 sm:mb-6 md:mb-8">
             <div className="flex flex-col gap-3 sm:gap-4">
