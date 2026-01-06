@@ -23,6 +23,9 @@ import {
   LayoutTemplate,
   Bot,
   Volume2,
+  Folder,
+  Globe,
+  FileEdit,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
@@ -37,9 +40,17 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useElevenLabs } from "@/hooks/useElevenLabs";
 import { VoiceCallPanel } from "@/components/voice/VoiceCallPanel";
 import { useAgents } from "@/hooks/useAgents";
+import { useAgentFolders } from "@/hooks/useAgentFolders";
 import { toast } from "sonner";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
@@ -71,6 +82,7 @@ export default function AgentEditor() {
   const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
   const [iconName, setIconName] = useState("bot");
   const [iconColor, setIconColor] = useState("#10b981");
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   
   // VAD settings
   const [vadThreshold, setVadThreshold] = useState(0.5);
@@ -87,6 +99,7 @@ export default function AgentEditor() {
 
   const { isLoading: isPlayingAudio, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
+  const { folders } = useAgentFolders();
 
   // Fetch ElevenLabs voices on mount
   useEffect(() => {
@@ -123,6 +136,7 @@ export default function AgentEditor() {
           setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
           setIconName((agent as any).icon_name || "bot");
           setIconColor((agent as any).icon_color || "#10b981");
+          setSelectedFolderId(agent.folder_id || null);
           // VAD settings
           setVadThreshold((agent as any).vad_threshold ?? 0.5);
           setVadSilenceDuration((agent as any).vad_silence_duration_ms ?? 500);
@@ -164,6 +178,7 @@ export default function AgentEditor() {
         fallback_behavior: "end",
         icon_name: iconName,
         icon_color: iconColor,
+        folder_id: selectedFolderId,
         // VAD settings
         vad_mode: "server_vad",
         vad_threshold: vadThreshold,
@@ -189,7 +204,7 @@ export default function AgentEditor() {
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
     status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
-    iconName, iconColor, vadThreshold, vadSilenceDuration, vadPrefixPadding
+    iconName, iconColor, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
@@ -358,19 +373,25 @@ export default function AgentEditor() {
 
             <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end min-h-[40px]">
               {!isNew && (
-                <Badge
-                  variant={status === "published" ? "default" : "secondary"}
-                  className="gap-1.5 hidden sm:flex px-3 py-1"
+                <Button
+                  variant={status === "published" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleSave(status === "published" ? "draft" : "published")}
+                  disabled={isSaving}
+                  className="gap-1.5 rounded-xl"
                 >
-                  <Circle
-                    className={`h-2 w-2 ${
-                      status === "published"
-                        ? "fill-primary-foreground"
-                        : "fill-muted-foreground"
-                    }`}
-                  />
-                  {status === "published" ? "公開中" : "下書き"}
-                </Badge>
+                  {status === "published" ? (
+                    <>
+                      <FileEdit className="h-4 w-4" />
+                      <span className="hidden sm:inline">下書きに戻す</span>
+                    </>
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4" />
+                      <span className="hidden sm:inline">公開する</span>
+                    </>
+                  )}
+                </Button>
               )}
               
               {elevenlabsAgentId && (
@@ -509,6 +530,41 @@ export default function AgentEditor() {
                       onIconChange={setIconName}
                       onColorChange={setIconColor}
                     />
+
+                    {/* Folder Selection */}
+                    {folders.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="flex items-center gap-2 text-base font-semibold">
+                          <Folder className="h-4 w-4" />
+                          フォルダ
+                        </Label>
+                        <Select
+                          value={selectedFolderId || "none"}
+                          onValueChange={(value) => setSelectedFolderId(value === "none" ? null : value)}
+                        >
+                          <SelectTrigger className="h-12">
+                            <SelectValue placeholder="フォルダを選択" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">フォルダなし</SelectItem>
+                            {folders.map((folder) => (
+                              <SelectItem key={folder.id} value={folder.id}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="h-3 w-3 rounded-sm"
+                                    style={{ backgroundColor: folder.color }}
+                                  />
+                                  {folder.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2 bg-muted/50 px-3 py-2 rounded-lg">
+                          💡 フォルダで整理すると管理しやすくなります
+                        </p>
+                      </div>
+                    )}
 
                     <div className="space-y-4 p-4 rounded-xl bg-muted/30 border border-border/50">
                       <div className="flex items-start gap-3">
