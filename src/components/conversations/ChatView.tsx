@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ interface ChatViewProps {
   onMarkAsRead: (conversationId: string) => void;
 }
 
-export function ChatView({ 
+export const ChatView = memo(function ChatView({ 
   agent,
   onBack,
   dateFilter,
@@ -31,36 +31,39 @@ export function ChatView({
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
-  const handleSelectConversation = (conv: ConversationDisplay) => {
-    const newId = selectedConversationId === conv.id ? null : conv.id;
-    setSelectedConversationId(newId);
-    
-    if (newId && !conv.isRead) {
-      onMarkAsRead(conv.id);
-    }
-  };
+  const handleSelectConversation = useCallback((conv: ConversationDisplay) => {
+    setSelectedConversationId(prevId => {
+      const newId = prevId === conv.id ? null : conv.id;
+      if (newId && !conv.isRead) {
+        onMarkAsRead(conv.id);
+      }
+      return newId;
+    });
+  }, [onMarkAsRead]);
   
-  const filteredConversations = agent.conversations.filter((conv) => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const monthAgo = new Date(today);
-    monthAgo.setMonth(monthAgo.getMonth() - 1);
+  const filteredConversations = useMemo(() => {
+    return agent.conversations.filter((conv) => {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
 
-    let matchesDate = true;
-    if (dateFilter === "today") {
-      matchesDate = conv.rawDate >= today;
-    } else if (dateFilter === "week") {
-      matchesDate = conv.rawDate >= weekAgo;
-    } else if (dateFilter === "month") {
-      matchesDate = conv.rawDate >= monthAgo;
-    }
+      let matchesDate = true;
+      if (dateFilter === "today") {
+        matchesDate = conv.rawDate >= today;
+      } else if (dateFilter === "week") {
+        matchesDate = conv.rawDate >= weekAgo;
+      } else if (dateFilter === "month") {
+        matchesDate = conv.rawDate >= monthAgo;
+      }
 
-    const matchesStatus = statusFilter === "all" || conv.status === statusFilter;
-    
-    return matchesDate && matchesStatus;
-  });
+      const matchesStatus = statusFilter === "all" || conv.status === statusFilter;
+      
+      return matchesDate && matchesStatus;
+    });
+  }, [agent.conversations, dateFilter, statusFilter]);
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
@@ -232,4 +235,4 @@ export function ChatView({
       </ScrollArea>
     </div>
   );
-}
+});

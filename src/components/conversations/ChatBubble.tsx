@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 import type { TranscriptMessage } from "./types";
 
@@ -9,7 +10,7 @@ interface ChatBubbleProps {
   showAvatar: boolean;
 }
 
-export function ChatBubble({ 
+export const ChatBubble = memo(function ChatBubble({ 
   message, 
   isAgent, 
   agentIcon, 
@@ -41,4 +42,4 @@ export function ChatBubble({
       </div>
     </div>
   );
-}
+});
