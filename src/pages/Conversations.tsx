@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -51,10 +52,17 @@ import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Slider } from "@/components/ui/slider";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
+import { supabase } from "@/integrations/supabase/client";
 
 interface TranscriptMessage {
   role: 'agent' | 'user';
   text: string;
+}
+
+interface ExtractedDataItem {
+  field_key: string;
+  field_value: string;
+  field_name?: string;
 }
 
 interface ConversationDisplay {
@@ -77,7 +85,7 @@ interface ConversationDisplay {
   iconName: string;
   iconColor: string;
   isRead: boolean;
-  extractedData: Record<string, string>;
+  extractedData: ExtractedDataItem[];
 }
 
 interface AgentConversations {
@@ -401,7 +409,7 @@ function ConversationDetail({
   const hasSummary = conversation.summary && conversation.summary.trim().length > 0;
   const hasKeyPoints = conversation.keyPoints && conversation.keyPoints.length > 0;
   const hasActionItems = conversation.actionItems && conversation.actionItems.length > 0;
-  const hasExtractedData = conversation.extractedData && Object.keys(conversation.extractedData).length > 0;
+  const hasExtractedData = conversation.extractedData && conversation.extractedData.length > 0;
 
   return (
     <div className="space-y-4">
@@ -467,13 +475,20 @@ function ConversationDetail({
             <span className="text-sm font-medium text-violet-800 dark:text-violet-200">抽出データ</span>
           </div>
           <div className="grid gap-2">
-            {Object.entries(conversation.extractedData).map(([key, value]) => (
-              <div key={key} className="flex items-start justify-between gap-2 text-sm">
-                <span className="text-violet-600 dark:text-violet-400 font-mono text-xs bg-violet-100 dark:bg-violet-900/50 px-2 py-0.5 rounded">
-                  {key}
-                </span>
-                <span className="text-violet-900 dark:text-violet-100 text-right flex-1 truncate">
-                  {value}
+            {conversation.extractedData.map((item) => (
+              <div key={item.field_key} className="flex items-start justify-between gap-2 text-sm">
+                <div className="flex flex-col gap-0.5">
+                  {item.field_name && (
+                    <span className="text-violet-800 dark:text-violet-200 text-xs font-medium">
+                      {item.field_name}
+                    </span>
+                  )}
+                  <span className="text-violet-600 dark:text-violet-400 font-mono text-xs bg-violet-100 dark:bg-violet-900/50 px-2 py-0.5 rounded inline-block w-fit">
+                    {item.field_key}
+                  </span>
+                </div>
+                <span className="text-violet-900 dark:text-violet-100 text-right flex-1 truncate font-medium">
+                  {item.field_value}
                 </span>
               </div>
             ))}
@@ -1152,6 +1167,30 @@ export default function Conversations() {
   const { workspace } = useWorkspace();
   const { phoneNumbers, assignToAgent, unassignFromAgent } = usePhoneNumbers(workspace?.id);
 
+  // Fetch all extraction fields for all agents to map field_key to field_name
+  const { data: allExtractionFields = [] } = useQuery({
+    queryKey: ["all-extraction-fields"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("agent_extraction_fields")
+        .select("agent_id, field_key, field_name");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Create a lookup map: agentId -> { field_key -> field_name }
+  const extractionFieldNameMap = useMemo(() => {
+    const map = new Map<string, Map<string, string>>();
+    allExtractionFields.forEach((field) => {
+      if (!map.has(field.agent_id)) {
+        map.set(field.agent_id, new Map());
+      }
+      map.get(field.agent_id)!.set(field.field_key, field.field_name);
+    });
+    return map;
+  }, [allExtractionFields]);
+
   // Get phone number for an agent
   const getAgentPhoneNumber = (agentId: string) => {
     return phoneNumbers.find(p => p.agent_id === agentId);
@@ -1213,22 +1252,36 @@ export default function Conversations() {
       iconColor: (conv.agent as any)?.icon_color || '#10b981',
       isRead: conv.is_read,
       extractedData: (() => {
-        const data: Record<string, string> = {};
+        const items: ExtractedDataItem[] = [];
+        const agentFieldMap = extractionFieldNameMap.get(conv.agent_id);
         const extracted = (conv as any).extracted_data;
         if (Array.isArray(extracted)) {
           extracted.forEach((item: { field_key: string; field_value: string }) => {
-            data[item.field_key] = item.field_value;
+            items.push({
+              field_key: item.field_key,
+              field_value: item.field_value || '',
+              field_name: agentFieldMap?.get(item.field_key),
+            });
           });
         }
         // Also check metadata.extracted_data
         const metadataExtracted = conv.metadata?.extracted_data;
-        if (metadataExtracted) {
-          Object.assign(data, metadataExtracted);
+        if (metadataExtracted && typeof metadataExtracted === 'object') {
+          Object.entries(metadataExtracted).forEach(([key, value]) => {
+            // Don't add duplicates
+            if (!items.find(i => i.field_key === key)) {
+              items.push({
+                field_key: key,
+                field_value: String(value || ''),
+                field_name: agentFieldMap?.get(key),
+              });
+            }
+          });
         }
-        return data;
+        return items;
       })(),
     })),
-    [conversations]
+    [conversations, extractionFieldNameMap]
   );
 
   // Group conversations by agent
