@@ -131,7 +131,11 @@ serve(async (req) => {
     formData.append('From', phoneNumber.phone_number);
     formData.append('Url', twimlUrl);
     formData.append('StatusCallback', `${supabaseUrl}/functions/v1/twilio-call-status?outboundCallId=${outboundCall.id}`);
-    formData.append('StatusCallbackEvent', 'initiated ringing answered completed');
+    // StatusCallbackEvent must be passed as separate parameters, not space-separated
+    formData.append('StatusCallbackEvent', 'initiated');
+    formData.append('StatusCallbackEvent', 'ringing');
+    formData.append('StatusCallbackEvent', 'answered');
+    formData.append('StatusCallbackEvent', 'completed');
 
     const twilioResponse = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Calls.json`,

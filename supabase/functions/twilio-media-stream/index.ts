@@ -11,25 +11,30 @@ Deno.serve(async (req) => {
     return new Response("Expected WebSocket connection", { status: 426 });
   }
 
-  const url = new URL(req.url);
-  const agentId = url.searchParams.get('agentId');
-  const outboundCallId = url.searchParams.get('outboundCallId');
-
-  console.log(`WebSocket connection request for agent ${agentId}, outbound call ${outboundCallId}`);
+  console.log("WebSocket upgrade request received");
 
   // CRITICAL: Upgrade to WebSocket FIRST before any async operations
   const { socket: twilioSocket, response } = Deno.upgradeWebSocket(req);
 
-  // Initialize variables
+  // Initialize variables - these will be set from Twilio's "start" event customParameters
   let elevenLabsSocket: WebSocket | null = null;
   let streamSid: string | null = null;
   let callSid: string | null = null;
+  let agentId: string | null = null;
+  let outboundCallId: string | null = null;
+  let elevenLabsInitialized = false;
 
-  twilioSocket.onopen = async () => {
-    console.log("Twilio WebSocket connected");
-    
+  // Function to initialize ElevenLabs connection after we have the agentId
+  const initializeElevenLabs = async () => {
+    if (!agentId || elevenLabsInitialized) {
+      return;
+    }
+    elevenLabsInitialized = true;
+
     try {
       const supabase = createClient(supabaseUrl, supabaseKey);
+
+      console.log(`Initializing ElevenLabs for agent ${agentId}`);
 
       // Get agent details to get ElevenLabs agent ID
       const { data: agent, error: agentError } = await supabase
@@ -78,7 +83,7 @@ Deno.serve(async (req) => {
       }
 
       const { signed_url } = await signedUrlResponse.json();
-      console.log('Got ElevenLabs signed URL');
+      console.log('Got ElevenLabs signed URL, connecting...');
 
       // Connect to ElevenLabs WebSocket
       elevenLabsSocket = new WebSocket(signed_url);
@@ -162,16 +167,30 @@ Deno.serve(async (req) => {
     }
   };
 
+  twilioSocket.onopen = () => {
+    console.log("Twilio WebSocket connected, waiting for start event with parameters...");
+  };
+
   twilioSocket.onmessage = (event) => {
     try {
       const data = JSON.parse(event.data);
 
       switch (data.event) {
         case "start":
-          // Twilio stream started
+          // Twilio stream started - extract custom parameters
           streamSid = data.start.streamSid;
           callSid = data.start.callSid;
+          
+          // Get parameters from customParameters (sent via TwiML <Parameter> tags)
+          const customParams = data.start.customParameters || {};
+          agentId = customParams.agentId || null;
+          outboundCallId = customParams.outboundCallId || null;
+          
           console.log(`Stream started: ${streamSid}, Call: ${callSid}`);
+          console.log(`Custom parameters - agentId: ${agentId}, outboundCallId: ${outboundCallId}`);
+          
+          // Now that we have the agentId, initialize ElevenLabs
+          initializeElevenLabs();
           break;
 
         case "media":
