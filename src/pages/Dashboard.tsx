@@ -163,7 +163,7 @@ export default function Dashboard() {
                     <Link
                       key={agent.id}
                       to={`/agents/${agent.id}`}
-                      className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
+                      className="flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
                     >
                       <div className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl transition-colors shrink-0 ${
                         agent.status === "published" 
@@ -172,9 +172,9 @@ export default function Dashboard() {
                       }`}>
                         <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-medium truncate text-sm sm:text-base">{agent.name}</p>
+                      <div className="flex-1 min-w-0 overflow-hidden">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <p className="font-medium text-sm sm:text-base truncate max-w-[140px] sm:max-w-none">{agent.name}</p>
                           <Badge 
                             variant={agent.status === "published" ? "default" : "secondary"}
                             className="text-[10px] sm:text-xs shrink-0"
@@ -182,11 +182,11 @@ export default function Dashboard() {
                             {agent.status === "published" ? "公開中" : "下書き"}
                           </Badge>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:truncate">
                           {agent.description || "説明なし"}
                         </p>
                       </div>
-                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0 mt-1 sm:mt-0" />
                     </Link>
                   ))}
                 </div>
