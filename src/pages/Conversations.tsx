@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Search,
   Phone,
@@ -24,6 +23,8 @@ import {
   Bot,
   MessageCircle,
   Calendar,
+  ChevronRight,
+  User,
 } from "lucide-react";
 import { useConversations } from "@/hooks/useConversations";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
@@ -84,9 +85,8 @@ function formatRelativeDate(date: Date): string {
   if (isThisWeek(date)) {
     return format(date, 'EEEE', { locale: ja });
   }
-  return format(date, 'yyyy/MM/dd', { locale: ja });
+  return format(date, 'M/d', { locale: ja });
 }
-
 
 function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -130,12 +130,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   };
 
   return (
-    <div className="bg-background/80 rounded-2xl p-4 space-y-3 mx-4 mb-4">
-      <div className="flex items-center gap-2">
-        <Volume2 className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm font-medium">通話録音</span>
-      </div>
-      
+    <div className="flex items-center gap-3 bg-muted/50 rounded-full px-4 py-2 max-w-[280px]">
       <audio
         ref={audioRef}
         src={audioUrl}
@@ -144,39 +139,37 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
         onEnded={handleEnded}
       />
       
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 rounded-full"
-          onClick={togglePlayPause}
-        >
-          {isPlaying ? (
-            <Pause className="h-4 w-4" />
-          ) : (
-            <Play className="h-4 w-4 ml-0.5" />
-          )}
-        </Button>
-        
-        <div className="flex-1 space-y-1">
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="cursor-pointer"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatDuration(Math.floor(currentTime))}</span>
-            <span>{formatDuration(Math.floor(duration))}</span>
-          </div>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 rounded-full shrink-0"
+        onClick={togglePlayPause}
+      >
+        {isPlaying ? (
+          <Pause className="h-4 w-4" />
+        ) : (
+          <Play className="h-4 w-4 ml-0.5" />
+        )}
+      </Button>
+      
+      <div className="flex-1 space-y-0.5 min-w-0">
+        <Slider
+          value={[currentTime]}
+          max={duration || 100}
+          step={0.1}
+          onValueChange={handleSeek}
+          className="cursor-pointer"
+        />
+        <div className="flex justify-between text-[10px] text-muted-foreground">
+          <span>{formatDuration(Math.floor(currentTime))}</span>
+          <span>{formatDuration(Math.floor(duration))}</span>
         </div>
       </div>
     </div>
   );
 }
 
-// Agent List Item Component
+// Agent List Item Component - LINE style
 function AgentListItem({ 
   agent, 
   isSelected, 
@@ -191,30 +184,32 @@ function AgentListItem({
   
   return (
     <div
-      className={`flex items-center gap-3 p-4 cursor-pointer transition-all duration-200 border-b border-border/30 ${
+      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
         isSelected 
-          ? 'bg-primary/10' 
-          : 'hover:bg-muted/50 active:bg-muted'
+          ? 'bg-primary/8' 
+          : 'hover:bg-muted/50 active:bg-muted/70'
       }`}
       onClick={onClick}
     >
       {/* Agent Avatar */}
-      <div className="relative">
+      <div className="relative shrink-0">
         <div 
-          className="h-14 w-14 rounded-full flex items-center justify-center"
+          className="h-12 w-12 rounded-full flex items-center justify-center shadow-sm"
           style={{ backgroundColor: agent.iconColor }}
         >
-          <IconComponent className="h-7 w-7 text-white" />
+          <IconComponent className="h-6 w-6 text-white" />
         </div>
-        {lastConv.status === 'in_progress' && (
-          <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-green-500 rounded-full border-2 border-background" />
+        {agent.totalConversations > 1 && (
+          <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
+            <span className="text-[10px] font-bold text-primary-foreground">{agent.totalConversations}</span>
+          </div>
         )}
       </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <span className="font-semibold text-foreground truncate">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-foreground truncate">
             {agent.agentName}
           </span>
           <span className="text-xs text-muted-foreground shrink-0">
@@ -222,31 +217,196 @@ function AgentListItem({
           </span>
         </div>
         
-        <div className="flex items-center gap-2">
-          <div className="flex-1 min-w-0">
-            {lastConv.summary ? (
-              <p className="text-sm text-muted-foreground truncate">
-                {lastConv.summary}
-              </p>
-            ) : lastConv.transcript.length > 0 ? (
-              <p className="text-sm text-muted-foreground truncate">
-                {lastConv.transcript[lastConv.transcript.length - 1]?.text || '通話記録あり'}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground truncate flex items-center gap-1">
-                <Phone className="h-3 w-3" />
-                通話時間 {lastConv.duration}
-              </p>
-            )}
-          </div>
-          
-          {/* Badge */}
-          {agent.totalConversations > 1 && (
-            <Badge variant="secondary" className="shrink-0 h-5 min-w-[20px] text-xs">
-              {agent.totalConversations}
-            </Badge>
+        <p className="text-sm text-muted-foreground truncate mt-0.5">
+          {lastConv.summary 
+            ? lastConv.summary 
+            : lastConv.transcript.length > 0 
+              ? lastConv.transcript[lastConv.transcript.length - 1]?.text 
+              : `通話時間 ${lastConv.duration}`
+          }
+        </p>
+      </div>
+
+      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+    </div>
+  );
+}
+
+// Chat Message Bubble
+function ChatBubble({ 
+  message, 
+  isAgent, 
+  agentIcon, 
+  agentColor,
+  showAvatar 
+}: { 
+  message: TranscriptMessage;
+  isAgent: boolean;
+  agentIcon: string;
+  agentColor: string;
+  showAvatar: boolean;
+}) {
+  const IconComponent = getAgentIcon(agentIcon);
+  
+  return (
+    <div className={`flex gap-2 ${isAgent ? 'justify-start' : 'justify-end'}`}>
+      {isAgent && showAvatar && (
+        <div 
+          className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 mt-1"
+          style={{ backgroundColor: agentColor }}
+        >
+          <IconComponent className="h-4 w-4 text-white" />
+        </div>
+      )}
+      {isAgent && !showAvatar && <div className="w-8 shrink-0" />}
+      
+      <div
+        className={`max-w-[75%] px-4 py-2.5 ${
+          isAgent
+            ? 'bg-muted rounded-2xl rounded-tl-md'
+            : 'bg-[#06C755] text-white rounded-2xl rounded-tr-md'
+        }`}
+      >
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
+      </div>
+    </div>
+  );
+}
+
+// Conversation Detail Component
+function ConversationDetail({
+  conversation,
+  agentIconName,
+  agentIconColor,
+}: {
+  conversation: ConversationDisplay;
+  agentIconName: string;
+  agentIconColor: string;
+}) {
+  return (
+    <div className="space-y-4">
+      {/* Metadata Header */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {format(conversation.rawDate, 'M月d日 HH:mm', { locale: ja })}
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock className="h-3.5 w-3.5" />
+            {conversation.duration}
+          </span>
+          {conversation.phone !== '不明' && (
+            <span className="flex items-center gap-1">
+              <Phone className="h-3.5 w-3.5" />
+              {conversation.phone}
+            </span>
           )}
         </div>
+        <Badge
+          variant={
+            conversation.status === "completed" ? "default" : 
+            conversation.status === "in_progress" ? "secondary" : "destructive"
+          }
+          className="gap-1 text-xs font-normal"
+        >
+          {conversation.status === "completed" ? (
+            <CheckCircle className="h-3 w-3" />
+          ) : conversation.status === "in_progress" ? (
+            <Clock className="h-3 w-3" />
+          ) : (
+            <XCircle className="h-3 w-3" />
+          )}
+          {conversation.status === "completed" ? "完了" : 
+           conversation.status === "in_progress" ? "通話中" : "失敗"}
+        </Badge>
+      </div>
+
+      {/* Summary Card */}
+      {conversation.summary && (
+        <div className="bg-muted/30 rounded-2xl p-4">
+          <div className="flex items-start gap-3">
+            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <FileText className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground mb-1">AI要約</p>
+              <p className="text-sm leading-relaxed">{conversation.summary}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Key Points & Action Items */}
+      {(conversation.keyPoints.length > 0 || conversation.actionItems.length > 0) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {conversation.keyPoints.length > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-medium text-amber-800 dark:text-amber-200">重要ポイント</span>
+              </div>
+              <ul className="space-y-1.5">
+                {conversation.keyPoints.map((point, i) => (
+                  <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
+                    <span className="text-amber-500 mt-1">•</span>
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {conversation.actionItems.length > 0 && (
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                <span className="text-sm font-medium text-emerald-800 dark:text-emerald-200">アクション</span>
+              </div>
+              <ul className="space-y-1.5">
+                {conversation.actionItems.map((item, i) => (
+                  <li key={i} className="text-sm text-emerald-900 dark:text-emerald-100 flex items-start gap-2">
+                    <span className="text-emerald-500 mt-1">□</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Audio Player */}
+      {conversation.audioUrl && (
+        <div className="flex justify-center">
+          <AudioPlayer audioUrl={conversation.audioUrl} />
+        </div>
+      )}
+
+      {/* Chat Transcript */}
+      <div className="space-y-2">
+        {conversation.transcript.length > 0 ? (
+          conversation.transcript.map((msg, i, arr) => {
+            const prevMsg = arr[i - 1];
+            const showAvatar = !prevMsg || prevMsg.role !== msg.role;
+            
+            return (
+              <ChatBubble
+                key={i}
+                message={msg}
+                isAgent={msg.role === 'agent'}
+                agentIcon={agentIconName}
+                agentColor={agentIconColor}
+                showAvatar={showAvatar}
+              />
+            );
+          })
+        ) : (
+          <div className="text-center py-8 text-muted-foreground">
+            <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm">トランスクリプトがありません</p>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -297,20 +457,20 @@ function ChatView({
   const selectedConversation = filteredConversations.find(c => c.id === selectedConversationId);
 
   return (
-    <div className="flex flex-col h-full bg-muted/20">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 bg-background border-b border-border">
+    <div className="flex flex-col h-full w-full bg-background">
+      {/* Header - LINE style */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-border sticky top-0 z-10">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden shrink-0"
+          className="md:hidden h-9 w-9 shrink-0"
           onClick={onBack}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         
         <div 
-          className="h-10 w-10 rounded-full flex items-center justify-center"
+          className="h-10 w-10 rounded-full flex items-center justify-center shadow-sm shrink-0"
           style={{ backgroundColor: agent.iconColor }}
         >
           <IconComponent className="h-5 w-5 text-white" />
@@ -322,262 +482,154 @@ function ChatView({
             {agent.totalConversations}件の会話
           </p>
         </div>
-
-        <div className="flex items-center gap-1">
-          <Bot className="h-4 w-4 text-muted-foreground" />
-        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 p-3 bg-background/50 border-b border-border/50">
-        <div className="flex gap-1">
-          {[
-            { value: "all" as const, label: "すべて" },
-            { value: "today" as const, label: "今日" },
-            { value: "week" as const, label: "今週" },
-            { value: "month" as const, label: "今月" },
-          ].map((option) => (
-            <Button
-              key={option.value}
-              variant={dateFilter === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setDateFilter(option.value)}
-              className="text-xs h-7 px-2"
-            >
-              {option.label}
-            </Button>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {[
-            { value: "all" as const, label: "全状況", icon: null },
-            { value: "completed" as const, label: "完了", icon: CheckCircle },
-            { value: "in_progress" as const, label: "進行中", icon: Clock },
-            { value: "failed" as const, label: "失敗", icon: XCircle },
-          ].map((option) => (
-            <Button
-              key={option.value}
-              variant={statusFilter === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setStatusFilter(option.value)}
-              className="text-xs h-7 px-2 gap-1"
-            >
-              {option.icon && <option.icon className="h-3 w-3" />}
-              {option.label}
-            </Button>
-          ))}
-        </div>
+      {/* Filter Pills - Clean horizontal scroll */}
+      <div className="border-b border-border bg-muted/30">
+        <ScrollArea className="w-full">
+          <div className="flex gap-2 p-3">
+            {[
+              { value: "all" as const, label: "すべて" },
+              { value: "today" as const, label: "今日" },
+              { value: "week" as const, label: "今週" },
+              { value: "month" as const, label: "今月" },
+            ].map((option) => (
+              <Button
+                key={option.value}
+                variant={dateFilter === option.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setDateFilter(option.value)}
+                className={`text-xs h-8 px-4 rounded-full whitespace-nowrap ${
+                  dateFilter === option.value 
+                    ? 'bg-foreground text-background hover:bg-foreground/90' 
+                    : 'bg-background hover:bg-muted'
+                }`}
+              >
+                {option.label}
+              </Button>
+            ))}
+            <div className="w-px bg-border mx-1" />
+            {[
+              { value: "all" as const, label: "全状況", icon: null },
+              { value: "completed" as const, label: "完了", icon: CheckCircle },
+              { value: "in_progress" as const, label: "通話中", icon: Clock },
+              { value: "failed" as const, label: "失敗", icon: XCircle },
+            ].map((option) => (
+              <Button
+                key={option.value}
+                variant={statusFilter === option.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setStatusFilter(option.value)}
+                className={`text-xs h-8 px-4 rounded-full whitespace-nowrap gap-1.5 ${
+                  statusFilter === option.value 
+                    ? 'bg-foreground text-background hover:bg-foreground/90' 
+                    : 'bg-background hover:bg-muted'
+                }`}
+              >
+                {option.icon && <option.icon className="h-3 w-3" />}
+                {option.label}
+              </Button>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Conversation List & Chat */}
+      {/* Conversation List */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-3">
+        <div className="p-4 space-y-4">
           {filteredConversations.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-30" />
-              <p>該当する会話がありません</p>
+            <div className="text-center py-16 text-muted-foreground">
+              <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
+              <p className="font-medium">該当する会話がありません</p>
+              <p className="text-sm mt-1">フィルターを調整してください</p>
             </div>
           ) : (
-            filteredConversations.map((conv) => (
-              <ConversationCard 
-                key={conv.id} 
-                conversation={conv}
-                isExpanded={selectedConversationId === conv.id}
-                onToggle={() => setSelectedConversationId(
-                  selectedConversationId === conv.id ? null : conv.id
-                )}
-                agentIconName={agent.iconName}
-                agentIconColor={agent.iconColor}
-              />
-            ))
+            filteredConversations.map((conv, index) => {
+              const isExpanded = selectedConversationId === conv.id;
+              const showDateSeparator = index === 0 || 
+                format(conv.rawDate, 'yyyy-MM-dd') !== format(filteredConversations[index - 1].rawDate, 'yyyy-MM-dd');
+              
+              return (
+                <div key={conv.id}>
+                  {/* Date Separator */}
+                  {showDateSeparator && (
+                    <div className="flex items-center justify-center mb-4">
+                      <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
+                        {isToday(conv.rawDate) ? '今日' : 
+                         isYesterday(conv.rawDate) ? '昨日' : 
+                         format(conv.rawDate, 'M月d日（E）', { locale: ja })}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Conversation Card */}
+                  <div 
+                    className={`bg-muted/30 rounded-2xl overflow-hidden transition-all duration-200 ${
+                      isExpanded ? 'ring-1 ring-primary/20' : 'hover:bg-muted/50 cursor-pointer'
+                    }`}
+                  >
+                    {/* Collapsed Header */}
+                    <div 
+                      className="flex items-center gap-3 p-4"
+                      onClick={() => setSelectedConversationId(isExpanded ? null : conv.id)}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium">
+                            {format(conv.rawDate, 'HH:mm')}
+                          </span>
+                          <span className="text-muted-foreground">•</span>
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {conv.duration}
+                          </span>
+                          {conv.phone !== '不明' && (
+                            <>
+                              <span className="text-muted-foreground">•</span>
+                              <span className="text-muted-foreground">{conv.phone}</span>
+                            </>
+                          )}
+                        </div>
+                        {conv.summary && (
+                          <p className={`text-sm text-muted-foreground mt-1 ${isExpanded ? '' : 'line-clamp-1'}`}>
+                            {conv.summary}
+                          </p>
+                        )}
+                      </div>
+                      <Badge
+                        variant={
+                          conv.status === "completed" ? "default" : 
+                          conv.status === "in_progress" ? "secondary" : "destructive"
+                        }
+                        className="shrink-0 gap-1 text-xs"
+                      >
+                        {conv.status === "completed" ? <CheckCircle className="h-3 w-3" /> : 
+                         conv.status === "in_progress" ? <Clock className="h-3 w-3" /> : 
+                         <XCircle className="h-3 w-3" />}
+                        {conv.status === "completed" ? "完了" : 
+                         conv.status === "in_progress" ? "通話中" : "失敗"}
+                      </Badge>
+                    </div>
+
+                    {/* Expanded Content */}
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-0 border-t border-border/50">
+                        <div className="pt-4">
+                          <ConversationDetail
+                            conversation={conv}
+                            agentIconName={agent.iconName}
+                            agentIconColor={agent.iconColor}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
           )}
         </div>
       </ScrollArea>
-    </div>
-  );
-}
-
-// Conversation Card Component
-function ConversationCard({
-  conversation,
-  isExpanded,
-  onToggle,
-  agentIconName,
-  agentIconColor,
-}: {
-  conversation: ConversationDisplay;
-  isExpanded: boolean;
-  onToggle: () => void;
-  agentIconName: string;
-  agentIconColor: string;
-}) {
-  const IconComponent = getAgentIcon(agentIconName);
-  return (
-    <div 
-      className={`bg-background rounded-2xl overflow-hidden transition-all duration-300 ${
-        isExpanded ? 'ring-2 ring-primary/30' : 'hover:bg-background/80'
-      }`}
-    >
-      {/* Card Header */}
-      <div 
-        className="p-4 cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm font-medium">
-              {format(conversation.rawDate, 'yyyy年M月d日 HH:mm', { locale: ja })}
-            </span>
-          </div>
-          <Badge
-            variant={
-              conversation.status === "completed" ? "default" : 
-              conversation.status === "in_progress" ? "secondary" : "destructive"
-            }
-            className="gap-1 text-xs"
-          >
-            {conversation.status === "completed" ? (
-              <CheckCircle className="h-3 w-3" />
-            ) : conversation.status === "in_progress" ? (
-              <Clock className="h-3 w-3" />
-            ) : (
-              <XCircle className="h-3 w-3" />
-            )}
-            {conversation.status === "completed" ? "完了" : 
-             conversation.status === "in_progress" ? "進行中" : "失敗"}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center gap-4 text-sm text-muted-foreground mb-2">
-          <span className="flex items-center gap-1">
-            <Phone className="h-3.5 w-3.5" />
-            {conversation.phone}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {conversation.duration}
-          </span>
-        </div>
-
-        {/* Summary Preview */}
-        {conversation.summary && (
-          <div className="flex items-start gap-2 p-3 rounded-xl bg-primary/5 mt-2">
-            <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <p className={`text-sm ${isExpanded ? '' : 'line-clamp-2'}`}>
-              {conversation.summary}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Expanded Content */}
-      {isExpanded && (
-        <div className="border-t border-border/50">
-          {/* AI Analysis */}
-          {(conversation.keyPoints.length > 0 || conversation.actionItems.length > 0 || conversation.sentiment) && (
-            <div className="p-4 bg-primary/5 space-y-3">
-              {conversation.sentiment && (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">センチメント:</span>
-                  <Badge 
-                    variant={
-                      conversation.sentiment === 'positive' ? 'default' :
-                      conversation.sentiment === 'negative' ? 'destructive' : 'secondary'
-                    }
-                    className="gap-1"
-                  >
-                    {conversation.sentiment === 'positive' && <TrendingUp className="h-3 w-3" />}
-                    {conversation.sentiment === 'negative' && <TrendingDown className="h-3 w-3" />}
-                    {conversation.sentiment === 'neutral' && <Minus className="h-3 w-3" />}
-                    {conversation.sentiment === 'positive' ? 'ポジティブ' :
-                     conversation.sentiment === 'negative' ? 'ネガティブ' : 'ニュートラル'}
-                  </Badge>
-                </div>
-              )}
-              
-              {conversation.keyPoints.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Lightbulb className="h-4 w-4 text-yellow-500" />
-                    重要ポイント
-                  </div>
-                  <ul className="space-y-1 text-sm ml-6">
-                    {conversation.keyPoints.map((point, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-primary">•</span>
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              {conversation.actionItems.length > 0 && (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    アクションアイテム
-                  </div>
-                  <ul className="space-y-1 text-sm ml-6">
-                    {conversation.actionItems.map((item, i) => (
-                      <li key={i} className="flex items-start gap-2">
-                        <span className="text-green-500">□</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Audio Player */}
-          {conversation.audioUrl && (
-            <AudioPlayer audioUrl={conversation.audioUrl} />
-          )}
-
-          {/* Transcript - Chat Style */}
-          <div className="p-4">
-            <h4 className="font-medium mb-4 flex items-center gap-2">
-              <MessageCircle className="h-4 w-4" />
-              トランスクリプト
-            </h4>
-            <div className="space-y-3">
-              {conversation.transcript.length > 0 ? (
-                conversation.transcript.map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`flex ${msg.role === "agent" ? "justify-start" : "justify-end"}`}
-                  >
-                    {msg.role === "agent" && (
-                      <div 
-                        className="h-8 w-8 rounded-full flex items-center justify-center mr-2 shrink-0"
-                        style={{ backgroundColor: agentIconColor }}
-                      >
-                        <IconComponent className="h-4 w-4 text-white" />
-                      </div>
-                    )}
-                    <div
-                      className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
-                        msg.role === "agent"
-                          ? "bg-muted text-foreground rounded-tl-md"
-                          : "bg-primary text-primary-foreground rounded-tr-md"
-                      }`}
-                    >
-                      <p className="text-sm">{msg.text}</p>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center py-8">
-                  トランスクリプトがありません
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -651,20 +703,20 @@ export default function Conversations() {
   return (
     <AppLayout>
       <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex">
-        {/* Agent List (Left Panel) */}
+        {/* Agent List (Left Panel) - LINE style */}
         <div 
-          className={`w-full md:w-96 lg:w-[420px] flex flex-col border-r border-sidebar-border bg-sidebar ${
+          className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-background ${
             selectedAgentId ? 'hidden md:flex' : 'flex'
           }`}
         >
           {/* Header */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <MessageCircle className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-full bg-[#06C755] flex items-center justify-center">
+                <MessageCircle className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">トーク</h1>
+                <h1 className="text-lg font-bold text-foreground">トーク</h1>
                 <p className="text-xs text-muted-foreground">
                   {agentConversations.length}件のエージェント
                 </p>
@@ -678,7 +730,7 @@ export default function Conversations() {
                 placeholder="エージェントや電話番号で検索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 bg-muted/50 border-0"
+                className="pl-10 h-10 bg-muted/50 border-0 rounded-xl"
               />
             </div>
           </div>
@@ -693,27 +745,29 @@ export default function Conversations() {
             ) : filteredAgents.length === 0 ? (
               <div className="text-center py-16 px-4 text-muted-foreground">
                 <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <Bot className="h-8 w-8 opacity-50" />
+                  <Bot className="h-8 w-8 opacity-30" />
                 </div>
                 <p className="font-medium">会話履歴がありません</p>
-                <p className="text-sm mt-1">エージェントと通話すると、ここに表示されます</p>
+                <p className="text-sm mt-1">エージェントと通話すると、<br />ここに表示されます</p>
               </div>
             ) : (
-              filteredAgents.map((agent) => (
-                <AgentListItem
-                  key={agent.agentId}
-                  agent={agent}
-                  isSelected={selectedAgentId === agent.agentId}
-                  onClick={() => setSelectedAgentId(agent.agentId)}
-                />
-              ))
+              <div className="divide-y divide-border/50">
+                {filteredAgents.map((agent) => (
+                  <AgentListItem
+                    key={agent.agentId}
+                    agent={agent}
+                    isSelected={selectedAgentId === agent.agentId}
+                    onClick={() => setSelectedAgentId(agent.agentId)}
+                  />
+                ))}
+              </div>
             )}
           </ScrollArea>
         </div>
 
         {/* Chat View (Right Panel) */}
         <div 
-          className={`flex-1 ${
+          className={`flex-1 bg-muted/20 ${
             selectedAgentId ? 'flex' : 'hidden md:flex'
           }`}
         >
@@ -727,12 +781,12 @@ export default function Conversations() {
               setStatusFilter={setStatusFilter}
             />
           ) : (
-            <div className="flex-1 flex items-center justify-center bg-muted/10">
+            <div className="flex-1 flex items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <div className="h-20 w-20 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-4">
-                  <MessageCircle className="h-10 w-10 opacity-30" />
+                  <MessageCircle className="h-10 w-10 opacity-20" />
                 </div>
-                <p className="text-lg font-medium">エージェントを選択</p>
+                <p className="text-lg font-medium">トークを選択</p>
                 <p className="text-sm mt-1">左のリストからエージェントを選んでください</p>
               </div>
             </div>
