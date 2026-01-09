@@ -4,12 +4,15 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Search,
   Phone,
   PhoneOutgoing,
+  PhoneOff,
   Clock,
   CheckCircle,
+  CheckCircle2,
   XCircle,
   Play,
   Loader2,
@@ -26,11 +29,14 @@ import {
   Calendar,
   ChevronRight,
   User,
+  X,
+  History,
 } from "lucide-react";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
 import { BatchCallDialog } from "@/components/outbound/BatchCallDialog";
 import { useConversations } from "@/hooks/useConversations";
+import { useAgents } from "@/hooks/useAgents";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Slider } from "@/components/ui/slider";
@@ -622,7 +628,81 @@ function ChatView({
   );
 }
 
+// Outbound Call Status Badge Component
+function OutboundStatusBadge({ status, result }: { status: string; result?: string | null }) {
+  switch (status) {
+    case 'scheduled':
+      return (
+        <Badge variant="secondary" className="gap-1 font-normal text-xs h-6">
+          <Calendar className="h-3 w-3" />
+          予約済み
+        </Badge>
+      );
+    case 'initiating':
+    case 'ringing':
+      return (
+        <Badge variant="secondary" className="gap-1 font-normal bg-blue-500/10 text-blue-600 border-blue-500/20 text-xs h-6">
+          <Loader2 className="h-3 w-3 animate-spin" />
+          発信中
+        </Badge>
+      );
+    case 'in_progress':
+      return (
+        <Badge variant="secondary" className="gap-1 font-normal bg-green-500/10 text-green-600 border-green-500/20 text-xs h-6">
+          <Phone className="h-3 w-3" />
+          通話中
+        </Badge>
+      );
+    case 'completed':
+      if (result === 'answered') {
+        return (
+          <Badge variant="secondary" className="gap-1 font-normal bg-green-500/10 text-green-600 border-green-500/20 text-xs h-6">
+            <CheckCircle2 className="h-3 w-3" />
+            完了
+          </Badge>
+        );
+      } else if (result === 'busy') {
+        return (
+          <Badge variant="secondary" className="gap-1 font-normal bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-6">
+            <PhoneOff className="h-3 w-3" />
+            話し中
+          </Badge>
+        );
+      } else if (result === 'no_answer') {
+        return (
+          <Badge variant="secondary" className="gap-1 font-normal bg-amber-500/10 text-amber-600 border-amber-500/20 text-xs h-6">
+            <Clock className="h-3 w-3" />
+            応答なし
+          </Badge>
+        );
+      }
+      return (
+        <Badge variant="secondary" className="gap-1 font-normal text-xs h-6">
+          <CheckCircle2 className="h-3 w-3" />
+          完了
+        </Badge>
+      );
+    case 'failed':
+      return (
+        <Badge variant="destructive" className="gap-1 font-normal text-xs h-6">
+          <XCircle className="h-3 w-3" />
+          失敗
+        </Badge>
+      );
+    case 'canceled':
+      return (
+        <Badge variant="secondary" className="gap-1 font-normal text-xs h-6">
+          <X className="h-3 w-3" />
+          キャンセル
+        </Badge>
+      );
+    default:
+      return <Badge variant="secondary" className="font-normal text-xs h-6">{status}</Badge>;
+  }
+}
+
 export default function Conversations() {
+  const [activeTab, setActiveTab] = useState<"conversations" | "outbound">("conversations");
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
@@ -631,6 +711,29 @@ export default function Conversations() {
   const [batchCallDialogOpen, setBatchCallDialogOpen] = useState(false);
   const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
   const { conversations, isLoading } = useConversations();
+  const { outboundCalls, isLoading: isOutboundLoading, cancelCall } = useOutboundCalls();
+  const { agents } = useAgents();
+
+  const getAgentName = (id: string) => {
+    const agent = agents.find(a => a.id === id);
+    return agent?.name || '不明';
+  };
+
+  const getAgentInfo = (id: string) => {
+    const agent = agents.find(a => a.id === id);
+    return {
+      name: agent?.name || '不明',
+      iconName: agent?.icon_name || 'bot',
+      iconColor: agent?.icon_color || '#10b981',
+    };
+  };
+
+  const formatOutboundDuration = (seconds?: number | null) => {
+    if (!seconds) return '-';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Transform DB data to display format
   const displayConversations: ConversationDisplay[] = useMemo(() => 
@@ -694,7 +797,7 @@ export default function Conversations() {
   return (
     <AppLayout>
       <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex">
-        {/* Agent List (Left Panel) - LINE style */}
+        {/* Left Panel */}
         <div 
           className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-background ${
             selectedAgentId ? 'hidden md:flex' : 'flex'
@@ -709,7 +812,10 @@ export default function Conversations() {
               <div className="flex-1">
                 <h1 className="text-lg font-bold text-foreground">AI通話履歴</h1>
                 <p className="text-xs text-muted-foreground">
-                  {agentConversations.length}件のエージェント
+                  {activeTab === "conversations" 
+                    ? `${agentConversations.length}件のエージェント`
+                    : `${outboundCalls.length}件の発信`
+                  }
                 </p>
               </div>
             </div>
@@ -737,47 +843,141 @@ export default function Conversations() {
             </div>
             
             {/* Search */}
-            <div className="relative">
+            <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="エージェントや電話番号で検索..."
+                placeholder="検索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-10 bg-muted/50 border-0 rounded-xl"
               />
             </div>
+
+            {/* Tabs */}
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "conversations" | "outbound")} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
+                <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
+                  <MessageCircle className="h-4 w-4" />
+                  会話
+                </TabsTrigger>
+                <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
+                  <History className="h-4 w-4" />
+                  発信履歴
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
-          {/* Agent List */}
+          {/* Content based on active tab */}
           <ScrollArea className="flex-1">
-            {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-16 gap-2">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">読み込み中...</p>
-              </div>
-            ) : filteredAgents.length === 0 ? (
-              <div className="text-center py-16 px-4 text-muted-foreground">
-                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                  <Bot className="h-8 w-8 opacity-30" />
+            {activeTab === "conversations" ? (
+              // Conversation List
+              isLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">読み込み中...</p>
                 </div>
-                <p className="font-medium">会話履歴がありません</p>
-                <p className="text-sm mt-1">エージェントと通話すると、<br />ここに表示されます</p>
-              </div>
+              ) : filteredAgents.length === 0 ? (
+                <div className="text-center py-16 px-4 text-muted-foreground">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <Bot className="h-8 w-8 opacity-30" />
+                  </div>
+                  <p className="font-medium">会話履歴がありません</p>
+                  <p className="text-sm mt-1">エージェントと通話すると、<br />ここに表示されます</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border/50">
+                  {filteredAgents.map((agent) => (
+                    <AgentListItem
+                      key={agent.agentId}
+                      agent={agent}
+                      isSelected={selectedAgentId === agent.agentId}
+                      onClick={() => setSelectedAgentId(agent.agentId)}
+                      onCall={() => {
+                        setCallAgentId(agent.agentId);
+                        setCallDialogOpen(true);
+                      }}
+                    />
+                  ))}
+                </div>
+              )
             ) : (
-              <div className="divide-y divide-border/50">
-                {filteredAgents.map((agent) => (
-                  <AgentListItem
-                    key={agent.agentId}
-                    agent={agent}
-                    isSelected={selectedAgentId === agent.agentId}
-                    onClick={() => setSelectedAgentId(agent.agentId)}
-                    onCall={() => {
-                      setCallAgentId(agent.agentId);
-                      setCallDialogOpen(true);
-                    }}
-                  />
-                ))}
-              </div>
+              // Outbound Calls List
+              isOutboundLoading ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-2">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  <p className="text-sm text-muted-foreground">読み込み中...</p>
+                </div>
+              ) : outboundCalls.length === 0 ? (
+                <div className="text-center py-16 px-4 text-muted-foreground">
+                  <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
+                    <PhoneOutgoing className="h-8 w-8 opacity-30" />
+                  </div>
+                  <p className="font-medium">発信履歴がありません</p>
+                  <p className="text-sm mt-1">発信すると、ここに表示されます</p>
+                </div>
+              ) : (
+                <div className="p-3 space-y-2">
+                  {outboundCalls
+                    .filter(call => 
+                      call.to_number.includes(searchQuery) ||
+                      getAgentName(call.agent_id).toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((call) => {
+                      const agentInfo = getAgentInfo(call.agent_id);
+                      const IconComponent = getAgentIcon(agentInfo.iconName);
+                      
+                      return (
+                        <div
+                          key={call.id}
+                          className="flex items-center gap-3 p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                        >
+                          {/* Agent Icon */}
+                          <div 
+                            className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                            style={{ backgroundColor: agentInfo.iconColor }}
+                          >
+                            <IconComponent className="h-5 w-5 text-white" />
+                          </div>
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="font-mono text-sm">{call.to_number}</span>
+                              <OutboundStatusBadge status={call.status} result={call.result} />
+                            </div>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                              <span>{agentInfo.name}</span>
+                              <span>
+                                {call.scheduled_at
+                                  ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
+                                  : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
+                              </span>
+                              {call.duration_seconds && (
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" />
+                                  {formatOutboundDuration(call.duration_seconds)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          {/* Cancel Button */}
+                          {(call.status === 'scheduled' || call.status === 'initiating') && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => cancelCall(call.id)}
+                              className="rounded-xl text-xs text-muted-foreground hover:text-destructive shrink-0"
+                            >
+                              キャンセル
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )
             )}
           </ScrollArea>
         </div>
