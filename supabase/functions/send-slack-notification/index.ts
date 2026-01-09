@@ -7,17 +7,17 @@ const corsHeaders = {
 };
 
 // Slack Workflow用のペイロード構造
-// これらの変数がSlackワークフローで使用できます:
-// - event_type: "call_start" | "call_end" | "call_failed"
-// - agent_name: エージェント名
-// - phone_number: 電話番号
-// - duration_seconds: 通話時間(秒)
-// - duration_formatted: 通話時間(フォーマット済み: "X分Y秒")
-// - outcome: 通話結果
-// - summary: AI要約
-// - transcript_text: 会話内容(テキスト)
-// - timestamp: タイムスタンプ
-// - conversation_id: 会話ID
+// これらの変数がSlackワークフローやカスタムメッセージで使用できます:
+// - {{event_type}}: "call_start" | "call_end" | "call_failed"
+// - {{agent_name}}: エージェント名
+// - {{phone_number}}: 電話番号
+// - {{duration_seconds}}: 通話時間(秒)
+// - {{duration_formatted}}: 通話時間(フォーマット済み: "X分Y秒")
+// - {{outcome}}: 通話結果
+// - {{summary}}: AI要約
+// - {{transcript}}: 会話内容(テキスト)
+// - {{timestamp}}: タイムスタンプ
+// - {{conversation_id}}: 会話ID
 
 interface SlackWorkflowPayload {
   event_type: string;
@@ -30,6 +30,17 @@ interface SlackWorkflowPayload {
   transcript_text: string;
   timestamp: string;
   conversation_id: string;
+  text?: string; // カスタムメッセージ用
+}
+
+// テンプレート変数を実際の値に置換する関数
+function replaceTemplateVariables(template: string, variables: Record<string, string | number>): string {
+  let result = template;
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+    result = result.replace(regex, String(value));
+  }
+  return result;
 }
 
 serve(async (req) => {
@@ -127,9 +138,23 @@ serve(async (req) => {
         .join("\n");
     }
 
+    // テンプレート変数用のマッピング
+    const templateVariables: Record<string, string | number> = {
+      event_type: eventType,
+      agent_name: agent.name,
+      phone_number: conversation.phone_number || "不明",
+      duration_seconds: durationSeconds,
+      duration_formatted: durationFormatted,
+      outcome: conversation.outcome || "完了",
+      summary: conversation.summary || "",
+      transcript: transcriptText,
+      timestamp: new Date().toISOString(),
+      conversation_id: conversationId,
+    };
+
     // Build payload for Slack Workflow
     const buildWorkflowPayload = (integration: typeof integrations[0]): SlackWorkflowPayload => {
-      return {
+      const payload: SlackWorkflowPayload = {
         event_type: eventType,
         agent_name: agent.name,
         phone_number: conversation.phone_number || "不明",
@@ -141,6 +166,13 @@ serve(async (req) => {
         timestamp: new Date().toISOString(),
         conversation_id: conversationId,
       };
+
+      // カスタムメッセージテンプレートがある場合は text フィールドに追加
+      if (integration.message_template) {
+        payload.text = replaceTemplateVariables(integration.message_template, templateVariables);
+      }
+
+      return payload;
     };
 
     // Send to all applicable integrations
