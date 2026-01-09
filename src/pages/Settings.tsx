@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -17,6 +17,21 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slack } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+const TAB_OPTIONS = [
+  { value: "workspace", label: "ワークスペース", icon: Building },
+  { value: "integrations", label: "API連携", icon: Key },
+  { value: "voice-tools", label: "音声ツール", icon: Wand2 },
+  { value: "webhooks", label: "Webhook", icon: Webhook },
+  { value: "notifications", label: "連携", icon: Bell },
+  { value: "billing", label: "請求", icon: CreditCard },
+] as const;
 
 // Demo workspace ID for testing when not authenticated
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -33,6 +48,7 @@ export default function Settings() {
     isAuthenticated
   } = useWorkspace();
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("workspace");
   const [apiKey, setApiKey] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
@@ -126,21 +142,67 @@ export default function Settings() {
           )}
         </div>
 
-        <Tabs defaultValue="workspace" className="space-y-4 sm:space-y-6">
-          {/* タブリスト - 改善されたスタイル */}
-          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 overflow-x-auto">
-            <TabsList className="bg-muted/30 border border-border inline-flex sm:flex sm:flex-wrap h-auto gap-1 p-1.5 min-w-max sm:min-w-0 rounded-xl">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          {/* モバイル用ドロップダウン */}
+          <div className="sm:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-between bg-background border-border"
+                >
+                  <span className="flex items-center gap-2">
+                    {(() => {
+                      const currentTab = TAB_OPTIONS.find(tab => tab.value === activeTab);
+                      if (currentTab) {
+                        const Icon = currentTab.icon;
+                        return (
+                          <>
+                            <Icon className="h-4 w-4" />
+                            {currentTab.label}
+                          </>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </span>
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-[calc(100vw-2rem)] bg-background border-border">
+                {TAB_OPTIONS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={tab.value}
+                      onClick={() => setActiveTab(tab.value)}
+                      className={`flex items-center gap-2 ${activeTab === tab.value ? 'bg-muted' : ''}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                      {tab.value === "integrations" && (hasApiKey || hasTwilioCredentials) && (
+                        <span className="h-2 w-2 rounded-full bg-success animate-pulse ml-auto" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* デスクトップ用タブリスト */}
+          <div className="hidden sm:block">
+            <TabsList className="bg-muted/30 border border-border flex flex-wrap h-auto gap-1 p-1.5 rounded-xl">
               <TabsTrigger 
                 value="workspace" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <Building className="h-4 w-4" />
-                <span className="hidden xs:inline">ワークスペース</span>
-                <span className="xs:hidden">WS</span>
+                ワークスペース
               </TabsTrigger>
               <TabsTrigger 
                 value="integrations" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <Key className="h-4 w-4" />
                 API連携
@@ -150,28 +212,28 @@ export default function Settings() {
               </TabsTrigger>
               <TabsTrigger 
                 value="voice-tools" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <Wand2 className="h-4 w-4" />
                 音声ツール
               </TabsTrigger>
               <TabsTrigger 
                 value="webhooks" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <Webhook className="h-4 w-4" />
                 Webhook
               </TabsTrigger>
               <TabsTrigger 
                 value="notifications" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <Bell className="h-4 w-4" />
                 連携
               </TabsTrigger>
               <TabsTrigger 
                 value="billing" 
-                className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
                 <CreditCard className="h-4 w-4" />
                 請求
