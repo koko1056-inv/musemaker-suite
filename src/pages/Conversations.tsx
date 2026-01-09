@@ -495,7 +495,7 @@ function ChatView({
   statusFilter,
   setDateFilter,
   setStatusFilter,
-  onMarkAllAsRead,
+  onMarkAsRead,
 }: { 
   agent: AgentConversations;
   onBack: () => void;
@@ -503,17 +503,21 @@ function ChatView({
   statusFilter: string;
   setDateFilter: (value: "all" | "today" | "week" | "month") => void;
   setStatusFilter: (value: "all" | "completed" | "failed" | "in_progress") => void;
-  onMarkAllAsRead: (agentId: string) => void;
+  onMarkAsRead: (conversationId: string) => void;
 }) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
-  // Mark all conversations as read when opening agent
-  useEffect(() => {
-    if (agent.unreadCount > 0) {
-      onMarkAllAsRead(agent.agentId);
+  // Mark conversation as read when expanded
+  const handleSelectConversation = (conv: ConversationDisplay) => {
+    const newId = selectedConversationId === conv.id ? null : conv.id;
+    setSelectedConversationId(newId);
+    
+    // Mark as read when opening (expanding) the conversation
+    if (newId && !conv.isRead) {
+      onMarkAsRead(conv.id);
     }
-  }, [agent.agentId, agent.unreadCount, onMarkAllAsRead]);
+  };
   
   // Filter conversations for this agent
   const filteredConversations = agent.conversations.filter((conv) => {
@@ -641,12 +645,12 @@ function ChatView({
                   <div 
                     className={`bg-muted/30 rounded-2xl overflow-hidden transition-all duration-200 ${
                       isExpanded ? 'ring-1 ring-primary/20' : 'hover:bg-muted/50 cursor-pointer'
-                    }`}
+                    } ${!conv.isRead && !isExpanded ? 'border-l-4 border-l-primary' : ''}`}
                   >
                     {/* Collapsed Header */}
                     <div 
                       className="flex items-center gap-3 p-3 sm:p-4"
-                      onClick={() => setSelectedConversationId(isExpanded ? null : conv.id)}
+                      onClick={() => handleSelectConversation(conv)}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1.5 sm:gap-2 text-sm flex-wrap">
@@ -810,7 +814,7 @@ function OutboundChatView({
   agent,
   onBack,
   cancelCall,
-  onMarkAllAsRead,
+  onMarkAsRead,
 }: { 
   agent: {
     agentId: string;
@@ -824,17 +828,27 @@ function OutboundChatView({
   };
   onBack: () => void;
   cancelCall: (id: string) => void;
-  onMarkAllAsRead: (agentId: string) => void;
+  onMarkAsRead: (callId: string) => void;
 }) {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
-  // Mark all calls as read when opening agent
-  useEffect(() => {
-    if (agent.unreadCount > 0) {
-      onMarkAllAsRead(agent.agentId);
+  // Mark call as read when expanded
+  const handleSelectCall = (call: any) => {
+    const hasConversation = call.conversation && (
+      (call.conversation.transcript && call.conversation.transcript.length > 0) ||
+      call.conversation.summary
+    );
+    if (!hasConversation) return;
+    
+    const newId = selectedCallId === call.id ? null : call.id;
+    setSelectedCallId(newId);
+    
+    // Mark as read when opening (expanding) the call
+    if (newId && !call.is_read) {
+      onMarkAsRead(call.id);
     }
-  }, [agent.agentId, agent.unreadCount, onMarkAllAsRead]);
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
@@ -894,12 +908,12 @@ function OutboundChatView({
                 <div 
                   className={`bg-muted/30 rounded-2xl overflow-hidden transition-all duration-200 ${
                     isExpanded ? 'ring-1 ring-primary/20' : hasConversation ? 'hover:bg-muted/50 cursor-pointer' : ''
-                  }`}
+                  } ${!call.is_read && !isExpanded ? 'border-l-4 border-l-primary' : ''}`}
                 >
                   {/* Header */}
                   <div 
                     className="flex items-center gap-3 p-3 sm:p-4"
-                    onClick={() => hasConversation && setSelectedCallId(isExpanded ? null : call.id)}
+                    onClick={() => handleSelectCall(call)}
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 sm:gap-2 text-sm flex-wrap">
@@ -1307,7 +1321,7 @@ export default function Conversations() {
             <div className="relative mb-3">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="検索..."
+                placeholder="エージェント名または電話番号で検索..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-10 bg-muted/50 border-0 rounded-xl"
@@ -1423,14 +1437,14 @@ export default function Conversations() {
               statusFilter={statusFilter}
               setDateFilter={setDateFilter}
               setStatusFilter={setStatusFilter}
-              onMarkAllAsRead={markAllAsRead}
+              onMarkAsRead={markAsRead}
             />
           ) : activeTab === "outbound" && selectedOutboundAgent ? (
             <OutboundChatView
               agent={selectedOutboundAgent}
               onBack={() => setSelectedOutboundAgentId(null)}
               cancelCall={cancelCall}
-              onMarkAllAsRead={markAllOutboundAsRead}
+              onMarkAsRead={markOutboundAsRead}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">
