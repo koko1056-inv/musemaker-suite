@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
@@ -50,6 +50,10 @@ const DEMO_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
 export function useAgents() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Use ref to access current agents in callbacks without adding to dependencies
+  const agentsRef = useRef<Agent[]>([]);
+  agentsRef.current = agents;
 
   const fetchAgents = useCallback(async () => {
     setIsLoading(true);
@@ -134,8 +138,8 @@ export function useAgents() {
 
   const updateAgent = useCallback(async (id: string, updates: AgentUpdate) => {
     try {
-      // Get current agent to check if it has an ElevenLabs agent ID
-      const currentAgent = agents.find(a => a.id === id);
+      // Get current agent from ref to avoid stale closure
+      const currentAgent = agentsRef.current.find(a => a.id === id);
       
       // Sync with ElevenLabs if agent has an elevenlabs_agent_id
       if (currentAgent?.elevenlabs_agent_id) {
@@ -168,12 +172,12 @@ export function useAgents() {
       toast.error('エージェントの更新に失敗しました');
       throw error;
     }
-  }, [agents]);
+  }, []);
 
   const deleteAgent = useCallback(async (id: string) => {
     try {
-      // Get current agent to check if it has an ElevenLabs agent ID
-      const currentAgent = agents.find(a => a.id === id);
+      // Get current agent from ref to avoid stale closure
+      const currentAgent = agentsRef.current.find(a => a.id === id);
       
       // Try to delete from ElevenLabs first (don't fail if this fails)
       if (currentAgent?.elevenlabs_agent_id) {
@@ -198,7 +202,7 @@ export function useAgents() {
       toast.error('エージェントの削除に失敗しました');
       throw error;
     }
-  }, [agents]);
+  }, []);
 
   const getAgent = useCallback(async (id: string) => {
     try {
@@ -219,7 +223,7 @@ export function useAgents() {
 
   const syncKnowledgeBase = useCallback(async (id: string) => {
     try {
-      const agent = agents.find(a => a.id === id);
+      const agent = agentsRef.current.find(a => a.id === id);
       if (!agent?.elevenlabs_agent_id) {
         throw new Error('エージェントがElevenLabsと同期されていません');
       }
@@ -243,12 +247,12 @@ export function useAgents() {
       toast.error('ナレッジベースの同期に失敗しました');
       throw error;
     }
-  }, [agents]);
+  }, []);
 
   // Sync knowledge base using ElevenLabs Knowledge Base API (document-based)
   const syncKnowledgeBaseAPI = useCallback(async (id: string) => {
     try {
-      const agent = agents.find(a => a.id === id);
+      const agent = agentsRef.current.find(a => a.id === id);
       if (!agent?.elevenlabs_agent_id) {
         throw new Error('エージェントがElevenLabsと同期されていません');
       }
@@ -308,7 +312,7 @@ export function useAgents() {
       toast.error('Knowledge Base APIの同期に失敗しました');
       throw error;
     }
-  }, [agents]);
+  }, []);
 
   return {
     agents,
