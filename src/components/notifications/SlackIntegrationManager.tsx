@@ -26,6 +26,9 @@ import {
   Phone,
   PhoneOff,
   AlertTriangle,
+  Pencil,
+  Check,
+  X,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -47,6 +50,8 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingWebhookId, setEditingWebhookId] = useState<string | null>(null);
+  const [editingWebhookUrl, setEditingWebhookUrl] = useState("");
   const [newIntegration, setNewIntegration] = useState({
     name: "",
     webhook_url: "",
@@ -95,6 +100,33 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
 
   const handleTestWebhook = async (webhookUrl: string) => {
     await testWebhook(webhookUrl);
+  };
+
+  const handleStartEditWebhook = (integration: { id: string; webhook_url: string }) => {
+    setEditingWebhookId(integration.id);
+    setEditingWebhookUrl(integration.webhook_url);
+  };
+
+  const handleSaveWebhookUrl = async (id: string) => {
+    if (!editingWebhookUrl) {
+      toast({
+        title: "エラー",
+        description: "Webhook URLを入力してください",
+        variant: "destructive",
+      });
+      return;
+    }
+    await updateIntegration.mutateAsync({
+      id,
+      webhook_url: editingWebhookUrl,
+    });
+    setEditingWebhookId(null);
+    setEditingWebhookUrl("");
+  };
+
+  const handleCancelEditWebhook = () => {
+    setEditingWebhookId(null);
+    setEditingWebhookUrl("");
   };
 
   if (isLoading) {
@@ -415,6 +447,58 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                   {/* 展開時の詳細設定 */}
                   <CollapsibleContent>
                     <div className="border-t p-4 sm:p-5 bg-muted/30 space-y-4">
+                      {/* Webhook URL編集 */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <Settings2 className="h-4 w-4" />
+                            Webhook URL
+                          </Label>
+                          {editingWebhookId !== integration.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleStartEditWebhook(integration)}
+                              className="h-7 gap-1 text-xs"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              編集
+                            </Button>
+                          )}
+                        </div>
+                        {editingWebhookId === integration.id ? (
+                          <div className="flex gap-2">
+                            <Input
+                              value={editingWebhookUrl}
+                              onChange={(e) => setEditingWebhookUrl(e.target.value)}
+                              placeholder="https://hooks.slack.com/services/..."
+                              className="h-9 font-mono text-sm flex-1"
+                            />
+                            <Button
+                              size="sm"
+                              onClick={() => handleSaveWebhookUrl(integration.id)}
+                              disabled={updateIntegration.isPending}
+                              className="h-9 gap-1"
+                            >
+                              <Check className="h-4 w-4" />
+                              保存
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={handleCancelEditWebhook}
+                              className="h-9"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground font-mono truncate bg-muted/50 px-3 py-2 rounded-md">
+                            {integration.webhook_url.substring(0, 50)}...
+                          </p>
+                        )}
+                      </div>
+
                       <div className="grid gap-4 sm:grid-cols-2">
                         {/* 通知タイミング */}
                         <div className="space-y-3">
