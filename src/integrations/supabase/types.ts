@@ -498,6 +498,7 @@ export type Database = {
         Row: {
           agent_id: string
           call_sid: string | null
+          conversation_id: string | null
           created_at: string
           duration_seconds: number | null
           ended_at: string | null
@@ -515,6 +516,7 @@ export type Database = {
         Insert: {
           agent_id: string
           call_sid?: string | null
+          conversation_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
@@ -532,6 +534,7 @@ export type Database = {
         Update: {
           agent_id?: string
           call_sid?: string | null
+          conversation_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           ended_at?: string | null
@@ -552,6 +555,13 @@ export type Database = {
             columns: ["agent_id"]
             isOneToOne: false
             referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "outbound_calls_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
             referencedColumns: ["id"]
           },
           {

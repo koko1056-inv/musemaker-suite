@@ -136,12 +136,109 @@ Deno.serve(async (req) => {
   let agentId: string | null = null;
   let outboundCallId: string | null = null;
   let elevenLabsInitialized = false;
+  let conversationSaved = false;
 
   // Set after we receive ElevenLabs conversation initiation metadata
   // Default to pcm_16000 because that's what ElevenLabs reports in practice; this prevents early-audio noise.
   let elevenUserInputFormat: string | null = "pcm_16000";
   let elevenAgentOutputFormat: string | null = "pcm_16000";
   let enableTranscoding = true;
+
+  // Collect transcript and metadata during the call
+  const transcript: Array<{ role: 'agent' | 'user'; text: string }> = [];
+  let callStartTime: number = 0;
+  let elevenLabsConversationId: string | null = null;
+
+  // Function to save the conversation when the call ends
+  const saveConversation = async () => {
+    if (conversationSaved || !agentId) return;
+    conversationSaved = true;
+
+    try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+      const endTime = Date.now();
+      const durationSeconds = callStartTime > 0
+        ? Math.floor((endTime - callStartTime) / 1000)
+        : 0;
+
+      console.log(`Saving conversation: agentId=${agentId}, transcript=${transcript.length} messages, duration=${durationSeconds}s`);
+
+      // Insert conversation record
+      const { data: convData, error: convError } = await supabase
+        .from('conversations')
+        .insert({
+          agent_id: agentId,
+          phone_number: null, // Will be updated from outbound call if available
+          transcript: transcript,
+          duration_seconds: durationSeconds,
+          status: 'completed',
+          ended_at: new Date(endTime).toISOString(),
+          metadata: {
+            elevenlabs_conversation_id: elevenLabsConversationId,
+            call_sid: callSid,
+            call_type: outboundCallId ? 'outbound' : 'inbound',
+          }
+        })
+        .select()
+        .single();
+
+      if (convError) {
+        console.error('Error saving conversation:', convError);
+        return;
+      }
+
+      console.log(`Conversation saved: ${convData.id}`);
+
+      // If this is an outbound call, link the conversation
+      if (outboundCallId) {
+        // Get phone number from outbound call
+        const { data: outboundCall } = await supabase
+          .from('outbound_calls')
+          .select('to_number')
+          .eq('id', outboundCallId)
+          .single();
+
+        // Update outbound_calls with conversation_id
+        const { error: updateError } = await supabase
+          .from('outbound_calls')
+          .update({ 
+            conversation_id: convData.id,
+            status: 'completed',
+            result: 'answered',
+            duration_seconds: durationSeconds,
+            ended_at: new Date(endTime).toISOString(),
+          })
+          .eq('id', outboundCallId);
+
+        if (updateError) {
+          console.error('Error updating outbound call:', updateError);
+        } else {
+          console.log(`Outbound call ${outboundCallId} linked to conversation ${convData.id}`);
+        }
+
+        // Update conversation with phone number
+        if (outboundCall?.to_number) {
+          await supabase
+            .from('conversations')
+            .update({ phone_number: outboundCall.to_number })
+            .eq('id', convData.id);
+        }
+      }
+
+      // Trigger summary generation asynchronously
+      fetch(`${supabaseUrl}/functions/v1/generate-summary`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ conversationId: convData.id }),
+      }).catch(err => console.error('Error triggering summary:', err));
+
+    } catch (error) {
+      console.error('Error in saveConversation:', error);
+    }
+  };
 
   // Function to initialize ElevenLabs connection after we have the agentId
   const initializeElevenLabs = async () => {
@@ -293,10 +390,14 @@ Deno.serve(async (req) => {
               const meta = data.conversation_initiation_metadata_event;
               elevenUserInputFormat = meta?.user_input_audio_format ?? null;
               elevenAgentOutputFormat = meta?.agent_output_audio_format ?? null;
+              elevenLabsConversationId = meta?.conversation_id ?? null;
 
               // If ElevenLabs is not using mulaw/ulaw, we must transcode to avoid loud noise.
               enableTranscoding =
                 elevenUserInputFormat === "pcm_16000" || elevenAgentOutputFormat === "pcm_16000";
+
+              // Mark call start time
+              callStartTime = Date.now();
 
               console.log("Conversation initialized:", meta?.conversation_id);
               console.log("User input format:", elevenUserInputFormat);
@@ -308,17 +409,39 @@ Deno.serve(async (req) => {
               break;
             }
               
-            case "agent_response":
-              console.log("Agent response:", data.agent_response_event?.agent_response);
+            case "agent_response": {
+              const agentText = data.agent_response_event?.agent_response;
+              if (agentText) {
+                transcript.push({ role: 'agent', text: agentText });
+                console.log("Agent response:", agentText);
+              }
               break;
+            }
               
-            case "user_transcript":
-              console.log("User said:", data.user_transcription_event?.user_transcript);
+            case "user_transcript": {
+              const userText = data.user_transcription_event?.user_transcript;
+              if (userText) {
+                transcript.push({ role: 'user', text: userText });
+                console.log("User said:", userText);
+              }
               break;
+            }
               
-            case "agent_response_correction":
-              console.log("Agent response corrected:", data.agent_response_correction_event?.corrected_agent_response);
+            case "agent_response_correction": {
+              // Update the last agent response if it was corrected
+              const correctedText = data.agent_response_correction_event?.corrected_agent_response;
+              if (correctedText && transcript.length > 0) {
+                // Find and update the last agent message
+                for (let i = transcript.length - 1; i >= 0; i--) {
+                  if (transcript[i].role === 'agent') {
+                    transcript[i].text = correctedText;
+                    break;
+                  }
+                }
+              }
+              console.log("Agent response corrected:", correctedText);
               break;
+            }
             
             case "internal_tentative_agent_response":
               // Ignore tentative responses
@@ -338,6 +461,8 @@ Deno.serve(async (req) => {
 
       elevenLabsSocket.onclose = () => {
         console.log("ElevenLabs WebSocket closed");
+        // Save conversation when ElevenLabs connection closes
+        saveConversation();
         if (twilioSocket.readyState === WebSocket.OPEN) {
           twilioSocket.close();
         }
@@ -394,6 +519,8 @@ Deno.serve(async (req) => {
 
         case "stop":
           console.log("Twilio stream stopped");
+          // Save conversation when Twilio stream stops
+          saveConversation();
           if (elevenLabsSocket?.readyState === WebSocket.OPEN) {
             elevenLabsSocket.close();
           }

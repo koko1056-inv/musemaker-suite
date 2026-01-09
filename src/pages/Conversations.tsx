@@ -776,6 +776,7 @@ export default function Conversations() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [selectedOutboundCallId, setSelectedOutboundCallId] = useState<string | null>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [batchCallDialogOpen, setBatchCallDialogOpen] = useState(false);
   const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
@@ -1018,52 +1019,161 @@ export default function Conversations() {
                     .map((call) => {
                       const agentInfo = getAgentInfo(call.agent_id);
                       const IconComponent = getAgentIcon(agentInfo.iconName);
+                      const isExpanded = selectedOutboundCallId === call.id;
+                      const hasConversation = call.conversation && (
+                        (call.conversation.transcript && call.conversation.transcript.length > 0) ||
+                        call.conversation.summary
+                      );
                       
                       return (
                         <div
                           key={call.id}
-                          className="flex items-center gap-3 p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                          className={`rounded-2xl bg-muted/30 overflow-hidden transition-all duration-200 ${
+                            isExpanded ? 'ring-1 ring-primary/20' : hasConversation ? 'hover:bg-muted/50 cursor-pointer' : ''
+                          }`}
                         >
-                          {/* Agent Icon */}
+                          {/* Header */}
                           <div 
-                            className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
-                            style={{ backgroundColor: agentInfo.iconColor }}
+                            className="flex items-center gap-3 p-3"
+                            onClick={() => hasConversation && setSelectedOutboundCallId(isExpanded ? null : call.id)}
                           >
-                            <IconComponent className="h-5 w-5 text-white" />
-                          </div>
-
-                          {/* Content */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-0.5">
-                              <span className="font-mono text-sm">{call.to_number}</span>
-                              <OutboundStatusBadge status={call.status} result={call.result} />
+                            {/* Agent Icon */}
+                            <div 
+                              className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
+                              style={{ backgroundColor: agentInfo.iconColor }}
+                            >
+                              <IconComponent className="h-5 w-5 text-white" />
                             </div>
-                            <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                              <span>{agentInfo.name}</span>
-                              <span>
-                                {call.scheduled_at
-                                  ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
-                                  : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
-                              </span>
-                              {call.duration_seconds && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {formatOutboundDuration(call.duration_seconds)}
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <span className="font-mono text-sm">{call.to_number}</span>
+                                <OutboundStatusBadge status={call.status} result={call.result} />
+                                {hasConversation && (
+                                  <Badge variant="outline" className="text-xs h-5 gap-1">
+                                    <MessageCircle className="h-3 w-3" />
+                                    会話あり
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                <span>{agentInfo.name}</span>
+                                <span>
+                                  {call.scheduled_at
+                                    ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
+                                    : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
                                 </span>
+                                {call.duration_seconds && (
+                                  <span className="flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {formatOutboundDuration(call.duration_seconds)}
+                                  </span>
+                                )}
+                              </div>
+                              {/* Show summary preview when collapsed */}
+                              {!isExpanded && call.conversation?.summary && (
+                                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                                  {call.conversation.summary}
+                                </p>
                               )}
                             </div>
+                            
+                            {/* Cancel Button */}
+                            {(call.status === 'scheduled' || call.status === 'initiating') && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  cancelCall(call.id);
+                                }}
+                                className="rounded-xl text-xs text-muted-foreground hover:text-destructive shrink-0"
+                              >
+                                キャンセル
+                              </Button>
+                            )}
+
+                            {/* Expand indicator */}
+                            {hasConversation && (
+                              <ChevronRight className={`h-4 w-4 text-muted-foreground/50 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                            )}
                           </div>
-                          
-                          {/* Cancel Button */}
-                          {(call.status === 'scheduled' || call.status === 'initiating') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => cancelCall(call.id)}
-                              className="rounded-xl text-xs text-muted-foreground hover:text-destructive shrink-0"
-                            >
-                              キャンセル
-                            </Button>
+
+                          {/* Expanded Content - Conversation Details */}
+                          {isExpanded && call.conversation && (
+                            <div className="px-4 pb-4 pt-0 border-t border-border/50">
+                              <div className="pt-4 space-y-4">
+                                {/* Summary */}
+                                {call.conversation.summary && (
+                                  <div className="bg-muted/30 rounded-2xl p-4">
+                                    <div className="flex items-start gap-3">
+                                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                        <FileText className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <div>
+                                        <p className="text-xs font-medium text-muted-foreground mb-1">AI要約</p>
+                                        <p className="text-sm leading-relaxed">{call.conversation.summary}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Key Points */}
+                                {call.conversation.key_points && call.conversation.key_points.length > 0 && (
+                                  <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                      <Lightbulb className="h-4 w-4 text-amber-600" />
+                                      <span className="text-sm font-medium text-amber-800 dark:text-amber-200">重要ポイント</span>
+                                    </div>
+                                    <ul className="space-y-1.5">
+                                      {call.conversation.key_points.map((point, i) => (
+                                        <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
+                                          <span className="text-amber-500 mt-1">•</span>
+                                          <span>{point}</span>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                )}
+
+                                {/* Audio Player */}
+                                {call.conversation.audio_url && (
+                                  <div className="flex justify-center">
+                                    <AudioPlayer audioUrl={call.conversation.audio_url} />
+                                  </div>
+                                )}
+
+                                {/* Transcript */}
+                                {call.conversation.transcript && call.conversation.transcript.length > 0 && (
+                                  <div className="space-y-2">
+                                    {(call.conversation.transcript as TranscriptMessage[]).map((msg, i, arr) => {
+                                      const prevMsg = arr[i - 1];
+                                      const showAvatar = !prevMsg || prevMsg.role !== msg.role;
+                                      
+                                      return (
+                                        <ChatBubble
+                                          key={i}
+                                          message={msg}
+                                          isAgent={msg.role === 'agent'}
+                                          agentIcon={agentInfo.iconName}
+                                          agentColor={agentInfo.iconColor}
+                                          showAvatar={showAvatar}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* No transcript message */}
+                                {(!call.conversation.transcript || call.conversation.transcript.length === 0) && !call.conversation.summary && (
+                                  <div className="text-center py-8 text-muted-foreground">
+                                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                    <p className="text-sm">会話の詳細はまだ準備中です</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
                       );
