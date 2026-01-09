@@ -179,6 +179,7 @@ serve(async (req) => {
               duration_seconds: durationSeconds,
               outcome: outcome,
               transcript: transcript,
+              conversation_id: data.id,
             }),
           });
           console.log('Email notification triggered');

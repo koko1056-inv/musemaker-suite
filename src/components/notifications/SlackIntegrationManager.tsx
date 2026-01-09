@@ -615,19 +615,28 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                               placeholder="例: 📞 {{agent_name}}で通話がありました&#10;📱 電話番号: {{phone_number}}&#10;⏱ 通話時間: {{duration_formatted}}&#10;&#10;📝 要約:&#10;{{summary}}"
                               className="min-h-[120px] font-mono text-sm"
                             />
-                            <div className="bg-muted/50 p-3 rounded-md">
-                              <p className="text-xs text-muted-foreground mb-2">使用可能な変数:</p>
-                              <div className="flex flex-wrap gap-1.5">
-                                {["agent_name", "phone_number", "duration_formatted", "duration_seconds", "outcome", "summary", "transcript", "event_type", "timestamp"].map((v) => (
-                                  <Badge 
-                                    key={v} 
-                                    variant="outline" 
-                                    className="text-xs font-mono cursor-pointer hover:bg-primary/10"
-                                    onClick={() => setEditingTemplate((prev) => prev + `{{${v}}}`)}
-                                  >
-                                    {`{{${v}}}`}
-                                  </Badge>
-                                ))}
+                            <div className="bg-muted/50 p-3 rounded-md space-y-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-2">標準変数:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {["agent_name", "phone_number", "duration_formatted", "duration_seconds", "outcome", "summary", "transcript", "event_type", "timestamp"].map((v) => (
+                                    <Badge 
+                                      key={v} 
+                                      variant="outline" 
+                                      className="text-xs font-mono cursor-pointer hover:bg-primary/10"
+                                      onClick={() => setEditingTemplate((prev) => prev + `{{${v}}}`)}
+                                    >
+                                      {`{{${v}}}`}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-2">抽出データ変数 (エージェントで設定した項目):</p>
+                                <p className="text-xs text-muted-foreground">
+                                  <code className="bg-violet-100 dark:bg-violet-900/50 px-1.5 py-0.5 rounded text-violet-700 dark:text-violet-300">{"{{extracted.フィールドキー}}"}</code>
+                                  <span className="ml-2">例: {"{{extracted.customer_name}}"}</span>
+                                </p>
                               </div>
                             </div>
                             <div className="flex gap-2">

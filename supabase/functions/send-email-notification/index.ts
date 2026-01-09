@@ -18,6 +18,33 @@ interface EmailNotificationRequest {
   summary?: string;
   transcript?: Array<{ role: string; message: string }>;
   outcome?: string;
+  conversation_id?: string;
+}
+
+// テンプレート変数を実際の値に置換する関数
+function replaceTemplateVariables(
+  template: string, 
+  variables: Record<string, string | number>, 
+  extractedData: Record<string, string> = {}
+): string {
+  let result = template;
+  
+  // 通常の変数を置換
+  for (const [key, value] of Object.entries(variables)) {
+    const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
+    result = result.replace(regex, String(value));
+  }
+  
+  // 抽出データの変数を置換 ({{extracted.key}} 形式)
+  for (const [key, value] of Object.entries(extractedData)) {
+    const regex = new RegExp(`{{\\s*extracted\\.${key}\\s*}}`, 'g');
+    result = result.replace(regex, String(value || ''));
+  }
+  
+  // 未定義の抽出データ変数をクリア
+  result = result.replace(/\{\{\s*extracted\.\w+\s*\}\}/g, '');
+  
+  return result;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -39,6 +66,7 @@ const handler = async (req: Request): Promise<Response> => {
       summary,
       transcript,
       outcome,
+      conversation_id,
     }: EmailNotificationRequest = await req.json();
 
     // Get all active email notifications for this workspace
@@ -60,6 +88,42 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Get extracted data if conversation_id is provided
+    let extractedData: Record<string, string> = {};
+    if (conversation_id) {
+      const { data: extractedDataRows, error: extractedError } = await supabase
+        .from("conversation_extracted_data")
+        .select("field_key, field_value")
+        .eq("conversation_id", conversation_id);
+
+      if (extractedError) {
+        console.error("Error fetching extracted data:", extractedError);
+      } else if (extractedDataRows) {
+        for (const row of extractedDataRows) {
+          extractedData[row.field_key] = row.field_value || '';
+        }
+      }
+    }
+
+    console.log(`Found ${Object.keys(extractedData).length} extracted data fields`);
+
+    const formattedDuration = duration_seconds
+      ? `${Math.floor(duration_seconds / 60)}分${duration_seconds % 60}秒`
+      : null;
+
+    // Template variables for custom messages
+    const templateVariables: Record<string, string | number> = {
+      event_type,
+      agent_name: agent_name || 'エージェント',
+      phone_number: phone_number || '不明',
+      duration_seconds: duration_seconds || 0,
+      duration_formatted: formattedDuration || '-',
+      outcome: outcome || '完了',
+      summary: summary || '',
+      timestamp: new Date().toISOString(),
+      conversation_id: conversation_id || '',
+    };
+
     const results = [];
 
     for (const notification of notifications) {
@@ -79,9 +143,6 @@ const handler = async (req: Request): Promise<Response> => {
       };
 
       const eventTitle = eventLabels[event_type];
-      const formattedDuration = duration_seconds
-        ? `${Math.floor(duration_seconds / 60)}分${duration_seconds % 60}秒`
-        : null;
 
       let htmlContent = `
         <!DOCTYPE html>
@@ -97,6 +158,9 @@ const handler = async (req: Request): Promise<Response> => {
             .label { color: #666; font-size: 14px; }
             .value { font-weight: 500; }
             .summary { background: white; padding: 16px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #333; }
+            .extracted { background: #f0f0ff; padding: 16px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #8b5cf6; }
+            .extracted-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0ff; }
+            .extracted-key { color: #6b21a8; font-family: monospace; font-size: 12px; }
             .transcript { background: white; padding: 16px; border-radius: 8px; margin-top: 16px; }
             .message { padding: 8px 0; }
             .role { font-size: 12px; color: #666; text-transform: uppercase; }
@@ -146,6 +210,23 @@ const handler = async (req: Request): Promise<Response> => {
             <p style="margin: 0;">${summary}</p>
           </div>
         `;
+      }
+
+      // Add extracted data section
+      if (Object.keys(extractedData).length > 0) {
+        htmlContent += `
+          <div class="extracted">
+            <h3 style="margin: 0 0 12px; font-size: 14px; color: #6b21a8;">📊 抽出データ</h3>
+        `;
+        for (const [key, value] of Object.entries(extractedData)) {
+          htmlContent += `
+            <div class="extracted-row">
+              <span class="extracted-key">${key}</span>
+              <span class="value">${value}</span>
+            </div>
+          `;
+        }
+        htmlContent += `</div>`;
       }
 
       if (notification.include_transcript && transcript && transcript.length > 0) {

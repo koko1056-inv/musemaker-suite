@@ -38,6 +38,7 @@ import {
   User,
   X,
   History,
+  Variable,
 } from "lucide-react";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
@@ -76,6 +77,7 @@ interface ConversationDisplay {
   iconName: string;
   iconColor: string;
   isRead: boolean;
+  extractedData: Record<string, string>;
 }
 
 interface AgentConversations {
@@ -399,6 +401,7 @@ function ConversationDetail({
   const hasSummary = conversation.summary && conversation.summary.trim().length > 0;
   const hasKeyPoints = conversation.keyPoints && conversation.keyPoints.length > 0;
   const hasActionItems = conversation.actionItems && conversation.actionItems.length > 0;
+  const hasExtractedData = conversation.extractedData && Object.keys(conversation.extractedData).length > 0;
 
   return (
     <div className="space-y-4">
@@ -453,6 +456,28 @@ function ConversationDetail({
               </ul>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Extracted Data - show if any extracted data exists */}
+      {hasExtractedData && (
+        <div className="bg-violet-50 dark:bg-violet-950/30 rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Variable className="h-4 w-4 text-violet-600" />
+            <span className="text-sm font-medium text-violet-800 dark:text-violet-200">抽出データ</span>
+          </div>
+          <div className="grid gap-2">
+            {Object.entries(conversation.extractedData).map(([key, value]) => (
+              <div key={key} className="flex items-start justify-between gap-2 text-sm">
+                <span className="text-violet-600 dark:text-violet-400 font-mono text-xs bg-violet-100 dark:bg-violet-900/50 px-2 py-0.5 rounded">
+                  {key}
+                </span>
+                <span className="text-violet-900 dark:text-violet-100 text-right flex-1 truncate">
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -1187,6 +1212,21 @@ export default function Conversations() {
       iconName: (conv.agent as any)?.icon_name || 'bot',
       iconColor: (conv.agent as any)?.icon_color || '#10b981',
       isRead: conv.is_read,
+      extractedData: (() => {
+        const data: Record<string, string> = {};
+        const extracted = (conv as any).extracted_data;
+        if (Array.isArray(extracted)) {
+          extracted.forEach((item: { field_key: string; field_value: string }) => {
+            data[item.field_key] = item.field_value;
+          });
+        }
+        // Also check metadata.extracted_data
+        const metadataExtracted = conv.metadata?.extracted_data;
+        if (metadataExtracted) {
+          Object.assign(data, metadataExtracted);
+        }
+        return data;
+      })(),
     })),
     [conversations]
   );
