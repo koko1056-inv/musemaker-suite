@@ -273,6 +273,59 @@ export type Database = {
           },
         ]
       }
+      email_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          include_summary: boolean
+          include_transcript: boolean
+          is_active: boolean
+          name: string
+          notify_on_call_end: boolean
+          notify_on_call_failed: boolean
+          notify_on_call_start: boolean
+          recipient_email: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          name: string
+          notify_on_call_end?: boolean
+          notify_on_call_failed?: boolean
+          notify_on_call_start?: boolean
+          recipient_email: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          name?: string
+          notify_on_call_end?: boolean
+          notify_on_call_failed?: boolean
+          notify_on_call_start?: boolean
+          recipient_email?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notifications_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       escalation_rules: {
         Row: {
           action_type: string

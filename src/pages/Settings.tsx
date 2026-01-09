@@ -10,6 +10,7 @@ import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, Aler
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
+import { EmailNotificationManager } from "@/components/notifications/EmailNotificationManager";
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
 import { useWorkspace } from "@/hooks/useWorkspace";
@@ -464,65 +465,12 @@ export default function Settings() {
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
             {/* Slack連携 */}
             <SlackIntegrationManager workspaceId={workspaceId} />
             
             {/* メール通知 */}
-            <div className="glass rounded-xl card-shadow overflow-hidden">
-              <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Bell className="h-4 w-4 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">メール通知</h3>
-                    <p className="text-xs text-muted-foreground">通知設定をカスタマイズ</p>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 sm:p-6">
-                <div className="space-y-1">
-                  {[
-                    {
-                      id: "new-conversation",
-                      label: "新しい会話",
-                      description: "新しい会話が開始された際に通知",
-                      defaultChecked: true
-                    },
-                    {
-                      id: "failed-calls",
-                      label: "失敗した通話",
-                      description: "通話が失敗または転送された際にアラート",
-                      defaultChecked: true
-                    },
-                    {
-                      id: "weekly-report",
-                      label: "週次分析レポート",
-                      description: "エージェントのパフォーマンスサマリーを受信",
-                      defaultChecked: true
-                    },
-                    {
-                      id: "team-updates",
-                      label: "チームの更新",
-                      description: "メンバーがワークスペースに参加または退出した際",
-                      defaultChecked: false
-                    }
-                  ].map(item => (
-                    <div 
-                      key={item.id} 
-                      className="flex items-center justify-between py-3 px-3 -mx-3 rounded-lg hover:bg-muted/30 transition-colors gap-4"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium text-foreground text-sm">{item.label}</p>
-                        <p className="text-xs text-muted-foreground">{item.description}</p>
-                      </div>
-                      <Switch defaultChecked={item.defaultChecked} className="shrink-0" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <EmailNotificationManager workspaceId={workspaceId} />
           </TabsContent>
 
           {/* Billing Tab */}
