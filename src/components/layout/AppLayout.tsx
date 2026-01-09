@@ -35,7 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             </SheetContent>
           </Sheet>
           
-          <img src={musaLogo} alt="MUSA" className="h-6 w-auto" />
+          <img src={musaLogo} alt="MUSA" className="h-8 w-auto" />
           
           <div className="w-10" /> {/* Spacer for balance */}
         </div>
