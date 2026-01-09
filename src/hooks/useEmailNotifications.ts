@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface EmailNotification {
+export interface EmailNotification {
   id: string;
   workspace_id: string;
   name: string;
@@ -14,11 +14,12 @@ interface EmailNotification {
   include_summary: boolean;
   include_transcript: boolean;
   message_template: string | null;
+  agent_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }
 
-interface CreateEmailNotificationInput {
+export interface CreateEmailNotificationInput {
   name: string;
   recipient_email: string;
   notify_on_call_start?: boolean;
@@ -26,9 +27,10 @@ interface CreateEmailNotificationInput {
   notify_on_call_failed?: boolean;
   include_summary?: boolean;
   include_transcript?: boolean;
+  agent_ids?: string[] | null;
 }
 
-interface UpdateEmailNotificationInput {
+export interface UpdateEmailNotificationInput {
   id: string;
   name?: string;
   recipient_email?: string;
@@ -38,6 +40,7 @@ interface UpdateEmailNotificationInput {
   include_summary?: boolean;
   include_transcript?: boolean;
   message_template?: string | null;
+  agent_ids?: string[] | null;
 }
 
 export function useEmailNotifications(workspaceId: string) {

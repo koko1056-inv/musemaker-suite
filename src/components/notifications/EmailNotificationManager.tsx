@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useEmailNotifications } from "@/hooks/useEmailNotifications";
+import { useState, useMemo } from "react";
+import { useEmailNotifications, EmailNotification } from "@/hooks/useEmailNotifications";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { AgentSelector } from "./AgentSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ import {
   Loader2,
   Variable,
   Copy,
+  Bot,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -108,8 +110,43 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
     notify_on_call_failed: true,
     include_summary: true,
     include_transcript: false,
+    agent_ids: null as string[] | null,
   });
   const { toast } = useToast();
+
+  // 選択したエージェントの抽出フィールドを取得（編集中の通知用）
+  const agentIdsForFields = useMemo(() => {
+    if (editingTemplateId) {
+      const notification = notifications.find(n => n.id === editingTemplateId);
+      return notification?.agent_ids || (agents?.map(a => a.id) || []);
+    }
+    return newNotification.agent_ids || (agents?.map(a => a.id) || []);
+  }, [editingTemplateId, notifications, newNotification.agent_ids, agents]);
+
+  const { data: filteredExtractionFields = [] } = useQuery({
+    queryKey: ["extraction-fields-filtered-email", agentIdsForFields],
+    queryFn: async () => {
+      if (agentIdsForFields.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("agent_extraction_fields")
+        .select("field_key, field_name, agent_id")
+        .in("agent_id", agentIdsForFields);
+
+      if (error) throw error;
+      
+      // field_keyでユニークにする
+      const uniqueFields = new Map<string, { field_key: string; field_name: string }>();
+      data?.forEach(field => {
+        if (!uniqueFields.has(field.field_key)) {
+          uniqueFields.set(field.field_key, { field_key: field.field_key, field_name: field.field_name });
+        }
+      });
+      
+      return Array.from(uniqueFields.values());
+    },
+    enabled: agentIdsForFields.length > 0,
+  });
 
   const handleCopyVariable = (variable: string) => {
     navigator.clipboard.writeText(variable);
@@ -149,6 +186,7 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
       notify_on_call_failed: true,
       include_summary: true,
       include_transcript: false,
+      agent_ids: null,
     });
     setIsCreateOpen(false);
   };
@@ -368,6 +406,14 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* エージェント選択 */}
+              <div className="pt-2 border-t">
+                <AgentSelector
+                  selectedAgentIds={newNotification.agent_ids}
+                  onChange={(agentIds) => setNewNotification({ ...newNotification, agent_ids: agentIds })}
+                />
               </div>
 
               <Button
@@ -614,6 +660,23 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                         </div>
                       </div>
 
+                      {/* エージェント選択 */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium flex items-center gap-2">
+                          <Bot className="h-4 w-4" />
+                          対象エージェント
+                        </Label>
+                        <AgentSelector
+                          selectedAgentIds={notification.agent_ids}
+                          onChange={(agentIds) => 
+                            updateNotification.mutate({
+                              id: notification.id,
+                              agent_ids: agentIds,
+                            })
+                          }
+                        />
+                      </div>
+
                       {/* メッセージテンプレート */}
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -661,14 +724,14 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                                   ))}
                                 </div>
                               </div>
-                              {allExtractionFields.length > 0 && (
+                              {filteredExtractionFields.length > 0 && (
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-2">
                                     <Variable className="h-3.5 w-3.5 text-violet-500" />
-                                    <p className="text-xs text-muted-foreground">抽出変数:</p>
+                                    <p className="text-xs text-muted-foreground">選択中のエージェントの抽出変数:</p>
                                   </div>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {allExtractionFields.map((field) => (
+                                    {filteredExtractionFields.map((field) => (
                                       <Badge 
                                         key={field.field_key} 
                                         variant="outline" 
@@ -682,10 +745,10 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                                   </div>
                                 </div>
                               )}
-                              {allExtractionFields.length === 0 && (
+                              {filteredExtractionFields.length === 0 && (
                                 <div>
                                   <p className="text-xs text-muted-foreground">
-                                    抽出変数: エージェント設定で追加すると候補が表示されます
+                                    抽出変数: 選択中のエージェントに抽出フィールドが設定されていません
                                   </p>
                                 </div>
                               )}
