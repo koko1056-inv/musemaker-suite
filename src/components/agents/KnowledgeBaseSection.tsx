@@ -252,16 +252,23 @@ export function KnowledgeBaseSection() {
     const file = e.target.files?.[0];
     if (!file || !selectedKbId) return;
 
-    const result = await uploadFile.mutateAsync(file);
-    
-    await createItem.mutateAsync({
-      knowledge_base_id: selectedKbId,
-      title: file.name,
-      content: `ファイル: ${file.name}`,
-      file_url: result.url,
-      file_type: result.type,
-      category: "other",
-    });
+    try {
+      const result = await uploadFile.mutateAsync(file);
+      
+      await createItem.mutateAsync({
+        knowledge_base_id: selectedKbId,
+        title: file.name,
+        content: `ファイル: ${file.name}`,
+        file_url: result.url,
+        file_type: result.type,
+        category: "other",
+      });
+      
+      // Reset input
+      e.target.value = '';
+    } catch (error) {
+      console.error('Upload failed:', error);
+    }
   };
 
   // Mobile: Show list or detail view
@@ -296,6 +303,26 @@ export function KnowledgeBaseSection() {
               className="pl-9 h-10"
             />
           </div>
+          
+          {/* File Upload Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-10 shrink-0 gap-1"
+            onClick={() => document.getElementById('file-upload-input')?.click()}
+            disabled={uploadFile.isPending}
+          >
+            <Upload className="h-4 w-4" />
+            {uploadFile.isPending ? "..." : ""}
+          </Button>
+          <input
+            id="file-upload-input"
+            type="file"
+            className="hidden"
+            accept=".txt,.pdf,.doc,.docx,.md,.csv,.json"
+            onChange={handleFileUpload}
+          />
+          
           <Dialog open={isCreateItemOpen} onOpenChange={setIsCreateItemOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="h-10 shrink-0">
@@ -364,7 +391,14 @@ export function KnowledgeBaseSection() {
                 className="glass rounded-xl p-4 card-shadow"
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
-                  <h4 className="font-medium text-sm">{item.title}</h4>
+                  <div className="flex items-center gap-2 min-w-0">
+                    {item.file_url ? (
+                      <Upload className="h-4 w-4 text-primary shrink-0" />
+                    ) : (
+                      <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                    )}
+                    <h4 className="font-medium text-sm truncate">{item.title}</h4>
+                  </div>
                   <div className="flex items-center gap-1 shrink-0">
                     <Button
                       variant="ghost"
@@ -385,11 +419,18 @@ export function KnowledgeBaseSection() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{item.content}</p>
-                {item.category && (
-                  <Badge variant="secondary" className="mt-2 text-xs">
-                    {CATEGORIES.find(c => c.value === item.category)?.label || item.category}
-                  </Badge>
-                )}
+                <div className="flex items-center gap-2 mt-2">
+                  {item.file_type && (
+                    <Badge variant="outline" className="text-xs">
+                      {item.file_type.split('/').pop()?.toUpperCase() || 'ファイル'}
+                    </Badge>
+                  )}
+                  {item.category && (
+                    <Badge variant="secondary" className="text-xs">
+                      {CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+                    </Badge>
+                  )}
+                </div>
               </div>
             ))
           )}
