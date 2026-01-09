@@ -143,6 +143,7 @@ export function KnowledgeBaseSection() {
   // Form states
   const [kbName, setKbName] = useState("");
   const [kbDescription, setKbDescription] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [itemTitle, setItemTitle] = useState("");
   const [itemContent, setItemContent] = useState("");
   const [itemCategory, setItemCategory] = useState("");
@@ -185,10 +186,43 @@ export function KnowledgeBaseSection() {
 
   const handleCreateKb = async () => {
     if (!kbName.trim()) return;
-    await createKb.mutateAsync({ name: kbName, description: kbDescription });
-    setKbName("");
-    setKbDescription("");
-    setIsCreateKbOpen(false);
+    
+    try {
+      // Create knowledge base first
+      const newKb = await createKb.mutateAsync({ name: kbName, description: kbDescription });
+      
+      // Upload pending files to the new knowledge base
+      if (pendingFiles.length > 0 && newKb) {
+        for (const file of pendingFiles) {
+          try {
+            const result = await uploadFile.mutateAsync(file);
+            await createItem.mutateAsync({
+              knowledge_base_id: newKb.id,
+              title: file.name,
+              content: `ファイル: ${file.name}`,
+              file_url: result.url,
+              file_type: result.type,
+              category: "other",
+            });
+          } catch (err) {
+            console.error('Failed to upload file:', file.name, err);
+          }
+        }
+      }
+      
+      // Reset form
+      setKbName("");
+      setKbDescription("");
+      setPendingFiles([]);
+      setIsCreateKbOpen(false);
+      
+      // Select the new knowledge base to show uploaded files
+      if (newKb) {
+        setSelectedKbId(newKb.id);
+      }
+    } catch (error) {
+      console.error('Failed to create knowledge base:', error);
+    }
   };
 
   const handleDeleteKb = async (id: string) => {
@@ -492,10 +526,45 @@ export function KnowledgeBaseSection() {
                   placeholder="何を保存するか..."
                 />
               </div>
+              
+              {/* File Upload Section */}
+              <div className="space-y-2">
+                <Label>ファイルを追加（任意）</Label>
+                <div className="flex items-center gap-2">
+                  <FileUploadButton
+                    onFileSelect={(file) => setPendingFiles(prev => [...prev, file])}
+                    isUploading={false}
+                    label="PDFを選択"
+                    className="flex-1"
+                  />
+                </div>
+                {pendingFiles.length > 0 && (
+                  <div className="space-y-1 mt-2">
+                    {pendingFiles.map((file, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
+                        <span className="truncate flex-1">{file.name}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 shrink-0"
+                          onClick={() => setPendingFiles(prev => prev.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                    <p className="text-xs text-muted-foreground">{pendingFiles.length}件のファイルを追加予定</p>
+                  </div>
+                )}
+              </div>
             </div>
             <DialogFooter className="flex-col gap-2">
-              <Button onClick={handleCreateKb} disabled={createKb.isPending} className="w-full">
-                作成
+              <Button 
+                onClick={handleCreateKb} 
+                disabled={createKb.isPending || uploadFile.isPending} 
+                className="w-full"
+              >
+                {(createKb.isPending || uploadFile.isPending) ? "作成中..." : pendingFiles.length > 0 ? `作成 (${pendingFiles.length}件アップロード)` : "作成"}
               </Button>
             </DialogFooter>
           </DialogContent>
