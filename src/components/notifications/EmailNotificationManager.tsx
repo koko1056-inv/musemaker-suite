@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useEmailNotifications } from "@/hooks/useEmailNotifications";
+import { useAgents } from "@/hooks/useAgents";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +31,8 @@ import {
   X,
   AtSign,
   Loader2,
+  Variable,
+  Copy,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -58,11 +63,40 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
     testEmail,
   } = useEmailNotifications(workspaceId);
 
+  const { agents } = useAgents();
+  
+  // 全エージェントの抽出フィールドを取得
+  const { data: allExtractionFields = [] } = useQuery({
+    queryKey: ["all-extraction-fields-email", workspaceId],
+    queryFn: async () => {
+      if (!agents || agents.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("agent_extraction_fields")
+        .select("field_key, field_name, agent_id")
+        .in("agent_id", agents.map(a => a.id));
+
+      if (error) throw error;
+      
+      // field_keyでユニークにする
+      const uniqueFields = new Map<string, { field_key: string; field_name: string }>();
+      data?.forEach(field => {
+        if (!uniqueFields.has(field.field_key)) {
+          uniqueFields.set(field.field_key, { field_key: field.field_key, field_name: field.field_name });
+        }
+      });
+      
+      return Array.from(uniqueFields.values());
+    },
+    enabled: !!agents && agents.length > 0,
+  });
+
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
   const [editingEmailValue, setEditingEmailValue] = useState("");
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [newNotification, setNewNotification] = useState({
     name: "",
     recipient_email: "",
@@ -73,6 +107,13 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
     include_transcript: false,
   });
   const { toast } = useToast();
+
+  const handleCopyVariable = (variable: string) => {
+    navigator.clipboard.writeText(variable);
+    setCopiedKey(variable);
+    toast({ title: "コピーしました" });
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   const handleCreate = async () => {
     if (!newNotification.name || !newNotification.recipient_email) {
@@ -569,6 +610,38 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                           </div>
                         </div>
                       </div>
+
+                      {/* 利用可能な変数 */}
+                      {allExtractionFields.length > 0 && (
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium flex items-center gap-2">
+                            <Variable className="h-4 w-4 text-violet-500" />
+                            メール本文で利用可能な抽出変数
+                          </Label>
+                          <div className="bg-muted/50 p-3 rounded-lg space-y-2">
+                            <p className="text-xs text-muted-foreground">
+                              以下の変数がメール本文に自動的に含まれます（抽出データセクション）
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {allExtractionFields.map((field) => (
+                                <Badge 
+                                  key={field.field_key} 
+                                  variant="outline" 
+                                  className="text-xs font-mono cursor-pointer hover:bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 gap-1"
+                                  onClick={() => handleCopyVariable(`{{extracted.${field.field_key}}}`)}
+                                >
+                                  {field.field_name}
+                                  {copiedKey === `{{extracted.${field.field_key}}}` ? (
+                                    <Check className="h-3 w-3 text-green-500" />
+                                  ) : (
+                                    <Copy className="h-3 w-3 opacity-50" />
+                                  )}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       {/* アクションボタン */}
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
