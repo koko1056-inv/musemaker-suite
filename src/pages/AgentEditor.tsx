@@ -371,37 +371,51 @@ export default function AgentEditor() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-end min-h-[40px]">
+            <div className="flex items-center gap-1.5 sm:gap-3 w-full sm:w-auto justify-end min-h-[40px]">
               {!isNew && (
-                <Button
-                  variant={status === "published" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleSave(status === "published" ? "draft" : "published")}
-                  disabled={isSaving}
-                  className="gap-1.5 rounded-xl"
-                >
-                  {status === "published" ? (
-                    <>
-                      <FileEdit className="h-4 w-4" />
-                      <span className="hidden sm:inline">下書きに戻す</span>
-                    </>
-                  ) : (
-                    <>
-                      <Globe className="h-4 w-4" />
-                      <span className="hidden sm:inline">公開する</span>
-                    </>
-                  )}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant={status === "published" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handleSave(status === "published" ? "draft" : "published")}
+                      disabled={isSaving}
+                      className="gap-1.5 rounded-xl px-2.5 sm:px-3"
+                    >
+                      {status === "published" ? (
+                        <>
+                          <FileEdit className="h-4 w-4" />
+                          <span className="hidden sm:inline">下書きに戻す</span>
+                        </>
+                      ) : (
+                        <>
+                          <Globe className="h-4 w-4" />
+                          <span className="hidden sm:inline">公開する</span>
+                        </>
+                      )}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="sm:hidden">
+                    {status === "published" ? "下書きに戻す" : "公開する"}
+                  </TooltipContent>
+                </Tooltip>
               )}
               
               {elevenlabsAgentId && (
                 <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-2 rounded-xl border-2">
-                      <Phone className="h-4 w-4" />
-                      <span className="hidden sm:inline">テスト通話</span>
-                    </Button>
-                  </DialogTrigger>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="gap-2 rounded-xl border-2 px-2.5 sm:px-3">
+                          <Phone className="h-4 w-4" />
+                          <span className="hidden sm:inline">テスト通話</span>
+                        </Button>
+                      </DialogTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent className="sm:hidden">
+                      テスト通話
+                    </TooltipContent>
+                  </Tooltip>
                   <DialogContent className="sm:max-w-md max-h-[90vh] overflow-auto">
                     <DialogHeader>
                       <DialogTitle>テスト通話</DialogTitle>
@@ -419,19 +433,26 @@ export default function AgentEditor() {
                 </Dialog>
               )}
               
-              <Button 
-                onClick={() => handleSave()}
-                disabled={isSaving || !canProceedToStep3}
-                className="gap-2 rounded-xl shadow-md shadow-primary/20"
-                size="sm"
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                <span className="hidden sm:inline">{isNew ? "作成" : "保存"}</span>
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    onClick={() => handleSave()}
+                    disabled={isSaving || !canProceedToStep3}
+                    className="gap-2 rounded-xl shadow-md shadow-primary/20 px-2.5 sm:px-3"
+                    size="sm"
+                  >
+                    {isSaving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">{isNew ? "作成" : "保存"}</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">
+                  {isNew ? "作成" : "保存"}
+                </TooltipContent>
+              </Tooltip>
             </div>
           </header>
 
