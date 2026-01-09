@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
+import { BatchCallDialog } from "@/components/outbound/BatchCallDialog";
 import { useConversations } from "@/hooks/useConversations";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -627,6 +628,7 @@ export default function Conversations() {
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [batchCallDialogOpen, setBatchCallDialogOpen] = useState(false);
   const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
   const { conversations, isLoading } = useConversations();
 
@@ -704,12 +706,34 @@ export default function Conversations() {
               <div className="h-10 w-10 rounded-full bg-[#06C755] flex items-center justify-center">
                 <MessageCircle className="h-5 w-5 text-white" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h1 className="text-lg font-bold text-foreground">AI通話履歴</h1>
                 <p className="text-xs text-muted-foreground">
                   {agentConversations.length}件のエージェント
                 </p>
               </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 mb-3">
+              <Button 
+                className="flex-1 h-9 text-sm gap-1.5"
+                onClick={() => {
+                  setCallAgentId(undefined);
+                  setCallDialogOpen(true);
+                }}
+              >
+                <PhoneOutgoing className="h-4 w-4" />
+                新規発信
+              </Button>
+              <Button 
+                variant="outline"
+                className="flex-1 h-9 text-sm gap-1.5"
+                onClick={() => setBatchCallDialogOpen(true)}
+              >
+                <Phone className="h-4 w-4" />
+                一斉発信
+              </Button>
             </div>
             
             {/* Search */}
@@ -792,6 +816,12 @@ export default function Conversations() {
         open={callDialogOpen}
         onOpenChange={setCallDialogOpen}
         defaultAgentId={callAgentId}
+      />
+
+      {/* Batch Call Dialog */}
+      <BatchCallDialog
+        open={batchCallDialogOpen}
+        onOpenChange={setBatchCallDialogOpen}
       />
     </AppLayout>
   );
