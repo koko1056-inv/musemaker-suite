@@ -283,47 +283,15 @@ function ConversationDetail({
   agentIconName: string;
   agentIconColor: string;
 }) {
+  const hasTranscript = conversation.transcript && conversation.transcript.length > 0;
+  const hasSummary = conversation.summary && conversation.summary.trim().length > 0;
+  const hasKeyPoints = conversation.keyPoints && conversation.keyPoints.length > 0;
+  const hasActionItems = conversation.actionItems && conversation.actionItems.length > 0;
+
   return (
     <div className="space-y-4">
-      {/* Metadata Header */}
-      <div className="flex items-center justify-between px-1">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Calendar className="h-3.5 w-3.5" />
-            {format(conversation.rawDate, 'M月d日 HH:mm', { locale: ja })}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />
-            {conversation.duration}
-          </span>
-          {conversation.phone !== '不明' && (
-            <span className="flex items-center gap-1">
-              <Phone className="h-3.5 w-3.5" />
-              {conversation.phone}
-            </span>
-          )}
-        </div>
-        <Badge
-          variant={
-            conversation.status === "completed" ? "default" : 
-            conversation.status === "in_progress" ? "secondary" : "destructive"
-          }
-          className="gap-1 text-xs font-normal"
-        >
-          {conversation.status === "completed" ? (
-            <CheckCircle className="h-3 w-3" />
-          ) : conversation.status === "in_progress" ? (
-            <Clock className="h-3 w-3" />
-          ) : (
-            <XCircle className="h-3 w-3" />
-          )}
-          {conversation.status === "completed" ? "完了" : 
-           conversation.status === "in_progress" ? "通話中" : "失敗"}
-        </Badge>
-      </div>
-
-      {/* Summary Card */}
-      {conversation.summary && (
+      {/* Summary Card - only show if there's actual summary */}
+      {hasSummary && (
         <div className="bg-muted/30 rounded-2xl p-4">
           <div className="flex items-start gap-3">
             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
@@ -337,10 +305,10 @@ function ConversationDetail({
         </div>
       )}
 
-      {/* Key Points & Action Items */}
-      {(conversation.keyPoints.length > 0 || conversation.actionItems.length > 0) && (
+      {/* Key Points & Action Items - only show if data exists */}
+      {(hasKeyPoints || hasActionItems) && (
         <div className="grid gap-3 sm:grid-cols-2">
-          {conversation.keyPoints.length > 0 && (
+          {hasKeyPoints && (
             <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <Lightbulb className="h-4 w-4 text-amber-600" />
@@ -357,7 +325,7 @@ function ConversationDetail({
             </div>
           )}
           
-          {conversation.actionItems.length > 0 && (
+          {hasActionItems && (
             <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl p-4">
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="h-4 w-4 text-emerald-600" />
@@ -376,17 +344,17 @@ function ConversationDetail({
         </div>
       )}
 
-      {/* Audio Player */}
+      {/* Audio Player - only show if audio URL exists */}
       {conversation.audioUrl && (
         <div className="flex justify-center">
           <AudioPlayer audioUrl={conversation.audioUrl} />
         </div>
       )}
 
-      {/* Chat Transcript */}
-      <div className="space-y-2">
-        {conversation.transcript.length > 0 ? (
-          conversation.transcript.map((msg, i, arr) => {
+      {/* Chat Transcript - only show if transcript exists */}
+      {hasTranscript && (
+        <div className="space-y-2">
+          {conversation.transcript.map((msg, i, arr) => {
             const prevMsg = arr[i - 1];
             const showAvatar = !prevMsg || prevMsg.role !== msg.role;
             
@@ -400,14 +368,9 @@ function ConversationDetail({
                 showAvatar={showAvatar}
               />
             );
-          })
-        ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">トランスクリプトがありません</p>
-          </div>
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -459,25 +422,25 @@ function ChatView({
   return (
     <div className="flex flex-col h-full w-full bg-background">
       {/* Header - LINE style */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-border sticky top-0 z-10">
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-background border-b border-border sticky top-0 z-10">
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-9 w-9 shrink-0"
+          className="md:hidden h-8 w-8 shrink-0"
           onClick={onBack}
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
         
         <div 
-          className="h-10 w-10 rounded-full flex items-center justify-center shadow-sm shrink-0"
+          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shadow-sm shrink-0"
           style={{ backgroundColor: agent.iconColor }}
         >
-          <IconComponent className="h-5 w-5 text-white" />
+          <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
         </div>
         
         <div className="flex-1 min-w-0">
-          <h2 className="font-semibold text-foreground truncate">{agent.agentName}</h2>
+          <h2 className="font-semibold text-foreground truncate text-sm sm:text-base">{agent.agentName}</h2>
           <p className="text-xs text-muted-foreground">
             {agent.totalConversations}件の会話
           </p>
@@ -487,7 +450,7 @@ function ChatView({
       {/* Filter Pills - Clean horizontal scroll */}
       <div className="border-b border-border bg-muted/30">
         <ScrollArea className="w-full">
-          <div className="flex gap-2 p-3">
+          <div className="flex gap-1.5 sm:gap-2 p-2 sm:p-3">
             {[
               { value: "all" as const, label: "すべて" },
               { value: "today" as const, label: "今日" },
@@ -499,7 +462,7 @@ function ChatView({
                 variant={dateFilter === option.value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setDateFilter(option.value)}
-                className={`text-xs h-8 px-4 rounded-full whitespace-nowrap ${
+                className={`text-xs h-7 sm:h-8 px-3 sm:px-4 rounded-full whitespace-nowrap ${
                   dateFilter === option.value 
                     ? 'bg-foreground text-background hover:bg-foreground/90' 
                     : 'bg-background hover:bg-muted'
@@ -508,35 +471,26 @@ function ChatView({
                 {option.label}
               </Button>
             ))}
-            <div className="w-px bg-border mx-1" />
-            {[
-              { value: "all" as const, label: "全状況", icon: null },
-              { value: "completed" as const, label: "完了", icon: CheckCircle },
-              { value: "in_progress" as const, label: "通話中", icon: Clock },
-              { value: "failed" as const, label: "失敗", icon: XCircle },
-            ].map((option) => (
-              <Button
-                key={option.value}
-                variant={statusFilter === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setStatusFilter(option.value)}
-                className={`text-xs h-8 px-4 rounded-full whitespace-nowrap gap-1.5 ${
-                  statusFilter === option.value 
-                    ? 'bg-foreground text-background hover:bg-foreground/90' 
-                    : 'bg-background hover:bg-muted'
-                }`}
-              >
-                {option.icon && <option.icon className="h-3 w-3" />}
-                {option.label}
-              </Button>
-            ))}
+            <div className="w-px bg-border mx-0.5 sm:mx-1" />
+            <Button
+              variant={statusFilter === "all" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter("all")}
+              className={`text-xs h-7 sm:h-8 px-3 sm:px-4 rounded-full whitespace-nowrap ${
+                statusFilter === "all" 
+                  ? 'bg-foreground text-background hover:bg-foreground/90' 
+                  : 'bg-background hover:bg-muted'
+              }`}
+            >
+              全状況
+            </Button>
           </div>
         </ScrollArea>
       </div>
 
       {/* Conversation List */}
       <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
           {filteredConversations.length === 0 ? (
             <div className="text-center py-16 text-muted-foreground">
               <MessageCircle className="h-12 w-12 mx-auto mb-3 opacity-20" />
@@ -570,29 +524,30 @@ function ChatView({
                   >
                     {/* Collapsed Header */}
                     <div 
-                      className="flex items-center gap-3 p-4"
+                      className="flex items-center gap-3 p-3 sm:p-4"
                       onClick={() => setSelectedConversationId(isExpanded ? null : conv.id)}
                     >
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 text-sm">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-sm flex-wrap">
                           <span className="font-medium">
                             {format(conv.rawDate, 'HH:mm')}
                           </span>
-                          <span className="text-muted-foreground">•</span>
                           <span className="text-muted-foreground flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {conv.duration}
                           </span>
                           {conv.phone !== '不明' && (
-                            <>
-                              <span className="text-muted-foreground">•</span>
-                              <span className="text-muted-foreground">{conv.phone}</span>
-                            </>
+                            <span className="text-muted-foreground text-xs hidden sm:inline">{conv.phone}</span>
                           )}
                         </div>
                         {conv.summary && (
                           <p className={`text-sm text-muted-foreground mt-1 ${isExpanded ? '' : 'line-clamp-1'}`}>
                             {conv.summary}
+                          </p>
+                        )}
+                        {!conv.summary && conv.transcript.length > 0 && (
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                            {conv.transcript[0]?.text}
                           </p>
                         )}
                       </div>
@@ -601,20 +556,22 @@ function ChatView({
                           conv.status === "completed" ? "default" : 
                           conv.status === "in_progress" ? "secondary" : "destructive"
                         }
-                        className="shrink-0 gap-1 text-xs"
+                        className="shrink-0 gap-1 text-xs h-6"
                       >
                         {conv.status === "completed" ? <CheckCircle className="h-3 w-3" /> : 
                          conv.status === "in_progress" ? <Clock className="h-3 w-3" /> : 
                          <XCircle className="h-3 w-3" />}
-                        {conv.status === "completed" ? "完了" : 
-                         conv.status === "in_progress" ? "通話中" : "失敗"}
+                        <span className="hidden sm:inline">
+                          {conv.status === "completed" ? "完了" : 
+                           conv.status === "in_progress" ? "通話中" : "失敗"}
+                        </span>
                       </Badge>
                     </div>
 
                     {/* Expanded Content */}
                     {isExpanded && (
-                      <div className="px-4 pb-4 pt-0 border-t border-border/50">
-                        <div className="pt-4">
+                      <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 border-t border-border/50">
+                        <div className="pt-3 sm:pt-4">
                           <ConversationDetail
                             conversation={conv}
                             agentIconName={agent.iconName}
