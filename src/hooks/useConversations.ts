@@ -2,6 +2,31 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+
+async function ensureDemoWorkspaceMembership() {
+  try {
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+    if (!user) return;
+
+    const { error } = await supabase.from("workspace_members").insert({
+      user_id: user.id,
+      workspace_id: DEMO_WORKSPACE_ID,
+      role: "owner",
+    });
+
+    if (error) {
+      // Ignore duplicate membership
+      if (!String(error.message || "").toLowerCase().includes("duplicate")) {
+        console.warn("Failed to ensure demo workspace membership:", error);
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to ensure demo workspace membership:", error);
+  }
+}
+
 interface TranscriptMessage {
   role: 'agent' | 'user';
   text: string;
@@ -39,6 +64,8 @@ export function useConversations() {
   const fetchConversations = useCallback(async () => {
     setIsLoading(true);
     try {
+      await ensureDemoWorkspaceMembership();
+
       const { data, error } = await supabase
         .from('conversations')
         .select(`

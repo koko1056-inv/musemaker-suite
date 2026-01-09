@@ -29,11 +29,24 @@ export interface KnowledgeItem {
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 async function ensureDemoWorkspaceMembership() {
-  // Note: Supabase types are generated and may not include this RPC yet.
-  const rpc = (supabase.rpc as any) as (fn: string, args?: any) => Promise<{ error?: any }>;
-  const { error } = await rpc("ensure_demo_workspace_membership");
-  if (error) {
-    // Non-fatal: the rest of the query/mutation may still work depending on policies.
+  try {
+    const { data } = await supabase.auth.getUser();
+    const user = data.user;
+    if (!user) return;
+
+    const { error } = await supabase.from("workspace_members").insert({
+      user_id: user.id,
+      workspace_id: DEMO_WORKSPACE_ID,
+      role: "owner",
+    });
+
+    if (error) {
+      // Ignore duplicate membership
+      if (!String(error.message || "").toLowerCase().includes("duplicate")) {
+        console.warn("Failed to ensure demo workspace membership:", error);
+      }
+    }
+  } catch (error) {
     console.warn("Failed to ensure demo workspace membership:", error);
   }
 }
