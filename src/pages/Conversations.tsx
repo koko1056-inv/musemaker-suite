@@ -856,9 +856,9 @@ export default function Conversations() {
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "conversations" | "outbound")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
-                <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
-                  <MessageCircle className="h-4 w-4" />
-                  会話
+              <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
+                  <Phone className="h-4 w-4" />
+                  受信履歴
                 </TabsTrigger>
                 <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
                   <History className="h-4 w-4" />
