@@ -51,10 +51,14 @@ serve(async (req) => {
       });
     }
 
-    // Format transcript for AI
-    const formattedTranscript = transcript.map((entry: { role: string; content: string }) => 
-      `${entry.role === 'user' ? 'ユーザー' : 'AI'}: ${entry.content}`
-    ).join('\n');
+    // Format transcript for AI - handle both 'text' and 'content' field names
+    const formattedTranscript = transcript.map((entry: { role: string; text?: string; content?: string }) => {
+      const messageText = entry.text || entry.content || '';
+      const roleName = entry.role === 'user' ? 'ユーザー' : 'AI';
+      return `${roleName}: ${messageText}`;
+    }).join('\n');
+
+    console.log('Formatted transcript:', formattedTranscript);
 
     const agentName = conversation.agents?.name || 'AIエージェント';
     const agentDescription = conversation.agents?.description || '';
