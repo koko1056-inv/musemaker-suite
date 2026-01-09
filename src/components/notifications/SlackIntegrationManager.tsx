@@ -211,54 +211,24 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
 
   return (
     <div className="space-y-6">
-      {/* 説明セクション */}
-      <Card className="bg-gradient-to-r from-[#4A154B]/10 to-[#4A154B]/5 border-[#4A154B]/20">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-[#4A154B] rounded-xl">
-              <Slack className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2">Slack通知設定</h3>
-              <p className="text-muted-foreground mb-4">
-                通話の開始・終了・失敗時にSlackチャンネルへ自動で通知を送信できます。<br />
-                チームでリアルタイムに通話状況を共有しましょう。
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Phone className="h-3 w-3" />
-                  通話開始
-                </Badge>
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <PhoneOff className="h-3 w-3" />
-                  通話終了
-                </Badge>
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  通話失敗
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ヘッダーと追加ボタン */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            登録済みSlack連携
-            <Badge variant="secondary" className="ml-2">{integrations.length}件</Badge>
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            通知を受け取るSlackチャンネルを設定
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-[#4A154B] rounded-xl">
+            <Slack className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">Slack通知</h3>
+            <p className="text-sm text-muted-foreground">
+              通話イベントをSlackに自動通知
+            </p>
+          </div>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="w-full sm:w-auto gap-2">
-              <Plus className="h-5 w-5" />
-              Slack連携を追加
+            <Button className="w-full sm:w-auto gap-2">
+              <Plus className="h-4 w-4" />
+              追加
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">

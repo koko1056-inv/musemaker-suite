@@ -231,54 +231,24 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
 
   return (
     <div className="space-y-6">
-      {/* 説明セクション */}
-      <Card className="bg-gradient-to-r from-blue-500/10 to-blue-500/5 border-blue-500/20">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-blue-500 rounded-xl">
-              <Mail className="h-6 w-6 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2">メール通知設定</h3>
-              <p className="text-muted-foreground mb-4">
-                通話の開始・終了・失敗時にメールで自動通知を受け取れます。<br />
-                サマリーやトランスクリプトを含めることもできます。
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <Phone className="h-3 w-3" />
-                  通話開始
-                </Badge>
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <PhoneOff className="h-3 w-3" />
-                  通話終了
-                </Badge>
-                <Badge variant="secondary" className="text-xs gap-1">
-                  <AlertTriangle className="h-3 w-3" />
-                  通話失敗
-                </Badge>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* ヘッダーと追加ボタン */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            登録済みメール通知
-            <Badge variant="secondary" className="ml-2">{notifications.length}件</Badge>
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            通知を受け取るメールアドレスを設定
-          </p>
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-blue-500 rounded-xl">
+            <Mail className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold">メール通知</h3>
+            <p className="text-sm text-muted-foreground">
+              通話イベントをメールで自動通知
+            </p>
+          </div>
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
-            <Button size="lg" className="w-full sm:w-auto gap-2">
-              <Plus className="h-5 w-5" />
-              メール通知を追加
+            <Button className="w-full sm:w-auto gap-2">
+              <Plus className="h-4 w-4" />
+              追加
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
