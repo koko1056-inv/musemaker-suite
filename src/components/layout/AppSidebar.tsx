@@ -3,118 +3,100 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import musaLogo from "@/assets/musa-logo.png";
-import {
-  LayoutDashboard,
-  Bot,
-  Settings,
-  MessageSquare,
-  BarChart3,
-  Users,
-  ChevronDown,
-  Shield,
-  Gauge,
-  LogOut,
-  BookOpen,
-  PhoneOutgoing,
-  Phone,
-} from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-
-const navigation = [
-  { name: "ホーム", href: "/", icon: LayoutDashboard },
-  { name: "エージェント", href: "/agents", icon: Bot },
-  { name: "ナレッジ", href: "/knowledge", icon: BookOpen },
-  { name: "電話番号", href: "/phone-numbers", icon: Phone },
-  { name: "発信", href: "/outbound-calls", icon: PhoneOutgoing },
-  { name: "会話履歴", href: "/conversations", icon: MessageSquare },
-  { name: "分析", href: "/analytics", icon: BarChart3 },
-  { name: "利用量", href: "/usage", icon: Gauge },
-  { name: "ログ", href: "/audit-logs", icon: Shield },
-  { name: "チーム", href: "/team", icon: Users },
-  { name: "設定", href: "/settings", icon: Settings },
-];
-
+const navigation = [{
+  name: "ホーム",
+  href: "/",
+  icon: LayoutDashboard
+}, {
+  name: "エージェント",
+  href: "/agents",
+  icon: Bot
+}, {
+  name: "ナレッジ",
+  href: "/knowledge",
+  icon: BookOpen
+}, {
+  name: "電話番号",
+  href: "/phone-numbers",
+  icon: Phone
+}, {
+  name: "発信",
+  href: "/outbound-calls",
+  icon: PhoneOutgoing
+}, {
+  name: "会話履歴",
+  href: "/conversations",
+  icon: MessageSquare
+}, {
+  name: "分析",
+  href: "/analytics",
+  icon: BarChart3
+}, {
+  name: "利用量",
+  href: "/usage",
+  icon: Gauge
+}, {
+  name: "ログ",
+  href: "/audit-logs",
+  icon: Shield
+}, {
+  name: "チーム",
+  href: "/team",
+  icon: Users
+}, {
+  name: "設定",
+  href: "/settings",
+  icon: Settings
+}];
 interface AppSidebarProps {
   onNavigate?: () => void;
 }
-
-export function AppSidebar({ onNavigate }: AppSidebarProps) {
+export function AppSidebar({
+  onNavigate
+}: AppSidebarProps) {
   const currentLocation = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { workspace, isLoading: isWorkspaceLoading } = useWorkspace();
-
+  const {
+    user,
+    signOut
+  } = useAuth();
+  const {
+    workspace,
+    isLoading: isWorkspaceLoading
+  } = useWorkspace();
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
-
   const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
   const workspaceInitial = workspace?.name?.charAt(0).toUpperCase() || "W";
-
   const handleNavClick = () => {
     onNavigate?.();
   };
-
-  return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
+  return <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-sidebar-border bg-sidebar flex flex-col">
       {/* Logo */}
       <div className="flex h-20 items-center justify-center px-6">
-        <img 
-          src={musaLogo} 
-          alt="MUSA" 
-          className="h-12 w-auto"
-        />
+        <img src={musaLogo} alt="MUSA" className="h-12 w-auto" />
       </div>
 
       {/* Workspace Selector */}
-      {workspace && (
-        <div className="px-4 py-2">
-          <div className="flex w-full items-center gap-3 rounded-xl bg-sidebar-accent/50 p-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10 text-foreground">
-              <span className="text-xs font-serif font-medium">{workspaceInitial}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-serif font-medium text-sidebar-foreground truncate">
-                {workspace.name}
-              </p>
-              <p className="text-xs text-muted-foreground capitalize">{workspace.plan}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {workspace && <div className="px-4 py-2">
+          
+        </div>}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <div className="space-y-1">
-          {navigation.map((item) => {
-            const isActive = currentLocation.pathname === item.href || 
-              (item.href !== "/" && currentLocation.pathname.startsWith(item.href));
-            
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                onClick={handleNavClick}
-                className={cn(
-                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-serif font-medium transition-all duration-200",
-                  isActive
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent"
-                )}
-              >
+          {navigation.map(item => {
+          const isActive = currentLocation.pathname === item.href || item.href !== "/" && currentLocation.pathname.startsWith(item.href);
+          return <Link key={item.name} to={item.href} onClick={handleNavClick} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-serif font-medium transition-all duration-200", isActive ? "bg-foreground text-background" : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent")}>
                 <item.icon className="h-[18px] w-[18px]" />
                 <span>{item.name}</span>
-              </Link>
-            );
-          })}
+              </Link>;
+        })}
         </div>
       </nav>
 
@@ -150,6 +132,5 @@ export function AppSidebar({ onNavigate }: AppSidebarProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </aside>
-  );
+    </aside>;
 }
