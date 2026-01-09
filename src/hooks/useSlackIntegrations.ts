@@ -1,6 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface SlackIntegration {
   id: string;
@@ -33,31 +34,31 @@ export interface CreateSlackIntegrationInput {
 }
 
 export function useSlackIntegrations(workspaceId: string | undefined) {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const slackIntegrationsQuery = useQuery({
-    queryKey: ["slack-integrations", workspaceId],
+  const { data: integrations = [], isLoading } = useQuery({
+    queryKey: ['slack-integrations', workspaceId],
     queryFn: async () => {
       if (!workspaceId) return [];
       const { data, error } = await supabase
-        .from("slack_integrations")
-        .select("*")
-        .eq("workspace_id", workspaceId)
-        .order("created_at", { ascending: false });
+        .from('slack_integrations')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data as SlackIntegration[];
     },
     enabled: !!workspaceId,
+    staleTime: 60000, // 1 minute
   });
 
   const createIntegration = useMutation({
     mutationFn: async (input: CreateSlackIntegrationInput) => {
-      if (!workspaceId) throw new Error("Workspace ID required");
+      if (!workspaceId) throw new Error('Workspace ID required');
 
       const { data, error } = await supabase
-        .from("slack_integrations")
+        .from('slack_integrations')
         .insert({
           workspace_id: workspaceId,
           name: input.name,
@@ -74,104 +75,156 @@ export function useSlackIntegrations(workspaceId: string | undefined) {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as SlackIntegration;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["slack-integrations", workspaceId] });
-      toast({ title: "Slack連携を作成しました" });
+    onSuccess: (newIntegration) => {
+      queryClient.setQueryData<SlackIntegration[]>(
+        ['slack-integrations', workspaceId],
+        (old) => [newIntegration, ...(old || [])]
+      );
+      toast.success('Slack連携を作成しました');
     },
-    onError: (error) => {
-      toast({ title: "エラー", description: error.message, variant: "destructive" });
+    onError: (error: Error) => {
+      toast.error(error.message || 'Slack連携の作成に失敗しました');
     },
   });
 
   const updateIntegration = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SlackIntegration> & { id: string }) => {
       const { data, error } = await supabase
-        .from("slack_integrations")
+        .from('slack_integrations')
         .update(updates)
-        .eq("id", id)
+        .eq('id', id)
         .select()
         .single();
 
       if (error) throw error;
-      return data;
+      return data as SlackIntegration;
+    },
+    onMutate: async ({ id, ...updates }) => {
+      await queryClient.cancelQueries({ queryKey: ['slack-integrations', workspaceId] });
+      const previousData = queryClient.getQueryData<SlackIntegration[]>(['slack-integrations', workspaceId]);
+      
+      queryClient.setQueryData<SlackIntegration[]>(
+        ['slack-integrations', workspaceId],
+        (old) => old?.map((item) => (item.id === id ? { ...item, ...updates } : item))
+      );
+      
+      return { previousData };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["slack-integrations", workspaceId] });
-      toast({ title: "Slack連携を更新しました" });
+      toast.success('Slack連携を更新しました');
     },
-    onError: (error) => {
-      toast({ title: "エラー", description: error.message, variant: "destructive" });
+    onError: (error: Error, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['slack-integrations', workspaceId], context.previousData);
+      }
+      toast.error(error.message || 'Slack連携の更新に失敗しました');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['slack-integrations', workspaceId] });
     },
   });
 
   const deleteIntegration = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("slack_integrations")
+        .from('slack_integrations')
         .delete()
-        .eq("id", id);
+        .eq('id', id);
 
       if (error) throw error;
+      return id;
+    },
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['slack-integrations', workspaceId] });
+      const previousData = queryClient.getQueryData<SlackIntegration[]>(['slack-integrations', workspaceId]);
+      
+      queryClient.setQueryData<SlackIntegration[]>(
+        ['slack-integrations', workspaceId],
+        (old) => old?.filter((item) => item.id !== id)
+      );
+      
+      return { previousData };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["slack-integrations", workspaceId] });
-      toast({ title: "Slack連携を削除しました" });
+      toast.success('Slack連携を削除しました');
     },
-    onError: (error) => {
-      toast({ title: "エラー", description: error.message, variant: "destructive" });
+    onError: (error: Error, _, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['slack-integrations', workspaceId], context.previousData);
+      }
+      toast.error(error.message || 'Slack連携の削除に失敗しました');
     },
   });
 
   const toggleIntegration = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const { error } = await supabase
-        .from("slack_integrations")
+        .from('slack_integrations')
         .update({ is_active })
-        .eq("id", id);
+        .eq('id', id);
 
       if (error) throw error;
+      return { id, is_active };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["slack-integrations", workspaceId] });
+    onMutate: async ({ id, is_active }) => {
+      await queryClient.cancelQueries({ queryKey: ['slack-integrations', workspaceId] });
+      const previousData = queryClient.getQueryData<SlackIntegration[]>(['slack-integrations', workspaceId]);
+      
+      queryClient.setQueryData<SlackIntegration[]>(
+        ['slack-integrations', workspaceId],
+        (old) => old?.map((item) => (item.id === id ? { ...item, is_active } : item))
+      );
+      
+      return { previousData };
+    },
+    onError: (_, __, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['slack-integrations', workspaceId], context.previousData);
+      }
     },
   });
 
-  const testWebhook = async (webhookUrl: string) => {
+  const testWebhook = useCallback(async (webhookUrl: string) => {
     try {
       await fetch(webhookUrl, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: "🎉 Musa AI からのテスト通知です！連携が正常に設定されました。",
+          text: '🎉 Musa AI からのテスト通知です！連携が正常に設定されました。',
           blocks: [
             {
-              type: "section",
+              type: 'section',
               text: {
-                type: "mrkdwn",
-                text: "*🎉 テスト通知*\nMusa AI との連携が正常に設定されました！",
+                type: 'mrkdwn',
+                text: '*🎉 テスト通知*\nMusa AI との連携が正常に設定されました！',
               },
             },
           ],
         }),
       });
-      toast({ title: "テスト通知を送信しました", description: "Slackを確認してください" });
+      toast.success('テスト通知を送信しました', { description: 'Slackを確認してください' });
       return true;
-    } catch (error) {
-      toast({ title: "送信エラー", description: "Webhook URLを確認してください", variant: "destructive" });
+    } catch {
+      toast.error('送信エラー', { description: 'Webhook URLを確認してください' });
       return false;
     }
-  };
+  }, []);
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['slack-integrations', workspaceId] });
+  }, [queryClient, workspaceId]);
 
   return {
-    integrations: slackIntegrationsQuery.data || [],
-    isLoading: slackIntegrationsQuery.isLoading,
+    integrations,
+    isLoading,
     createIntegration,
     updateIntegration,
     deleteIntegration,
     toggleIntegration,
     testWebhook,
+    refetch,
   };
 }
