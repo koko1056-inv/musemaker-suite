@@ -303,6 +303,8 @@ export function KnowledgeBaseSection() {
           <FileUploadButton
             onFileSelect={handleFileUpload}
             isUploading={uploadFile.isPending}
+            label="PDF"
+            className="px-3"
           />
           
           <Dialog open={isCreateItemOpen} onOpenChange={setIsCreateItemOpen}>
@@ -364,7 +366,23 @@ export function KnowledgeBaseSection() {
           {filteredItems.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <FileText className="h-10 w-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">アイテムがありません</p>
+              <p className="text-sm mb-4">アイテムがありません</p>
+              <div className="flex items-center justify-center gap-2">
+                <FileUploadButton
+                  onFileSelect={handleFileUpload}
+                  isUploading={uploadFile.isPending}
+                  label="PDFを追加"
+                />
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="h-10"
+                  onClick={() => setIsCreateItemOpen(true)}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  テキスト追加
+                </Button>
+              </div>
             </div>
           ) : (
             filteredItems.map((item) => (
@@ -439,7 +457,7 @@ export function KnowledgeBaseSection() {
           </div>
           <div>
             <h3 className="font-semibold">ナレッジベース</h3>
-            <p className="text-xs text-muted-foreground">{knowledgeBases.length}件</p>
+            <p className="text-xs text-muted-foreground">{knowledgeBases.length}件・選択して追加/アップロード</p>
           </div>
         </div>
         <Dialog open={isCreateKbOpen} onOpenChange={setIsCreateKbOpen}>
