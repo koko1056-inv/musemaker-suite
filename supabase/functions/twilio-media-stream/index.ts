@@ -65,6 +65,7 @@ Deno.serve(async (req) => {
       console.log(`Agent found: ${agent.name}, ElevenLabs ID: ${agent.elevenlabs_agent_id}`);
 
       // Get signed URL for ElevenLabs conversation
+      // IMPORTANT: Add output_format for Twilio telephony (mulaw 8kHz)
       const signedUrlResponse = await fetch(
         `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agent.elevenlabs_agent_id}`,
         {
@@ -83,28 +84,42 @@ Deno.serve(async (req) => {
       }
 
       const { signed_url } = await signedUrlResponse.json();
-      console.log('Got ElevenLabs signed URL, connecting...');
+      
+      // Append output_format parameter for telephony audio format
+      const urlWithFormat = signed_url.includes('?') 
+        ? `${signed_url}&output_format=ulaw_8000`
+        : `${signed_url}?output_format=ulaw_8000`;
+      
+      console.log('Got ElevenLabs signed URL, connecting with ulaw_8000 format...');
 
-      // Connect to ElevenLabs WebSocket
-      elevenLabsSocket = new WebSocket(signed_url);
+      // Connect to ElevenLabs WebSocket with telephony audio format
+      elevenLabsSocket = new WebSocket(urlWithFormat);
 
       elevenLabsSocket.onopen = () => {
         console.log("ElevenLabs WebSocket connected");
         
-        // Send initial configuration to ElevenLabs
-        // For telephony integration, we need to specify the audio format
+        // Send initial configuration to ElevenLabs for telephony
+        // CRITICAL: Twilio uses 8kHz mulaw audio format
         const initMessage = {
           type: "conversation_initiation_client_data",
           conversation_config_override: {
             agent: {
               tts: {
-                // Twilio uses 8kHz mulaw audio for output
                 output_format: "ulaw_8000"
               }
+            },
+            stt: {
+              // Input from Twilio is also mulaw 8kHz
+              encoding: "mulaw",
+              sample_rate: 8000
             }
+          },
+          // Specify custom audio format for input stream
+          custom_llm_extra_body: {
+            audio_format: "mulaw_8000"
           }
         };
-        console.log("Sending ElevenLabs init config");
+        console.log("Sending ElevenLabs init config:", JSON.stringify(initMessage));
         elevenLabsSocket?.send(JSON.stringify(initMessage));
       };
 
@@ -114,13 +129,15 @@ Deno.serve(async (req) => {
           
           switch (data.type) {
             case "audio":
-              // ElevenLabs sends audio in audio_event.audio_base_64
-              if (data.audio_event?.audio_base_64 && streamSid) {
+              // ElevenLabs can send audio in different formats depending on version
+              // Try both audio.chunk and audio_event.audio_base_64
+              const audioPayload = data.audio?.chunk || data.audio_event?.audio_base_64;
+              if (audioPayload && streamSid) {
                 const mediaMessage = {
                   event: "media",
                   streamSid: streamSid,
                   media: {
-                    payload: data.audio_event.audio_base_64
+                    payload: audioPayload
                   }
                 };
                 twilioSocket.send(JSON.stringify(mediaMessage));
@@ -138,6 +155,14 @@ Deno.serve(async (req) => {
               }
               break;
             
+            case "interruption":
+              // When user interrupts, clear the Twilio audio buffer
+              console.log("User interrupted, clearing audio buffer");
+              if (streamSid) {
+                twilioSocket.send(JSON.stringify({ event: "clear", streamSid }));
+              }
+              break;
+            
             case "conversation_initiation_metadata":
               console.log("Conversation initialized:", data.conversation_initiation_metadata_event?.conversation_id);
               console.log("User input format:", data.conversation_initiation_metadata_event?.user_input_audio_format);
@@ -150,10 +175,6 @@ Deno.serve(async (req) => {
               
             case "user_transcript":
               console.log("User said:", data.user_transcription_event?.user_transcript);
-              break;
-              
-            case "interruption":
-              console.log("User interrupted");
               break;
               
             case "agent_response_correction":
