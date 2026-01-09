@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -26,7 +26,7 @@ interface OutboundChatViewProps {
   extractionFieldNameMap: Map<string, Map<string, string>>;
 }
 
-export function OutboundChatView({ 
+export const OutboundChatView = memo(function OutboundChatView({ 
   agent,
   onBack,
   cancelCall,
@@ -36,27 +36,28 @@ export function OutboundChatView({
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
-  const handleSelectCall = (call: any) => {
+  const handleSelectCall = useCallback((call: any) => {
     const hasConversation = call.conversation && (
       (call.conversation.transcript && call.conversation.transcript.length > 0) ||
       call.conversation.summary
     );
     if (!hasConversation) return;
     
-    const newId = selectedCallId === call.id ? null : call.id;
-    setSelectedCallId(newId);
-    
-    if (newId && !call.is_read) {
-      onMarkAsRead(call.id);
-    }
-  };
+    setSelectedCallId(prevId => {
+      const newId = prevId === call.id ? null : call.id;
+      if (newId && !call.is_read) {
+        onMarkAsRead(call.id);
+      }
+      return newId;
+    });
+  }, [onMarkAsRead]);
 
-  const formatDuration = (seconds?: number | null) => {
+  const formatDuration = useCallback((seconds?: number | null) => {
     if (!seconds) return '-';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  }, []);
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
@@ -268,4 +269,4 @@ export function OutboundChatView({
       </ScrollArea>
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { PhoneOutgoing, ChevronRight } from "lucide-react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
@@ -11,7 +12,7 @@ interface OutboundAgentListItemProps {
   onCall: () => void;
 }
 
-export function OutboundAgentListItem({ 
+export const OutboundAgentListItem = memo(function OutboundAgentListItem({ 
   agent, 
   isSelected, 
   onClick,
@@ -87,4 +88,4 @@ export function OutboundAgentListItem({
       </div>
     </div>
   );
-}
+});

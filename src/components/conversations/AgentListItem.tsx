@@ -1,3 +1,4 @@
+import { memo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -20,7 +21,7 @@ interface AgentListItemProps {
   onPhoneAssign: (agentId: string, phoneNumberSid: string) => void;
 }
 
-export function AgentListItem({ 
+export const AgentListItem = memo(function AgentListItem({ 
   agent, 
   isSelected, 
   onClick,
@@ -144,4 +145,4 @@ export function AgentListItem({
       )}
     </div>
   );
-}
+});

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { FileText, Lightbulb, CheckCircle, Variable } from "lucide-react";
 import { AudioPlayer } from "./AudioPlayer";
 import { ChatBubble } from "./ChatBubble";
@@ -9,7 +10,7 @@ interface ConversationDetailProps {
   agentIconColor: string;
 }
 
-export function ConversationDetail({
+export const ConversationDetail = memo(function ConversationDetail({
   conversation,
   agentIconName,
   agentIconColor,
@@ -134,4 +135,4 @@ export function ConversationDetail({
       )}
     </div>
   );
-}
+});

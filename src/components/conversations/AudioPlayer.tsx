@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { memo, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause } from "lucide-react";
@@ -7,14 +7,14 @@ interface AudioPlayerProps {
   audioUrl: string;
 }
 
-export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
+export const AudioPlayer = memo(function AudioPlayer({ audioUrl }: AudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = useCallback(() => {
     if (!audioRef.current) return;
     
     if (isPlaying) {
@@ -23,32 +23,32 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
       audioRef.current.play();
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
-  const handleTimeUpdate = () => {
+  const handleTimeUpdate = useCallback(() => {
     if (audioRef.current) {
       setCurrentTime(audioRef.current.currentTime);
     }
-  };
+  }, []);
 
-  const handleLoadedMetadata = () => {
+  const handleLoadedMetadata = useCallback(() => {
     if (audioRef.current && isFinite(audioRef.current.duration)) {
       setDuration(audioRef.current.duration);
       setIsLoaded(true);
     }
-  };
+  }, []);
 
-  const handleSeek = (value: number[]) => {
+  const handleSeek = useCallback((value: number[]) => {
     if (audioRef.current) {
       audioRef.current.currentTime = value[0];
       setCurrentTime(value[0]);
     }
-  };
+  }, []);
 
-  const handleEnded = () => {
+  const handleEnded = useCallback(() => {
     setIsPlaying(false);
     setCurrentTime(0);
-  };
+  }, []);
 
   const formatTime = (seconds: number): string => {
     if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
@@ -98,4 +98,4 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
       </div>
     </div>
   );
-}
+});
