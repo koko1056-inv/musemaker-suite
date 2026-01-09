@@ -12,11 +12,32 @@ import { useAgents } from "@/hooks/useAgents";
 import { useWorkspace } from "@/hooks/useWorkspace";
 
 export default function PhoneNumbers() {
-  const { workspace } = useWorkspace();
+  const { workspace, isLoading: isWorkspaceLoading } = useWorkspace();
   const { phoneNumbers, isLoading, isSyncing, syncFromTwilio, assignToAgent, unassignFromAgent, updateLabel } = usePhoneNumbers(workspace?.id);
   const { agents } = useAgents();
   const [editingLabel, setEditingLabel] = useState<string | null>(null);
   const [labelValue, setLabelValue] = useState("");
+
+  // Show loading while workspace is loading
+  if (isWorkspaceLoading) {
+    return (
+      <AppLayout>
+        <div className="p-6 md:p-8 lg:p-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-12">
+              <Skeleton className="h-8 w-48 mb-3" />
+              <Skeleton className="h-4 w-72" />
+            </div>
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-28 w-full rounded-2xl" />
+              ))}
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleAssign = async (phoneNumberSid: string, agentId: string) => {
     if (agentId === "none") {
