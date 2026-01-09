@@ -356,6 +356,7 @@ export type Database = {
           include_summary: boolean
           include_transcript: boolean
           is_active: boolean
+          message_template: string | null
           name: string
           notify_on_call_end: boolean
           notify_on_call_failed: boolean
@@ -370,6 +371,7 @@ export type Database = {
           include_summary?: boolean
           include_transcript?: boolean
           is_active?: boolean
+          message_template?: string | null
           name: string
           notify_on_call_end?: boolean
           notify_on_call_failed?: boolean
@@ -384,6 +386,7 @@ export type Database = {
           include_summary?: boolean
           include_transcript?: boolean
           is_active?: boolean
+          message_template?: string | null
           name?: string
           notify_on_call_end?: boolean
           notify_on_call_failed?: boolean

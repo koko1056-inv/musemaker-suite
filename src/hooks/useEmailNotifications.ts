@@ -13,6 +13,7 @@ interface EmailNotification {
   notify_on_call_failed: boolean;
   include_summary: boolean;
   include_transcript: boolean;
+  message_template: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -36,6 +37,7 @@ interface UpdateEmailNotificationInput {
   notify_on_call_failed?: boolean;
   include_summary?: boolean;
   include_transcript?: boolean;
+  message_template?: string | null;
 }
 
 export function useEmailNotifications(workspaceId: string) {

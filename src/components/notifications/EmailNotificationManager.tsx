@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -95,6 +96,8 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingEmailId, setEditingEmailId] = useState<string | null>(null);
   const [editingEmailValue, setEditingEmailValue] = useState("");
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState("");
   const [testingId, setTestingId] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [newNotification, setNewNotification] = useState({
@@ -611,37 +614,142 @@ export function EmailNotificationManager({ workspaceId }: EmailNotificationManag
                         </div>
                       </div>
 
-                      {/* 利用可能な変数 */}
-                      {allExtractionFields.length > 0 && (
-                        <div className="space-y-3">
+                      {/* メッセージテンプレート */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
                           <Label className="text-sm font-medium flex items-center gap-2">
-                            <Variable className="h-4 w-4 text-violet-500" />
-                            メール本文で利用可能な抽出変数
+                            <FileText className="h-4 w-4" />
+                            メッセージテンプレート
                           </Label>
-                          <div className="bg-muted/50 p-3 rounded-lg space-y-2">
-                            <p className="text-xs text-muted-foreground">
-                              以下の変数がメール本文に自動的に含まれます（抽出データセクション）
-                            </p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {allExtractionFields.map((field) => (
-                                <Badge 
-                                  key={field.field_key} 
-                                  variant="outline" 
-                                  className="text-xs font-mono cursor-pointer hover:bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300 gap-1"
-                                  onClick={() => handleCopyVariable(`{{extracted.${field.field_key}}}`)}
+                          {editingTemplateId !== notification.id && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingTemplateId(notification.id);
+                                setEditingTemplate(notification.message_template || "");
+                              }}
+                              className="h-7 gap-1 text-xs"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              編集
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {editingTemplateId === notification.id ? (
+                          <div className="space-y-3">
+                            <Textarea
+                              value={editingTemplate}
+                              onChange={(e) => setEditingTemplate(e.target.value)}
+                              placeholder="例: 📞 {{agent_name}}で通話がありました&#10;📱 電話番号: {{phone_number}}&#10;⏱ 通話時間: {{duration_formatted}}&#10;&#10;📝 要約:&#10;{{summary}}"
+                              className="min-h-[120px] font-mono text-sm"
+                            />
+                            <div className="bg-muted/50 p-3 rounded-md space-y-3">
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-2">標準変数:</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {["agent_name", "phone_number", "duration_formatted", "duration_seconds", "outcome", "summary", "transcript", "event_type", "timestamp"].map((v) => (
+                                    <Badge 
+                                      key={v} 
+                                      variant="outline" 
+                                      className="text-xs font-mono cursor-pointer hover:bg-primary/10"
+                                      onClick={() => setEditingTemplate((prev) => prev + `{{${v}}}`)}
+                                    >
+                                      {`{{${v}}}`}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                              {allExtractionFields.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-1.5 mb-2">
+                                    <Variable className="h-3.5 w-3.5 text-violet-500" />
+                                    <p className="text-xs text-muted-foreground">抽出変数:</p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {allExtractionFields.map((field) => (
+                                      <Badge 
+                                        key={field.field_key} 
+                                        variant="outline" 
+                                        className="text-xs font-mono cursor-pointer hover:bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300"
+                                        onClick={() => setEditingTemplate((prev) => prev + `{{extracted.${field.field_key}}}`)}
+                                      >
+                                        <span className="opacity-50 mr-0.5">{field.field_name}:</span>
+                                        {`{{extracted.${field.field_key}}}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {allExtractionFields.length === 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">
+                                    抽出変数: エージェント設定で追加すると候補が表示されます
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  await updateNotification.mutateAsync({
+                                    id: notification.id,
+                                    message_template: editingTemplate || null,
+                                  });
+                                  setEditingTemplateId(null);
+                                  setEditingTemplate("");
+                                }}
+                                disabled={updateNotification.isPending}
+                                className="gap-1"
+                              >
+                                <Check className="h-4 w-4" />
+                                保存
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingTemplateId(null);
+                                  setEditingTemplate("");
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                              {notification.message_template && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    await updateNotification.mutateAsync({
+                                      id: notification.id,
+                                      message_template: null,
+                                    });
+                                    setEditingTemplateId(null);
+                                    setEditingTemplate("");
+                                  }}
+                                  className="text-destructive hover:text-destructive ml-auto"
                                 >
-                                  {field.field_name}
-                                  {copiedKey === `{{extracted.${field.field_key}}}` ? (
-                                    <Check className="h-3 w-3 text-green-500" />
-                                  ) : (
-                                    <Copy className="h-3 w-3 opacity-50" />
-                                  )}
-                                </Badge>
-                              ))}
+                                  リセット
+                                </Button>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      )}
+                        ) : (
+                          <div>
+                            {notification.message_template ? (
+                              <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-wrap font-mono">
+                                {notification.message_template}
+                              </pre>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                デフォルトのメール形式を使用します。カスタマイズするには「編集」をクリック。
+                              </p>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
                       {/* アクションボタン */}
                       <div className="flex flex-col sm:flex-row gap-2 pt-2">
