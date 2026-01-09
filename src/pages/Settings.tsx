@@ -5,32 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Building,
-  Key,
-  Bell,
-  CreditCard,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Check,
-  AlertTriangle,
-  Webhook,
-  Wand2,
-  Loader2,
-  Shield,
-} from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -42,7 +18,6 @@ import { Slack } from "lucide-react";
 
 // Demo workspace ID for testing when not authenticated
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
-
 export default function Settings() {
   const {
     workspace,
@@ -52,14 +27,13 @@ export default function Settings() {
     updateWorkspace,
     updateElevenLabsApiKey,
     updateTwilioCredentials,
-    isAuthenticated,
+    isAuthenticated
   } = useWorkspace();
-
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
-  
+
   // Twilio credentials state
   const [twilioAccountSid, setTwilioAccountSid] = useState("");
   const [twilioAuthToken, setTwilioAuthToken] = useState("");
@@ -90,20 +64,17 @@ export default function Settings() {
       setHasChanges(workspaceName !== workspace.name);
     }
   }, [workspaceName, workspace]);
-
   const handleSaveWorkspace = async () => {
     const success = await updateWorkspace({
-      name: workspaceName,
+      name: workspaceName
     });
     if (success) {
       setHasChanges(false);
     }
   };
-
   const handleSaveApiKey = async () => {
     // Don't save if it's the placeholder
     if (apiKey === "••••••••••••••••") return;
-    
     if (apiKey.trim()) {
       const success = await updateElevenLabsApiKey(apiKey);
       if (success) {
@@ -111,14 +82,11 @@ export default function Settings() {
       }
     }
   };
-
   const handleSaveTwilioCredentials = async () => {
     // Don't save if both are placeholders
     if (twilioAccountSid === "••••••••••••••••" && twilioAuthToken === "••••••••••••••••") return;
-    
     const sidToSave = twilioAccountSid === "••••••••••••••••" ? workspace?.twilio_account_sid || "" : twilioAccountSid;
     const tokenToSave = twilioAuthToken === "••••••••••••••••" ? workspace?.twilio_auth_token || "" : twilioAuthToken;
-    
     if (sidToSave.trim() && tokenToSave.trim()) {
       const success = await updateTwilioCredentials(sidToSave, tokenToSave);
       if (success) {
@@ -127,13 +95,10 @@ export default function Settings() {
       }
     }
   };
-
   const workspaceId = workspace?.id || DEMO_WORKSPACE_ID;
   const hasApiKey = workspace?.elevenlabs_api_key || apiKey === "••••••••••••••••";
   const hasTwilioCredentials = workspace?.twilio_account_sid && workspace?.twilio_auth_token;
-
-  return (
-    <AppLayout>
+  return <AppLayout>
       <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
@@ -141,11 +106,9 @@ export default function Settings() {
           <p className="mt-1 text-sm sm:text-base text-muted-foreground">
             ワークスペースの設定と連携機能を管理
           </p>
-          {!isAuthenticated && (
-            <Badge variant="outline" className="mt-2 text-xs">
+          {!isAuthenticated && <Badge variant="outline" className="mt-2 text-xs">
               デモモード - ログインすると保存できます
-            </Badge>
-          )}
+            </Badge>}
         </div>
 
         <Tabs defaultValue="workspace" className="space-y-4 sm:space-y-6">
@@ -181,93 +144,42 @@ export default function Settings() {
           </div>
 
           {/* Workspace Tab */}
-          <TabsContent value="workspace" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="workspace" className="space-y-4 sm:space-y-6">
             <div className="glass rounded-xl card-shadow p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground text-sm sm:text-base">ワークスペース情報</h3>
-                {isAdmin && (
-                  <Badge variant="secondary" className="gap-1 text-xs">
+                {isAdmin && <Badge variant="secondary" className="gap-1 text-xs">
                     <Shield className="h-3 w-3" />
                     管理者
-                  </Badge>
-                )}
+                  </Badge>}
               </div>
               
-              {isLoading ? (
-                <div className="space-y-4">
+              {isLoading ? <div className="space-y-4">
                   <Skeleton className="h-10 w-full" />
                   <Skeleton className="h-10 w-full" />
-                </div>
-              ) : (
-                <div className="space-y-3 sm:space-y-4">
+                </div> : <div className="space-y-3 sm:space-y-4">
                   <div className="space-y-1.5 sm:space-y-2">
                     <Label htmlFor="workspace-name" className="text-sm">ワークスペース名</Label>
-                    <Input
-                      id="workspace-name"
-                      value={workspaceName}
-                      onChange={(e) => setWorkspaceName(e.target.value)}
-                      placeholder="ワークスペース名を入力"
-                      className="h-9 sm:h-10 text-sm"
-                      disabled={!isAuthenticated}
-                    />
+                    <Input id="workspace-name" value={workspaceName} onChange={e => setWorkspaceName(e.target.value)} placeholder="ワークスペース名を入力" className="h-9 sm:h-10 text-sm" disabled={!isAuthenticated} />
                   </div>
-                </div>
-              )}
+                </div>}
 
               <div className="pt-3 sm:pt-4 border-t border-border">
-                <Button
-                  className="w-full sm:w-auto text-sm h-9 sm:h-10"
-                  onClick={handleSaveWorkspace}
-                  disabled={!hasChanges || isSaving || !isAuthenticated}
-                >
-                  {isSaving ? (
-                    <>
+                <Button className="w-full sm:w-auto text-sm h-9 sm:h-10" onClick={handleSaveWorkspace} disabled={!hasChanges || isSaving || !isAuthenticated}>
+                  {isSaving ? <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                       保存中...
-                    </>
-                  ) : (
-                    "変更を保存"
-                  )}
+                    </> : "変更を保存"}
                 </Button>
               </div>
             </div>
 
             {/* Danger Zone */}
-            <div className="glass rounded-xl card-shadow p-4 sm:p-6 border-destructive/50">
-              <h3 className="font-semibold text-destructive mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
-                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5" />
-                危険な操作
-              </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">
-                ワークスペースと関連するすべてのデータを完全に削除します。
-              </p>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="destructive" className="w-full sm:w-auto text-sm h-9 sm:h-10" disabled={!isAdmin}>
-                    ワークスペースを削除
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="text-base sm:text-lg">ワークスペースを削除</AlertDialogTitle>
-                    <AlertDialogDescription className="text-sm">
-                      この操作は取り消せません。ワークスペース、すべてのエージェント、
-                      会話、データが完全に削除されます。
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-                    <AlertDialogCancel className="w-full sm:w-auto">キャンセル</AlertDialogCancel>
-                    <AlertDialogAction className="w-full sm:w-auto bg-destructive hover:bg-destructive/90">
-                      削除
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            
           </TabsContent>
 
           {/* Integrations Tab */}
-          <TabsContent value="integrations" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
             {/* ElevenLabs */}
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
@@ -282,14 +194,10 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                {hasApiKey ? (
-                  <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
+                {hasApiKey ? <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
                     <Check className="h-3 w-3" />
                     接続済み
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="self-start text-xs">未接続</Badge>
-                )}
+                  </Badge> : <Badge variant="outline" className="self-start text-xs">未接続</Badge>}
               </div>
 
               <div className="space-y-3 sm:space-y-4">
@@ -297,39 +205,13 @@ export default function Settings() {
                   <Label htmlFor="elevenlabs-key" className="text-sm">APIキー</Label>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <div className="relative flex-1">
-                      <Input
-                        id="elevenlabs-key"
-                        type={apiKeyVisible ? "text" : "password"}
-                        placeholder="ElevenLabsのAPIキーを入力"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        className="pr-10 h-9 sm:h-10 text-sm"
-                        disabled={!isAuthenticated}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full px-3"
-                        onClick={() => setApiKeyVisible(!apiKeyVisible)}
-                      >
-                        {apiKeyVisible ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                      <Input id="elevenlabs-key" type={apiKeyVisible ? "text" : "password"} placeholder="ElevenLabsのAPIキーを入力" value={apiKey} onChange={e => setApiKey(e.target.value)} className="pr-10 h-9 sm:h-10 text-sm" disabled={!isAuthenticated} />
+                      <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setApiKeyVisible(!apiKeyVisible)}>
+                        {apiKeyVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
-                    <Button
-                      onClick={handleSaveApiKey}
-                      className="w-full sm:w-auto h-9 sm:h-10 text-sm"
-                      disabled={isSaving || !isAuthenticated || apiKey === "••••••••••••••••"}
-                    >
-                      {isSaving ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        "保存"
-                      )}
+                    <Button onClick={handleSaveApiKey} className="w-full sm:w-auto h-9 sm:h-10 text-sm" disabled={isSaving || !isAuthenticated || apiKey === "••••••••••••••••"}>
+                      {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "保存"}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -360,41 +242,19 @@ export default function Settings() {
                     </p>
                   </div>
                 </div>
-                {hasTwilioCredentials ? (
-                  <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
+                {hasTwilioCredentials ? <Badge className="bg-success/10 text-success gap-1 self-start text-xs">
                     <Check className="h-3 w-3" />
                     接続済み
-                  </Badge>
-                ) : (
-                  <Badge variant="outline" className="self-start text-xs">未接続</Badge>
-                )}
+                  </Badge> : <Badge variant="outline" className="self-start text-xs">未接続</Badge>}
               </div>
 
               <div className="space-y-3 sm:space-y-4">
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="twilio-sid" className="text-sm">Account SID</Label>
                   <div className="relative">
-                    <Input
-                      id="twilio-sid"
-                      type={twilioSidVisible ? "text" : "password"}
-                      placeholder="TwilioのAccount SIDを入力"
-                      value={twilioAccountSid}
-                      onChange={(e) => setTwilioAccountSid(e.target.value)}
-                      className="pr-10 h-9 sm:h-10 text-sm"
-                      disabled={!isAuthenticated}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setTwilioSidVisible(!twilioSidVisible)}
-                    >
-                      {twilioSidVisible ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                    <Input id="twilio-sid" type={twilioSidVisible ? "text" : "password"} placeholder="TwilioのAccount SIDを入力" value={twilioAccountSid} onChange={e => setTwilioAccountSid(e.target.value)} className="pr-10 h-9 sm:h-10 text-sm" disabled={!isAuthenticated} />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setTwilioSidVisible(!twilioSidVisible)}>
+                      {twilioSidVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
@@ -402,27 +262,9 @@ export default function Settings() {
                 <div className="space-y-1.5 sm:space-y-2">
                   <Label htmlFor="twilio-token" className="text-sm">Auth Token</Label>
                   <div className="relative">
-                    <Input
-                      id="twilio-token"
-                      type={twilioTokenVisible ? "text" : "password"}
-                      placeholder="TwilioのAuth Tokenを入力"
-                      value={twilioAuthToken}
-                      onChange={(e) => setTwilioAuthToken(e.target.value)}
-                      className="pr-10 h-9 sm:h-10 text-sm"
-                      disabled={!isAuthenticated}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-0 top-0 h-full px-3"
-                      onClick={() => setTwilioTokenVisible(!twilioTokenVisible)}
-                    >
-                      {twilioTokenVisible ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                    <Input id="twilio-token" type={twilioTokenVisible ? "text" : "password"} placeholder="TwilioのAuth Tokenを入力" value={twilioAuthToken} onChange={e => setTwilioAuthToken(e.target.value)} className="pr-10 h-9 sm:h-10 text-sm" disabled={!isAuthenticated} />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-0 top-0 h-full px-3" onClick={() => setTwilioTokenVisible(!twilioTokenVisible)}>
+                      {twilioTokenVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
@@ -431,21 +273,8 @@ export default function Settings() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button
-                    onClick={handleSaveTwilioCredentials}
-                    className="w-full sm:w-auto h-9 sm:h-10 text-sm"
-                    disabled={
-                      isSaving || 
-                      !isAuthenticated || 
-                      (twilioAccountSid === "••••••••••••••••" && twilioAuthToken === "••••••••••••••••") ||
-                      (!twilioAccountSid.trim() || !twilioAuthToken.trim())
-                    }
-                  >
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      "保存"
-                    )}
+                  <Button onClick={handleSaveTwilioCredentials} className="w-full sm:w-auto h-9 sm:h-10 text-sm" disabled={isSaving || !isAuthenticated || twilioAccountSid === "••••••••••••••••" && twilioAuthToken === "••••••••••••••••" || !twilioAccountSid.trim() || !twilioAuthToken.trim()}>
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "保存"}
                   </Button>
                   <Button variant="outline" className="gap-2 w-full sm:w-auto text-sm h-9 sm:h-10" asChild>
                     <a href="https://console.twilio.com" target="_blank" rel="noopener noreferrer">
@@ -459,7 +288,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Voice Tools Tab */}
-          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6">
             <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
               <SpeechToText />
               <VoiceClone />
@@ -467,12 +296,12 @@ export default function Settings() {
           </TabsContent>
 
           {/* Webhooks Tab */}
-          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
+          <TabsContent value="webhooks">
             <WebhookManager workspaceId={workspaceId} />
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
             {/* Slack連携 */}
             <SlackIntegrationManager workspaceId={workspaceId} />
             
@@ -480,26 +309,35 @@ export default function Settings() {
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <h3 className="font-semibold text-foreground mb-4 sm:mb-6 text-sm sm:text-base">メール通知</h3>
               <div className="space-y-3 sm:space-y-4">
-                {[
-                  { id: "new-conversation", label: "新しい会話", description: "新しい会話が開始された際に通知" },
-                  { id: "failed-calls", label: "失敗した通話", description: "通話が失敗または転送された際にアラート" },
-                  { id: "weekly-report", label: "週次分析レポート", description: "エージェントのパフォーマンスのサマリーを受信" },
-                  { id: "team-updates", label: "チームの更新", description: "メンバーがワークスペースに参加または退出した際" },
-                ].map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-2 gap-3">
+                {[{
+                id: "new-conversation",
+                label: "新しい会話",
+                description: "新しい会話が開始された際に通知"
+              }, {
+                id: "failed-calls",
+                label: "失敗した通話",
+                description: "通話が失敗または転送された際にアラート"
+              }, {
+                id: "weekly-report",
+                label: "週次分析レポート",
+                description: "エージェントのパフォーマンスのサマリーを受信"
+              }, {
+                id: "team-updates",
+                label: "チームの更新",
+                description: "メンバーがワークスペースに参加または退出した際"
+              }].map(item => <div key={item.id} className="flex items-center justify-between py-2 gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-medium text-foreground text-sm sm:text-base">{item.label}</p>
                       <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                     </div>
                     <Switch defaultChecked={item.id !== "team-updates"} className="shrink-0" />
-                  </div>
-                ))}
+                  </div>)}
               </div>
             </div>
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+          <TabsContent value="billing" className="space-y-4 sm:space-y-6">
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                 <div>
@@ -544,10 +382,9 @@ export default function Settings() {
                     <span className="font-medium text-foreground">6,234 / 10,000</span>
                   </div>
                   <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: "62.34%" }}
-                    />
+                    <div className="h-full bg-primary rounded-full transition-all" style={{
+                    width: "62.34%"
+                  }} />
                   </div>
                 </div>
                 <div>
@@ -556,10 +393,9 @@ export default function Settings() {
                     <span className="font-medium text-foreground">1,450 / 5,000</span>
                   </div>
                   <div className="h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: "29%" }}
-                    />
+                    <div className="h-full bg-primary rounded-full transition-all" style={{
+                    width: "29%"
+                  }} />
                   </div>
                 </div>
               </div>
@@ -567,6 +403,5 @@ export default function Settings() {
           </TabsContent>
         </Tabs>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 }
