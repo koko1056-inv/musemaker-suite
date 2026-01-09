@@ -1,4 +1,4 @@
-import { memo, useCallback } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -21,14 +21,14 @@ interface AgentListItemProps {
   onPhoneAssign: (agentId: string, phoneNumberSid: string) => void;
 }
 
-export const AgentListItem = memo(function AgentListItem({ 
+const AgentListItemComponent = ({ 
   agent, 
   isSelected, 
   onClick,
   onCall,
   phoneNumbers,
   onPhoneAssign,
-}: AgentListItemProps) {
+}: AgentListItemProps) => {
   const lastConv = agent.lastConversation;
   const IconComponent = getAgentIcon(agent.iconName);
   const assignedPhone = phoneNumbers.find(p => p.agent_id === agent.agentId);
@@ -145,4 +145,6 @@ export const AgentListItem = memo(function AgentListItem({
       )}
     </div>
   );
-});
+};
+
+export const AgentListItem = React.memo(AgentListItemComponent);

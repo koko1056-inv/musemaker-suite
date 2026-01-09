@@ -1,4 +1,4 @@
-import { memo, useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Play, Pause } from "lucide-react";
@@ -7,7 +7,7 @@ interface AudioPlayerProps {
   audioUrl: string;
 }
 
-export const AudioPlayer = memo(function AudioPlayer({ audioUrl }: AudioPlayerProps) {
+const AudioPlayerComponent = ({ audioUrl }: AudioPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -98,4 +98,6 @@ export const AudioPlayer = memo(function AudioPlayer({ audioUrl }: AudioPlayerPr
       </div>
     </div>
   );
-});
+};
+
+export const AudioPlayer = React.memo(AudioPlayerComponent);

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React from "react";
 import { FileText, Lightbulb, CheckCircle, Variable } from "lucide-react";
 import { AudioPlayer } from "./AudioPlayer";
 import { ChatBubble } from "./ChatBubble";
@@ -10,11 +10,11 @@ interface ConversationDetailProps {
   agentIconColor: string;
 }
 
-export const ConversationDetail = memo(function ConversationDetail({
+const ConversationDetailComponent = ({
   conversation,
   agentIconName,
   agentIconColor,
-}: ConversationDetailProps) {
+}: ConversationDetailProps) => {
   const hasTranscript = conversation.transcript && conversation.transcript.length > 0;
   const hasSummary = conversation.summary && conversation.summary.trim().length > 0;
   const hasKeyPoints = conversation.keyPoints && conversation.keyPoints.length > 0;
@@ -135,4 +135,6 @@ export const ConversationDetail = memo(function ConversationDetail({
       )}
     </div>
   );
-});
+};
+
+export const ConversationDetail = React.memo(ConversationDetailComponent);
