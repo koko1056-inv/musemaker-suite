@@ -69,20 +69,20 @@ serve(async (req) => {
     // Return TwiML that connects to our WebSocket media stream handler
     // The WebSocket handler will bridge Twilio to ElevenLabs
     const wsUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
-    // Encode & as &amp; for valid XML
-    const mediaStreamUrl = `${wsUrl}/functions/v1/twilio-media-stream?agentId=${agentId}&amp;outboundCallId=${outboundCallId || ''}`;
+    const mediaStreamUrl = `${wsUrl}/functions/v1/twilio-media-stream`;
     
+    // Pass parameters via <Parameter> tags - Twilio sends these in the "start" event's customParameters
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
     <Stream url="${mediaStreamUrl}">
-      <Parameter name="agentId" value="${agent.elevenlabs_agent_id}"/>
+      <Parameter name="agentId" value="${agentId}"/>
       <Parameter name="outboundCallId" value="${outboundCallId || ''}"/>
     </Stream>
   </Connect>
 </Response>`;
 
-    console.log('Returning TwiML with media stream URL:', mediaStreamUrl);
+    console.log('Returning TwiML with media stream URL:', mediaStreamUrl, 'agentId:', agentId);
 
     return new Response(twiml, {
       headers: { 'Content-Type': 'text/xml' },
