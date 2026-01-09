@@ -459,7 +459,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Voice Tools Tab */}
-          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6">
+          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
               <SpeechToText />
               <VoiceClone />
@@ -467,7 +467,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Webhooks Tab */}
-          <TabsContent value="webhooks">
+          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
             <WebhookManager workspaceId={workspaceId} />
           </TabsContent>
 
@@ -499,7 +499,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Billing Tab */}
-          <TabsContent value="billing" className="space-y-4 sm:space-y-6">
+          <TabsContent value="billing" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
                 <div>
