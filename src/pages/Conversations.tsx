@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Search,
   Phone,
+  PhoneOutgoing,
   Clock,
   CheckCircle,
   XCircle,
@@ -26,6 +27,8 @@ import {
   ChevronRight,
   User,
 } from "lucide-react";
+import { useOutboundCalls } from "@/hooks/useOutboundCalls";
+import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
 import { useConversations } from "@/hooks/useConversations";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -185,11 +188,13 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
 function AgentListItem({ 
   agent, 
   isSelected, 
-  onClick 
+  onClick,
+  onCall,
 }: { 
   agent: AgentConversations;
   isSelected: boolean;
   onClick: () => void;
+  onCall: () => void;
 }) {
   const lastConv = agent.lastConversation;
   const IconComponent = getAgentIcon(agent.iconName);
@@ -238,6 +243,19 @@ function AgentListItem({
           }
         </p>
       </div>
+
+      {/* Call Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-9 w-9 rounded-full shrink-0 text-primary hover:bg-primary/10"
+        onClick={(e) => {
+          e.stopPropagation();
+          onCall();
+        }}
+      >
+        <PhoneOutgoing className="h-4 w-4" />
+      </Button>
 
       <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
     </div>
@@ -608,6 +626,8 @@ export default function Conversations() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
   const { conversations, isLoading } = useConversations();
 
   // Transform DB data to display format
@@ -727,6 +747,10 @@ export default function Conversations() {
                     agent={agent}
                     isSelected={selectedAgentId === agent.agentId}
                     onClick={() => setSelectedAgentId(agent.agentId)}
+                    onCall={() => {
+                      setCallAgentId(agent.agentId);
+                      setCallDialogOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -762,6 +786,13 @@ export default function Conversations() {
           )}
         </div>
       </div>
+
+      {/* Outbound Call Dialog */}
+      <OutboundCallDialog
+        open={callDialogOpen}
+        onOpenChange={setCallDialogOpen}
+        defaultAgentId={callAgentId}
+      />
     </AppLayout>
   );
 }
