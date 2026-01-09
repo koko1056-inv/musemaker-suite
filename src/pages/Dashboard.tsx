@@ -132,7 +132,7 @@ export default function Dashboard() {
 
             {/* Create Button */}
             <div className="mb-8 sm:mb-12">
-              <Button asChild size="lg" className="h-11 sm:h-12 px-6 sm:px-8 rounded-xl text-sm sm:text-base">
+              <Button asChild size="lg" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 rounded-xl text-sm sm:text-base">
                 <Link to="/agents/new">
                   <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   新しいエージェント
