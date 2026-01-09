@@ -1,8 +1,9 @@
-import { useState } from "react";
-import { useSlackIntegrations } from "@/hooks/useSlackIntegrations";
+import { useState, useMemo } from "react";
+import { useSlackIntegrations, SlackIntegration } from "@/hooks/useSlackIntegrations";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { AgentSelector } from "./AgentSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,6 +35,7 @@ import {
   Check,
   X,
   Variable,
+  Bot,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -96,6 +98,43 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
     notify_on_call_failed: true,
     include_transcript: false,
     include_summary: true,
+    agent_ids: null as string[] | null,
+  });
+  
+  // 選択したエージェントの抽出フィールドを取得（編集中の連携用）
+  const [editingAgentIds, setEditingAgentIds] = useState<string[] | null>(null);
+  
+  const agentIdsForFields = useMemo(() => {
+    if (editingTemplateId) {
+      const integration = integrations.find(i => i.id === editingTemplateId);
+      return integration?.agent_ids || (agents?.map(a => a.id) || []);
+    }
+    return newIntegration.agent_ids || (agents?.map(a => a.id) || []);
+  }, [editingTemplateId, integrations, newIntegration.agent_ids, agents]);
+
+  const { data: filteredExtractionFields = [] } = useQuery({
+    queryKey: ["extraction-fields-filtered", agentIdsForFields],
+    queryFn: async () => {
+      if (agentIdsForFields.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("agent_extraction_fields")
+        .select("field_key, field_name, agent_id")
+        .in("agent_id", agentIdsForFields);
+
+      if (error) throw error;
+      
+      // field_keyでユニークにする
+      const uniqueFields = new Map<string, { field_key: string; field_name: string }>();
+      data?.forEach(field => {
+        if (!uniqueFields.has(field.field_key)) {
+          uniqueFields.set(field.field_key, { field_key: field.field_key, field_name: field.field_name });
+        }
+      });
+      
+      return Array.from(uniqueFields.values());
+    },
+    enabled: agentIdsForFields.length > 0,
   });
   const { toast } = useToast();
 
@@ -118,6 +157,7 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
       notify_on_call_failed: newIntegration.notify_on_call_failed,
       include_transcript: newIntegration.include_transcript,
       include_summary: newIntegration.include_summary,
+      agent_ids: newIntegration.agent_ids,
     });
 
     setNewIntegration({
@@ -129,6 +169,7 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
       notify_on_call_failed: true,
       include_transcript: false,
       include_summary: true,
+      agent_ids: null,
     });
     setIsCreateOpen(false);
   };
@@ -281,6 +322,14 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                   </div>
                   <p className="text-xs text-muted-foreground">管理用のメモです。実際の送信先はWebhook URLで決まります</p>
                 </div>
+              </div>
+
+              {/* エージェント選択 */}
+              <div className="pt-2 border-t">
+                <AgentSelector
+                  selectedAgentIds={newIntegration.agent_ids}
+                  onChange={(agentIds) => setNewIntegration({ ...newIntegration, agent_ids: agentIds })}
+                />
               </div>
 
               {/* 通知設定 */}
@@ -616,6 +665,23 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                         </div>
                       </div>
 
+                      {/* エージェント選択 */}
+                      <div className="space-y-3 pt-3 border-t">
+                        <h5 className="font-medium text-sm flex items-center gap-2">
+                          <Bot className="h-4 w-4" />
+                          対象エージェント
+                        </h5>
+                        <AgentSelector
+                          selectedAgentIds={integration.agent_ids}
+                          onChange={(agentIds) => 
+                            updateIntegration.mutate({
+                              id: integration.id,
+                              agent_ids: agentIds,
+                            })
+                          }
+                        />
+                      </div>
+
                       {/* カスタムメッセージテンプレート */}
                       <div className="space-y-3 pt-3 border-t">
                         <div className="flex items-center justify-between">
@@ -663,14 +729,14 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                                   ))}
                                 </div>
                               </div>
-                              {allExtractionFields.length > 0 && (
+                              {filteredExtractionFields.length > 0 && (
                                 <div>
                                   <div className="flex items-center gap-1.5 mb-2">
                                     <Variable className="h-3.5 w-3.5 text-violet-500" />
-                                    <p className="text-xs text-muted-foreground">抽出変数:</p>
+                                    <p className="text-xs text-muted-foreground">選択中のエージェントの抽出変数:</p>
                                   </div>
                                   <div className="flex flex-wrap gap-1.5">
-                                    {allExtractionFields.map((field) => (
+                                    {filteredExtractionFields.map((field) => (
                                       <Badge 
                                         key={field.field_key} 
                                         variant="outline" 
@@ -684,10 +750,10 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                                   </div>
                                 </div>
                               )}
-                              {allExtractionFields.length === 0 && (
+                              {filteredExtractionFields.length === 0 && (
                                 <div>
                                   <p className="text-xs text-muted-foreground">
-                                    抽出変数: エージェント設定で追加すると候補が表示されます
+                                    抽出変数: 選択中のエージェントに抽出フィールドが設定されていません
                                   </p>
                                 </div>
                               )}

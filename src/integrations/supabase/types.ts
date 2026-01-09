@@ -351,6 +351,7 @@ export type Database = {
       }
       email_notifications: {
         Row: {
+          agent_ids: string[] | null
           created_at: string
           id: string
           include_summary: boolean
@@ -366,6 +367,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          agent_ids?: string[] | null
           created_at?: string
           id?: string
           include_summary?: boolean
@@ -381,6 +383,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          agent_ids?: string[] | null
           created_at?: string
           id?: string
           include_summary?: boolean
@@ -855,6 +858,7 @@ export type Database = {
       }
       slack_integrations: {
         Row: {
+          agent_ids: string[] | null
           channel_name: string | null
           created_at: string
           id: string
@@ -871,6 +875,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          agent_ids?: string[] | null
           channel_name?: string | null
           created_at?: string
           id?: string
@@ -887,6 +892,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          agent_ids?: string[] | null
           channel_name?: string | null
           created_at?: string
           id?: string

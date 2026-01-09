@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-interface SlackIntegration {
+export interface SlackIntegration {
   id: string;
   workspace_id: string;
   name: string;
@@ -15,11 +15,12 @@ interface SlackIntegration {
   include_transcript: boolean;
   include_summary: boolean;
   message_template: string | null;
+  agent_ids: string[] | null;
   created_at: string;
   updated_at: string;
 }
 
-interface CreateSlackIntegrationInput {
+export interface CreateSlackIntegrationInput {
   name: string;
   webhook_url: string;
   channel_name?: string;
@@ -28,6 +29,7 @@ interface CreateSlackIntegrationInput {
   notify_on_call_failed?: boolean;
   include_transcript?: boolean;
   include_summary?: boolean;
+  agent_ids?: string[] | null;
 }
 
 export function useSlackIntegrations(workspaceId: string | undefined) {
@@ -66,6 +68,7 @@ export function useSlackIntegrations(workspaceId: string | undefined) {
           notify_on_call_failed: input.notify_on_call_failed ?? true,
           include_transcript: input.include_transcript ?? false,
           include_summary: input.include_summary ?? true,
+          agent_ids: input.agent_ids ?? null,
         })
         .select()
         .single();
