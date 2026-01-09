@@ -1,5 +1,118 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// --- Audio helpers (Twilio <-> ElevenLabs) ---
+// Twilio Media Streams uses 8kHz G.711 mu-law (a.k.a. mulaw/ulaw).
+// ElevenLabs ConvAI WebSocket is currently returning pcm_16000, so we transcode both directions.
+
+const BIAS = 0x84;
+const CLIP = 32635;
+
+function base64ToBytes(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  // Keep it simple and safe (payload sizes are small in telephony streaming)
+  let bin = "";
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function linearToMulawSample(sample: number): number {
+  // sample: int16
+  let sign = 0;
+  let pcm = sample;
+  if (pcm < 0) {
+    sign = 0x80;
+    pcm = -pcm;
+    if (pcm > CLIP) pcm = CLIP;
+  } else {
+    if (pcm > CLIP) pcm = CLIP;
+  }
+
+  pcm = pcm + BIAS;
+
+  // Determine exponent.
+  let exponent = 7;
+  for (let expMask = 0x4000; (pcm & expMask) === 0 && exponent > 0; expMask >>= 1) {
+    exponent--;
+  }
+
+  const mantissa = (pcm >> (exponent + 3)) & 0x0f;
+  const muLawByte = ~(sign | (exponent << 4) | mantissa);
+  return muLawByte & 0xff;
+}
+
+function mulawToLinearSample(muLawByte: number): number {
+  let mu = (~muLawByte) & 0xff;
+  const sign = mu & 0x80;
+  const exponent = (mu >> 4) & 0x07;
+  const mantissa = mu & 0x0f;
+  let pcm = ((mantissa << 3) + BIAS) << exponent;
+  pcm -= BIAS;
+  return sign ? -pcm : pcm;
+}
+
+function pcmBytesToInt16LE(pcmBytes: Uint8Array): Int16Array {
+  const len = Math.floor(pcmBytes.length / 2);
+  const out = new Int16Array(len);
+  const dv = new DataView(pcmBytes.buffer, pcmBytes.byteOffset, pcmBytes.byteLength);
+  for (let i = 0; i < len; i++) out[i] = dv.getInt16(i * 2, true);
+  return out;
+}
+
+function int16ToPcmBytesLE(samples: Int16Array): Uint8Array {
+  const out = new Uint8Array(samples.length * 2);
+  const dv = new DataView(out.buffer);
+  for (let i = 0; i < samples.length; i++) dv.setInt16(i * 2, samples[i], true);
+  return out;
+}
+
+function mulaw8kBase64ToPcm16kBase64(mulawB64: string): string {
+  const mulawBytes = base64ToBytes(mulawB64);
+
+  // decode mu-law -> PCM 8k int16
+  const pcm8k = new Int16Array(mulawBytes.length);
+  for (let i = 0; i < mulawBytes.length; i++) {
+    pcm8k[i] = mulawToLinearSample(mulawBytes[i]);
+  }
+
+  // upsample 8k -> 16k (zero-order hold: duplicate samples)
+  const pcm16k = new Int16Array(pcm8k.length * 2);
+  for (let i = 0; i < pcm8k.length; i++) {
+    const s = pcm8k[i];
+    pcm16k[i * 2] = s;
+    pcm16k[i * 2 + 1] = s;
+  }
+
+  return bytesToBase64(int16ToPcmBytesLE(pcm16k));
+}
+
+function pcm16kBase64ToMulaw8kBase64(pcmB64: string): string {
+  const pcmBytes = base64ToBytes(pcmB64);
+  const pcm16k = pcmBytesToInt16LE(pcmBytes);
+
+  // downsample 16k -> 8k (average pairs)
+  const outLen = Math.floor(pcm16k.length / 2);
+  const pcm8k = new Int16Array(outLen);
+  for (let i = 0; i < outLen; i++) {
+    const a = pcm16k[i * 2];
+    const b = pcm16k[i * 2 + 1];
+    pcm8k[i] = ((a + b) / 2) | 0;
+  }
+
+  // encode PCM 8k -> mu-law bytes
+  const mulaw = new Uint8Array(pcm8k.length);
+  for (let i = 0; i < pcm8k.length; i++) {
+    mulaw[i] = linearToMulawSample(pcm8k[i]);
+  }
+
+  return bytesToBase64(mulaw);
+}
+
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -23,6 +136,12 @@ Deno.serve(async (req) => {
   let agentId: string | null = null;
   let outboundCallId: string | null = null;
   let elevenLabsInitialized = false;
+
+  // Set after we receive ElevenLabs conversation initiation metadata
+  // Default to pcm_16000 because that's what ElevenLabs reports in practice; this prevents early-audio noise.
+  let elevenUserInputFormat: string | null = "pcm_16000";
+  let elevenAgentOutputFormat: string | null = "pcm_16000";
+  let enableTranscoding = true;
 
   // Function to initialize ElevenLabs connection after we have the agentId
   const initializeElevenLabs = async () => {
@@ -128,21 +247,28 @@ Deno.serve(async (req) => {
           const data = JSON.parse(event.data);
           
           switch (data.type) {
-            case "audio":
+            case "audio": {
               // ElevenLabs can send audio in different formats depending on version
               // Try both audio.chunk and audio_event.audio_base_64
               const audioPayload = data.audio?.chunk || data.audio_event?.audio_base_64;
               if (audioPayload && streamSid) {
+                // If ElevenLabs is sending PCM, convert it to Twilio mulaw 8kHz
+                const twilioPayload =
+                  enableTranscoding && elevenAgentOutputFormat === "pcm_16000"
+                    ? pcm16kBase64ToMulaw8kBase64(audioPayload)
+                    : audioPayload;
+
                 const mediaMessage = {
                   event: "media",
                   streamSid: streamSid,
                   media: {
-                    payload: audioPayload
-                  }
+                    payload: twilioPayload,
+                  },
                 };
                 twilioSocket.send(JSON.stringify(mediaMessage));
               }
               break;
+            }
             
             case "ping":
               // Respond to ping to keep connection alive
@@ -163,11 +289,24 @@ Deno.serve(async (req) => {
               }
               break;
             
-            case "conversation_initiation_metadata":
-              console.log("Conversation initialized:", data.conversation_initiation_metadata_event?.conversation_id);
-              console.log("User input format:", data.conversation_initiation_metadata_event?.user_input_audio_format);
-              console.log("Agent output format:", data.conversation_initiation_metadata_event?.agent_output_audio_format);
+            case "conversation_initiation_metadata": {
+              const meta = data.conversation_initiation_metadata_event;
+              elevenUserInputFormat = meta?.user_input_audio_format ?? null;
+              elevenAgentOutputFormat = meta?.agent_output_audio_format ?? null;
+
+              // If ElevenLabs is not using mulaw/ulaw, we must transcode to avoid loud noise.
+              enableTranscoding =
+                elevenUserInputFormat === "pcm_16000" || elevenAgentOutputFormat === "pcm_16000";
+
+              console.log("Conversation initialized:", meta?.conversation_id);
+              console.log("User input format:", elevenUserInputFormat);
+              console.log("Agent output format:", elevenAgentOutputFormat);
+              console.log(
+                "Audio transcoding:",
+                enableTranscoding ? "ENABLED (pcm_16000 <-> mulaw_8000)" : "disabled"
+              );
               break;
+            }
               
             case "agent_response":
               console.log("Agent response:", data.agent_response_event?.agent_response);
@@ -237,11 +376,17 @@ Deno.serve(async (req) => {
           break;
 
         case "media":
-          // Audio from caller, forward to ElevenLabs using the correct format
+          // Audio from caller (Twilio: mulaw_8000 base64)
+          // ElevenLabs expects whatever format it negotiated (we often see pcm_16000 in metadata)
           if (elevenLabsSocket?.readyState === WebSocket.OPEN) {
-            // ElevenLabs expects: { user_audio_chunk: base64_audio_string }
+            const twilioMulawB64 = data.media.payload as string;
+            const elevenInputB64 =
+              enableTranscoding && elevenUserInputFormat === "pcm_16000"
+                ? mulaw8kBase64ToPcm16kBase64(twilioMulawB64)
+                : twilioMulawB64;
+
             const audioMessage = {
-              user_audio_chunk: data.media.payload // base64 mulaw audio from Twilio
+              user_audio_chunk: elevenInputB64,
             };
             elevenLabsSocket.send(JSON.stringify(audioMessage));
           }
