@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_extraction_fields: {
+        Row: {
+          agent_id: string
+          created_at: string
+          description: string | null
+          field_key: string
+          field_name: string
+          field_type: string
+          id: string
+          is_required: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          description?: string | null
+          field_key: string
+          field_name: string
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          description?: string | null
+          field_key?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_extraction_fields_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agent_folders: {
         Row: {
           color: string | null
@@ -213,6 +257,38 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      conversation_extracted_data: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          field_key: string
+          field_value: string | null
+          id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          field_key: string
+          field_value?: string | null
+          id?: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          field_key?: string
+          field_value?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_extracted_data_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       conversations: {
         Row: {

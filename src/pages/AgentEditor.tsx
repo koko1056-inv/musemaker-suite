@@ -26,10 +26,12 @@ import {
   Folder,
   Globe,
   FileEdit,
+  Variable,
 } from "lucide-react";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
+import { AgentExtractionFields } from "@/components/agents/AgentExtractionFields";
 import { AIAgentBuilder } from "@/components/agents/AIAgentBuilder";
 import {
   Dialog,
@@ -1025,8 +1027,28 @@ export default function AgentEditor() {
               )}
 
               {/* Knowledge Base Section (only for existing agents) */}
-              {!showTemplates && !isNew && (
+              {!showTemplates && !showAIBuilder && !isNew && (
                 <AgentKnowledgeSection agentId={id} isNew={isNew} />
+              )}
+
+              {/* Extraction Fields Section (only for existing agents) */}
+              {!showTemplates && !showAIBuilder && !isNew && id && (
+                <Card className="border-2 shadow-sm">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-3 text-lg">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
+                        <Variable className="h-5 w-5 text-violet-500" />
+                      </div>
+                      抽出変数
+                    </CardTitle>
+                    <CardDescription className="text-base">
+                      通話から自動抽出する情報を設定します。Webhookなどで変数として利用できます。
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <AgentExtractionFields agentId={id} />
+                  </CardContent>
+                </Card>
               )}
 
               {/* Step 3: Review */}

@@ -6,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface ExtractionField {
+  id: string;
+  agent_id: string;
+  field_name: string;
+  field_key: string;
+  field_type: string;
+  description: string | null;
+  is_required: boolean;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -33,7 +43,7 @@ serve(async (req) => {
       .from('conversations')
       .select(`
         *,
-        agents (name, description, system_prompt)
+        agents (id, name, description, system_prompt)
       `)
       .eq('id', conversationId)
       .single();
@@ -41,6 +51,21 @@ serve(async (req) => {
     if (fetchError || !conversation) {
       throw new Error(`Failed to fetch conversation: ${fetchError?.message}`);
     }
+
+    const agentIdToUse = conversation.agent_id;
+
+    // Fetch extraction fields for this agent
+    const { data: extractionFields, error: fieldsError } = await supabase
+      .from('agent_extraction_fields')
+      .select('*')
+      .eq('agent_id', agentIdToUse);
+
+    if (fieldsError) {
+      console.error('Error fetching extraction fields:', fieldsError);
+    }
+
+    const fields: ExtractionField[] = extractionFields || [];
+    console.log(`Found ${fields.length} extraction fields for agent ${agentIdToUse}`);
 
     const transcript = conversation.transcript || [];
     
@@ -62,6 +87,21 @@ serve(async (req) => {
 
     const agentName = conversation.agents?.name || 'AIエージェント';
     const agentDescription = conversation.agents?.description || '';
+
+    // Build dynamic extraction fields for the AI
+    const extractionFieldsPrompt = fields.length > 0 
+      ? `\n\n以下の情報も通話内容から抽出してください：
+${fields.map(f => `- ${f.field_name} (キー: ${f.field_key}, タイプ: ${f.field_type})${f.description ? `: ${f.description}` : ''}${f.is_required ? ' [必須]' : ''}`).join('\n')}`
+      : '';
+
+    // Build dynamic properties for tool schema
+    const extractedDataProperties: Record<string, { type: string; description: string }> = {};
+    for (const field of fields) {
+      extractedDataProperties[field.field_key] = {
+        type: field.field_type === 'number' ? 'number' : field.field_type === 'boolean' ? 'boolean' : 'string',
+        description: `${field.field_name}${field.description ? ` - ${field.description}` : ''}`
+      };
+    }
 
     // Generate summary using Lovable AI
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -85,10 +125,12 @@ serve(async (req) => {
     "重要ポイント3"
   ],
   "sentiment": "positive" | "neutral" | "negative",
-  "action_items": ["アクションアイテム1", "アクションアイテム2"]
+  "action_items": ["アクションアイテム1", "アクションアイテム2"],
+  "extracted_data": { ... }
 }
+${extractionFieldsPrompt}
 
-日本語で回答してください。`
+日本語で回答してください。通話内容に該当する情報がない場合は、その項目はnullにしてください。`
           },
           {
             role: 'user',
@@ -107,7 +149,7 @@ ${formattedTranscript}
             type: 'function',
             function: {
               name: 'extract_summary',
-              description: '通話内容から要約と重要ポイントを抽出する',
+              description: '通話内容から要約と重要ポイント、カスタム情報を抽出する',
               parameters: {
                 type: 'object',
                 properties: {
@@ -129,6 +171,11 @@ ${formattedTranscript}
                     type: 'array',
                     items: { type: 'string' },
                     description: 'フォローアップが必要なアクションアイテム'
+                  },
+                  extracted_data: {
+                    type: 'object',
+                    properties: extractedDataProperties,
+                    description: 'カスタム抽出データ'
                   }
                 },
                 required: ['summary', 'key_points', 'sentiment'],
@@ -169,7 +216,8 @@ ${formattedTranscript}
       summary: '',
       key_points: [] as string[],
       sentiment: 'neutral',
-      action_items: [] as string[]
+      action_items: [] as string[],
+      extracted_data: {} as Record<string, string | number | boolean | null>
     };
 
     if (toolCall?.function?.arguments) {
@@ -190,6 +238,7 @@ ${formattedTranscript}
           ...((conversation.metadata as Record<string, unknown>) || {}),
           sentiment: summaryData.sentiment,
           action_items: summaryData.action_items || [],
+          extracted_data: summaryData.extracted_data || {},
           summarized_at: new Date().toISOString()
         }
       })
@@ -197,6 +246,29 @@ ${formattedTranscript}
 
     if (updateError) {
       throw new Error(`Failed to update conversation: ${updateError.message}`);
+    }
+
+    // Save extracted data to separate table for easier querying
+    if (summaryData.extracted_data && Object.keys(summaryData.extracted_data).length > 0) {
+      const extractedDataRows = Object.entries(summaryData.extracted_data)
+        .filter(([_, value]) => value !== null && value !== undefined && value !== '')
+        .map(([field_key, field_value]) => ({
+          conversation_id: conversationId,
+          field_key,
+          field_value: String(field_value)
+        }));
+
+      if (extractedDataRows.length > 0) {
+        const { error: insertError } = await supabase
+          .from('conversation_extracted_data')
+          .upsert(extractedDataRows, { onConflict: 'conversation_id,field_key' });
+
+        if (insertError) {
+          console.error('Error saving extracted data:', insertError);
+        } else {
+          console.log(`Saved ${extractedDataRows.length} extracted data fields`);
+        }
+      }
     }
 
     console.log(`Summary generated for conversation ${conversationId}`);
@@ -220,7 +292,8 @@ ${formattedTranscript}
     return new Response(JSON.stringify({ 
       success: true, 
       summary: summaryData.summary,
-      key_points: summaryData.key_points 
+      key_points: summaryData.key_points,
+      extracted_data: summaryData.extracted_data
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
