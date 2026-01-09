@@ -1,4 +1,4 @@
-import { memo, useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,7 +19,7 @@ interface ChatViewProps {
   onMarkAsRead: (conversationId: string) => void;
 }
 
-export const ChatView = memo(function ChatView({ 
+const ChatViewComponent = ({ 
   agent,
   onBack,
   dateFilter,
@@ -27,7 +27,7 @@ export const ChatView = memo(function ChatView({
   setDateFilter,
   setStatusFilter,
   onMarkAsRead,
-}: ChatViewProps) {
+}: ChatViewProps) => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
@@ -235,4 +235,6 @@ export const ChatView = memo(function ChatView({
       </ScrollArea>
     </div>
   );
-});
+};
+
+export const ChatView = React.memo(ChatViewComponent);

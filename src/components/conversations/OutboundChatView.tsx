@@ -1,10 +1,9 @@
-import { memo, useState, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   ArrowLeft, 
   Clock, 
-  Phone as PhoneIcon, 
   FileText, 
   Lightbulb, 
   Variable,
@@ -26,13 +25,13 @@ interface OutboundChatViewProps {
   extractionFieldNameMap: Map<string, Map<string, string>>;
 }
 
-export const OutboundChatView = memo(function OutboundChatView({ 
+const OutboundChatViewComponent = ({ 
   agent,
   onBack,
   cancelCall,
   onMarkAsRead,
   extractionFieldNameMap,
-}: OutboundChatViewProps) {
+}: OutboundChatViewProps) => {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
 
@@ -269,4 +268,6 @@ export const OutboundChatView = memo(function OutboundChatView({
       </ScrollArea>
     </div>
   );
-});
+};
+
+export const OutboundChatView = React.memo(OutboundChatViewComponent);

@@ -1,4 +1,4 @@
-import { memo } from "react";
+import React from "react";
 import { Badge } from "@/components/ui/badge";
 import { 
   Phone, 
@@ -16,7 +16,7 @@ interface OutboundStatusBadgeProps {
   result?: string | null;
 }
 
-export const OutboundStatusBadge = memo(function OutboundStatusBadge({ status, result }: OutboundStatusBadgeProps) {
+const OutboundStatusBadgeComponent = ({ status, result }: OutboundStatusBadgeProps) => {
   switch (status) {
     case 'scheduled':
       return (
@@ -86,4 +86,6 @@ export const OutboundStatusBadge = memo(function OutboundStatusBadge({ status, r
     default:
       return <Badge variant="secondary" className="font-normal text-xs h-6">{status}</Badge>;
   }
-});
+};
+
+export const OutboundStatusBadge = React.memo(OutboundStatusBadgeComponent);
