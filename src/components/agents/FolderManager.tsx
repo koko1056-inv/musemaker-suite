@@ -34,7 +34,7 @@ interface FolderManagerProps {
   folders: AgentFolder[];
   onCreateFolder: (name: string, color: string) => Promise<unknown>;
   onUpdateFolder: (id: string, updates: { name?: string; color?: string }) => Promise<unknown>;
-  onDeleteFolder: (id: string) => Promise<void>;
+  onDeleteFolder: (id: string) => Promise<unknown>;
 }
 
 export function FolderManager({

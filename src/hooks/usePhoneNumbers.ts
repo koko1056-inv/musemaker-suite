@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface PhoneNumber {
+export interface PhoneNumber {
   id: string;
   phone_number: string;
   phone_number_sid: string;
@@ -21,165 +22,151 @@ interface PhoneNumber {
 }
 
 export function usePhoneNumbers(workspaceId: string | undefined) {
-  const [phoneNumbers, setPhoneNumbers] = useState<PhoneNumber[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const fetchPhoneNumbers = async () => {
-    if (!workspaceId) return;
+  const { data: phoneNumbers = [], isLoading } = useQuery({
+    queryKey: ['phone-numbers', workspaceId],
+    queryFn: async () => {
+      if (!workspaceId) return [];
 
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("twilio-phone-numbers", {
-        body: { action: "list", workspaceId },
+      const { data, error } = await supabase.functions.invoke('twilio-phone-numbers', {
+        body: { action: 'list', workspaceId },
       });
 
       if (error) throw error;
-      setPhoneNumbers(data.phoneNumbers || []);
-    } catch (error: any) {
-      console.error("Error fetching phone numbers:", error);
-      toast({
-        title: "エラー",
-        description: error.message || "電話番号の取得に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      return (data.phoneNumbers || []) as PhoneNumber[];
+    },
+    enabled: !!workspaceId,
+    staleTime: 60000, // 1 minute
+  });
 
-  const syncFromTwilio = async () => {
-    if (!workspaceId) return;
+  const syncMutation = useMutation({
+    mutationFn: async () => {
+      if (!workspaceId) throw new Error('Workspace ID required');
 
-    setIsSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("twilio-phone-numbers", {
-        body: { action: "list", workspaceId },
+      const { data, error } = await supabase.functions.invoke('twilio-phone-numbers', {
+        body: { action: 'list', workspaceId },
       });
 
       if (error) throw error;
-      setPhoneNumbers(data.phoneNumbers || []);
-      toast({
-        title: "同期完了",
-        description: "Twilioから電話番号を同期しました",
-      });
-    } catch (error: any) {
-      console.error("Error syncing phone numbers:", error);
-      toast({
-        title: "エラー",
-        description: error.message || "同期に失敗しました",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
+      return (data.phoneNumbers || []) as PhoneNumber[];
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(['phone-numbers', workspaceId], data);
+      toast.success('Twilioから電話番号を同期しました');
+    },
+    onError: (error: Error) => {
+      console.error('Error syncing phone numbers:', error);
+      toast.error(error.message || '同期に失敗しました');
+    },
+  });
 
-  const assignToAgent = async (phoneNumberSid: string, agentId: string) => {
-    if (!workspaceId) return;
+  const assignMutation = useMutation({
+    mutationFn: async ({ phoneNumberSid, agentId }: { phoneNumberSid: string; agentId: string }) => {
+      if (!workspaceId) throw new Error('Workspace ID required');
 
-    try {
-      const { error } = await supabase.functions.invoke("twilio-phone-numbers", {
-        body: { action: "assign", workspaceId, phoneNumberSid, agentId },
+      const { error } = await supabase.functions.invoke('twilio-phone-numbers', {
+        body: { action: 'assign', workspaceId, phoneNumberSid, agentId },
       });
 
       if (error) throw error;
-
-      setPhoneNumbers((prev) =>
-        prev.map((p) =>
+      return { phoneNumberSid, agentId };
+    },
+    onSuccess: ({ phoneNumberSid, agentId }) => {
+      queryClient.setQueryData<PhoneNumber[]>(['phone-numbers', workspaceId], (old) =>
+        old?.map((p) =>
           p.phone_number_sid === phoneNumberSid ? { ...p, agent_id: agentId } : p
         )
       );
+      toast.success('電話番号をエージェントに割り当てました');
+    },
+    onError: (error: Error) => {
+      console.error('Error assigning phone number:', error);
+      toast.error(error.message || '割り当てに失敗しました');
+    },
+  });
 
-      toast({
-        title: "割り当て完了",
-        description: "電話番号をエージェントに割り当てました",
-      });
-    } catch (error: any) {
-      console.error("Error assigning phone number:", error);
-      toast({
-        title: "エラー",
-        description: error.message || "割り当てに失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
+  const unassignMutation = useMutation({
+    mutationFn: async (phoneNumberSid: string) => {
+      if (!workspaceId) throw new Error('Workspace ID required');
 
-  const unassignFromAgent = async (phoneNumberSid: string) => {
-    if (!workspaceId) return;
-
-    try {
-      const { error } = await supabase.functions.invoke("twilio-phone-numbers", {
-        body: { action: "unassign", workspaceId, phoneNumberSid },
+      const { error } = await supabase.functions.invoke('twilio-phone-numbers', {
+        body: { action: 'unassign', workspaceId, phoneNumberSid },
       });
 
       if (error) throw error;
-
-      setPhoneNumbers((prev) =>
-        prev.map((p) =>
+      return phoneNumberSid;
+    },
+    onSuccess: (phoneNumberSid) => {
+      queryClient.setQueryData<PhoneNumber[]>(['phone-numbers', workspaceId], (old) =>
+        old?.map((p) =>
           p.phone_number_sid === phoneNumberSid ? { ...p, agent_id: null, agents: null } : p
         )
       );
+      toast.success('電話番号の割り当てを解除しました');
+    },
+    onError: (error: Error) => {
+      console.error('Error unassigning phone number:', error);
+      toast.error(error.message || '解除に失敗しました');
+    },
+  });
 
-      toast({
-        title: "解除完了",
-        description: "電話番号の割り当てを解除しました",
-      });
-    } catch (error: any) {
-      console.error("Error unassigning phone number:", error);
-      toast({
-        title: "エラー",
-        description: error.message || "解除に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
+  const updateLabelMutation = useMutation({
+    mutationFn: async ({ phoneNumberSid, label }: { phoneNumberSid: string; label: string }) => {
+      if (!workspaceId) throw new Error('Workspace ID required');
 
-  const updateLabel = async (phoneNumberSid: string, label: string) => {
-    if (!workspaceId) return;
-
-    try {
-      const { error } = await supabase.functions.invoke("twilio-phone-numbers", {
-        body: { action: "updateLabel", workspaceId, phoneNumberSid, label },
+      const { error } = await supabase.functions.invoke('twilio-phone-numbers', {
+        body: { action: 'updateLabel', workspaceId, phoneNumberSid, label },
       });
 
       if (error) throw error;
-
-      setPhoneNumbers((prev) =>
-        prev.map((p) =>
+      return { phoneNumberSid, label };
+    },
+    onSuccess: ({ phoneNumberSid, label }) => {
+      queryClient.setQueryData<PhoneNumber[]>(['phone-numbers', workspaceId], (old) =>
+        old?.map((p) =>
           p.phone_number_sid === phoneNumberSid ? { ...p, label } : p
         )
       );
+      toast.success('ラベルを更新しました');
+    },
+    onError: (error: Error) => {
+      console.error('Error updating label:', error);
+      toast.error(error.message || '更新に失敗しました');
+    },
+  });
 
-      toast({
-        title: "更新完了",
-        description: "ラベルを更新しました",
-      });
-    } catch (error: any) {
-      console.error("Error updating label:", error);
-      toast({
-        title: "エラー",
-        description: error.message || "更新に失敗しました",
-        variant: "destructive",
-      });
-    }
-  };
+  const syncFromTwilio = useCallback(() => syncMutation.mutateAsync(), [syncMutation]);
 
-  useEffect(() => {
-    if (workspaceId) {
-      fetchPhoneNumbers();
-    }
-  }, [workspaceId]);
+  const assignToAgent = useCallback(
+    (phoneNumberSid: string, agentId: string) =>
+      assignMutation.mutateAsync({ phoneNumberSid, agentId }),
+    [assignMutation]
+  );
+
+  const unassignFromAgent = useCallback(
+    (phoneNumberSid: string) => unassignMutation.mutateAsync(phoneNumberSid),
+    [unassignMutation]
+  );
+
+  const updateLabel = useCallback(
+    (phoneNumberSid: string, label: string) =>
+      updateLabelMutation.mutateAsync({ phoneNumberSid, label }),
+    [updateLabelMutation]
+  );
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['phone-numbers', workspaceId] });
+  }, [queryClient, workspaceId]);
 
   return {
     phoneNumbers,
     isLoading,
-    isSyncing,
+    isSyncing: syncMutation.isPending,
     syncFromTwilio,
     assignToAgent,
     unassignFromAgent,
     updateLabel,
-    refetch: fetchPhoneNumbers,
+    refetch,
   };
 }

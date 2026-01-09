@@ -37,9 +37,9 @@ interface KnowledgeBaseListViewProps {
   onDeleteKb: (id: string) => void;
   onCreateKb: (data: { name: string; description: string; files: File[] }) => Promise<void>;
   onMoveToFolder: (kbId: string, folderId: string | null) => Promise<void>;
-  onCreateFolder: (name: string, color: string) => Promise<void>;
-  onUpdateFolder: (id: string, updates: { name?: string; color?: string }) => Promise<void>;
-  onDeleteFolder: (id: string) => Promise<void>;
+  onCreateFolder: (name: string, color: string) => Promise<unknown>;
+  onUpdateFolder: (id: string, updates: { name?: string; color?: string }) => Promise<unknown>;
+  onDeleteFolder: (id: string) => Promise<unknown>;
   isCreating: boolean;
 }
 

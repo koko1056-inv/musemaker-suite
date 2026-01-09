@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useCallback } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { DEMO_WORKSPACE_ID } from '@/lib/workspace';
 
 export interface KnowledgeBaseFolder {
   id: string;
@@ -11,99 +13,135 @@ export interface KnowledgeBaseFolder {
   updated_at: string;
 }
 
-const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
-
 export function useKnowledgeBaseFolders() {
-  const [folders, setFolders] = useState<KnowledgeBaseFolder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchFolders = useCallback(async () => {
-    try {
+  const { data: folders = [], isLoading } = useQuery({
+    queryKey: ['knowledge-base-folders'],
+    queryFn: async () => {
       const { data, error } = await supabase
-        .from("knowledge_base_folders")
-        .select("*")
-        .eq("workspace_id", DEMO_WORKSPACE_ID)
-        .order("created_at", { ascending: true });
+        .from('knowledge_base_folders')
+        .select('*')
+        .eq('workspace_id', DEMO_WORKSPACE_ID)
+        .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setFolders(data || []);
-    } catch (error) {
-      console.error("Failed to fetch kb folders:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+      return data as KnowledgeBaseFolder[];
+    },
+    staleTime: 60000, // 1 minute
+  });
 
-  useEffect(() => {
-    fetchFolders();
-  }, [fetchFolders]);
-
-  const createFolder = async (name: string, color: string) => {
-    try {
-      const { error } = await supabase
-        .from("knowledge_base_folders")
-        .insert({ name, color, workspace_id: DEMO_WORKSPACE_ID });
+  const createFolderMutation = useMutation({
+    mutationFn: async ({ name, color }: { name: string; color: string }) => {
+      const { data, error } = await supabase
+        .from('knowledge_base_folders')
+        .insert({ name, color, workspace_id: DEMO_WORKSPACE_ID })
+        .select()
+        .single();
 
       if (error) throw error;
-      toast.success("フォルダを作成しました");
-      fetchFolders();
-    } catch (error) {
-      console.error("Failed to create kb folder:", error);
-      toast.error("フォルダの作成に失敗しました");
-    }
-  };
+      return data as KnowledgeBaseFolder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base-folders'] });
+      toast.success('フォルダを作成しました');
+    },
+    onError: (error) => {
+      console.error('Failed to create kb folder:', error);
+      toast.error('フォルダの作成に失敗しました');
+    },
+  });
 
-  const updateFolder = async (id: string, updates: Partial<Pick<KnowledgeBaseFolder, 'name' | 'color'>>) => {
-    try {
-      const { error } = await supabase
-        .from("knowledge_base_folders")
+  const updateFolderMutation = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Pick<KnowledgeBaseFolder, 'name' | 'color'>> }) => {
+      const { data, error } = await supabase
+        .from('knowledge_base_folders')
         .update(updates)
-        .eq("id", id);
+        .eq('id', id)
+        .select()
+        .single();
 
       if (error) throw error;
-      toast.success("フォルダを更新しました");
-      fetchFolders();
-    } catch (error) {
-      console.error("Failed to update kb folder:", error);
-      toast.error("フォルダの更新に失敗しました");
-    }
-  };
+      return data as KnowledgeBaseFolder;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base-folders'] });
+      toast.success('フォルダを更新しました');
+    },
+    onError: (error) => {
+      console.error('Failed to update kb folder:', error);
+      toast.error('フォルダの更新に失敗しました');
+    },
+  });
 
-  const deleteFolder = async (id: string) => {
-    try {
+  const deleteFolderMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("knowledge_base_folders")
+        .from('knowledge_base_folders')
         .delete()
-        .eq("id", id);
+        .eq('id', id);
 
       if (error) throw error;
-      toast.success("フォルダを削除しました");
-      fetchFolders();
-    } catch (error) {
-      console.error("Failed to delete kb folder:", error);
-      toast.error("フォルダの削除に失敗しました");
-    }
-  };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-base-folders'] });
+      toast.success('フォルダを削除しました');
+    },
+    onError: (error) => {
+      console.error('Failed to delete kb folder:', error);
+      toast.error('フォルダの削除に失敗しました');
+    },
+  });
 
-  const moveToFolder = async (kbId: string, folderId: string | null) => {
-    try {
+  const moveToFolderMutation = useMutation({
+    mutationFn: async ({ kbId, folderId }: { kbId: string; folderId: string | null }) => {
       const { error } = await supabase
-        .from("knowledge_bases")
+        .from('knowledge_bases')
         .update({ folder_id: folderId })
-        .eq("id", kbId);
+        .eq('id', kbId);
 
       if (error) throw error;
-      toast.success(folderId ? "フォルダに移動しました" : "フォルダから外しました");
-    } catch (error) {
-      console.error("Failed to move kb to folder:", error);
-      toast.error("移動に失敗しました");
-    }
-  };
+      return { kbId, folderId };
+    },
+    onSuccess: ({ folderId }) => {
+      queryClient.invalidateQueries({ queryKey: ['knowledge-bases'] });
+      toast.success(folderId ? 'フォルダに移動しました' : 'フォルダから外しました');
+    },
+    onError: (error) => {
+      console.error('Failed to move kb to folder:', error);
+      toast.error('移動に失敗しました');
+    },
+  });
+
+  const createFolder = useCallback(
+    (name: string, color: string) => createFolderMutation.mutateAsync({ name, color }),
+    [createFolderMutation]
+  );
+
+  const updateFolder = useCallback(
+    (id: string, updates: Partial<Pick<KnowledgeBaseFolder, 'name' | 'color'>>) =>
+      updateFolderMutation.mutateAsync({ id, updates }),
+    [updateFolderMutation]
+  );
+
+  const deleteFolder = useCallback(
+    (id: string) => deleteFolderMutation.mutateAsync(id),
+    [deleteFolderMutation]
+  );
+
+  const moveToFolder = useCallback(
+    (kbId: string, folderId: string | null) => moveToFolderMutation.mutateAsync({ kbId, folderId }),
+    [moveToFolderMutation]
+  );
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['knowledge-base-folders'] });
+  }, [queryClient]);
 
   return {
     folders,
     isLoading,
-    refetch: fetchFolders,
+    refetch,
     createFolder,
     updateFolder,
     deleteFolder,
