@@ -181,7 +181,7 @@ export default function Settings() {
           </div>
 
           {/* Workspace Tab */}
-          <TabsContent value="workspace" className="space-y-4 sm:space-y-6">
+          <TabsContent value="workspace" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             <div className="glass rounded-xl card-shadow p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-foreground text-sm sm:text-base">ワークスペース情報</h3>
@@ -267,7 +267,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Integrations Tab */}
-          <TabsContent value="integrations" className="space-y-4 sm:space-y-6">
+          <TabsContent value="integrations" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             {/* ElevenLabs */}
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0 mb-4">
