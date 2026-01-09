@@ -382,7 +382,7 @@ export default function AgentEditor() {
             </DialogContent>
           </Dialog>
           {/* Header */}
-          <header className="flex items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur-sm px-4 md:px-6 py-4 sticky top-14 lg:top-0 z-10">
+          <header className="flex items-center justify-between gap-4 border-b border-border bg-background/95 backdrop-blur-sm px-4 md:px-6 py-4 lg:sticky lg:top-0 z-10">
             <div className="flex items-center gap-3 sm:gap-4 min-h-[40px] min-w-0 flex-1">
               <Button variant="ghost" size="icon" asChild className="shrink-0 rounded-xl hover:bg-muted">
                 <Link to="/agents">
