@@ -1098,6 +1098,7 @@ export type Database = {
         }
         Returns: string
       }
+      trigger_process_scheduled_calls: { Args: never; Returns: undefined }
     }
     Enums: {
       agent_status: "draft" | "published"
