@@ -861,7 +861,7 @@ export default function Conversations() {
                   受信履歴
                 </TabsTrigger>
                 <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
-                  <History className="h-4 w-4" />
+                  <PhoneOutgoing className="h-4 w-4" />
                   発信履歴
                 </TabsTrigger>
               </TabsList>
