@@ -92,17 +92,19 @@ Deno.serve(async (req) => {
         console.log("ElevenLabs WebSocket connected");
         
         // Send initial configuration to ElevenLabs
+        // For telephony integration, we need to specify the audio format
         const initMessage = {
           type: "conversation_initiation_client_data",
           conversation_config_override: {
             agent: {
               tts: {
-                // Twilio uses 8kHz mulaw audio
+                // Twilio uses 8kHz mulaw audio for output
                 output_format: "ulaw_8000"
               }
             }
           }
         };
+        console.log("Sending ElevenLabs init config");
         elevenLabsSocket?.send(JSON.stringify(initMessage));
       };
 
@@ -112,34 +114,54 @@ Deno.serve(async (req) => {
           
           switch (data.type) {
             case "audio":
-              // ElevenLabs sends base64 audio, forward to Twilio
-              if (data.audio && streamSid) {
+              // ElevenLabs sends audio in audio_event.audio_base_64
+              if (data.audio_event?.audio_base_64 && streamSid) {
                 const mediaMessage = {
                   event: "media",
                   streamSid: streamSid,
                   media: {
-                    payload: data.audio
+                    payload: data.audio_event.audio_base_64
                   }
                 };
                 twilioSocket.send(JSON.stringify(mediaMessage));
               }
               break;
+            
+            case "ping":
+              // Respond to ping to keep connection alive
+              if (data.ping_event?.event_id) {
+                const pongMessage = {
+                  type: "pong",
+                  event_id: data.ping_event.event_id
+                };
+                elevenLabsSocket?.send(JSON.stringify(pongMessage));
+              }
+              break;
+            
+            case "conversation_initiation_metadata":
+              console.log("Conversation initialized:", data.conversation_initiation_metadata_event?.conversation_id);
+              console.log("User input format:", data.conversation_initiation_metadata_event?.user_input_audio_format);
+              console.log("Agent output format:", data.conversation_initiation_metadata_event?.agent_output_audio_format);
+              break;
               
             case "agent_response":
-              console.log("Agent response:", data.text);
+              console.log("Agent response:", data.agent_response_event?.agent_response);
               break;
               
             case "user_transcript":
-              console.log("User said:", data.text);
+              console.log("User said:", data.user_transcription_event?.user_transcript);
               break;
               
-            case "conversation_ended":
-              console.log("Conversation ended by ElevenLabs");
-              twilioSocket.close();
+            case "interruption":
+              console.log("User interrupted");
               break;
               
-            case "error":
-              console.error("ElevenLabs error:", data);
+            case "agent_response_correction":
+              console.log("Agent response corrected:", data.agent_response_correction_event?.corrected_agent_response);
+              break;
+            
+            case "internal_tentative_agent_response":
+              // Ignore tentative responses
               break;
               
             default:
@@ -194,11 +216,11 @@ Deno.serve(async (req) => {
           break;
 
         case "media":
-          // Audio from caller, forward to ElevenLabs
+          // Audio from caller, forward to ElevenLabs using the correct format
           if (elevenLabsSocket?.readyState === WebSocket.OPEN) {
+            // ElevenLabs expects: { user_audio_chunk: base64_audio_string }
             const audioMessage = {
-              type: "audio",
-              audio: data.media.payload // Already base64 mulaw
+              user_audio_chunk: data.media.payload // base64 mulaw audio from Twilio
             };
             elevenLabsSocket.send(JSON.stringify(audioMessage));
           }
