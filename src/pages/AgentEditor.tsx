@@ -69,9 +69,11 @@ export default function AgentEditor() {
   const isNew = id === "new";
   const creationMethod = searchParams.get("method"); // "template", "scratch", or "ai"
   
-  // If method is "scratch", skip template selection
-  // If method is "ai", show AI builder
-  const shouldShowTemplates = isNew && creationMethod !== "scratch" && creationMethod !== "ai";
+  // Determine what to show based on creation method
+  // "template" or no method: show template selection
+  // "scratch": skip to form directly
+  // "ai": show AI builder
+  const shouldShowTemplates = isNew && (creationMethod === "template" || !creationMethod);
   const shouldShowAIBuilder = isNew && creationMethod === "ai";
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
