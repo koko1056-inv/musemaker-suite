@@ -15,6 +15,9 @@ interface WebhookPayload {
   duration_seconds?: number;
   outcome?: string;
   transcript?: any;
+  summary?: string;
+  key_points?: string[];
+  extracted_data?: Record<string, string>;
   timestamp: string;
 }
 
@@ -80,6 +83,26 @@ serve(async (req) => {
       });
     }
 
+    // Get extracted data for this conversation
+    const { data: extractedDataRows, error: extractedError } = await supabase
+      .from("conversation_extracted_data")
+      .select("field_key, field_value")
+      .eq("conversation_id", conversationId);
+
+    if (extractedError) {
+      console.error("Error fetching extracted data:", extractedError);
+    }
+
+    // Convert to object
+    const extractedData: Record<string, string> = {};
+    if (extractedDataRows) {
+      for (const row of extractedDataRows) {
+        extractedData[row.field_key] = row.field_value || '';
+      }
+    }
+
+    console.log(`Found ${Object.keys(extractedData).length} extracted data fields`);
+
     const payload: WebhookPayload = {
       event_type: "conversation_ended",
       conversation_id: conversationId,
@@ -89,6 +112,9 @@ serve(async (req) => {
       duration_seconds: conversation.duration_seconds,
       outcome: conversation.outcome,
       transcript: conversation.transcript,
+      summary: conversation.summary,
+      key_points: conversation.key_points,
+      extracted_data: extractedData,
       timestamp: new Date().toISOString(),
     };
 
