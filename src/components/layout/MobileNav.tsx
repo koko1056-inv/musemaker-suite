@@ -12,7 +12,7 @@ const mobileNavItems = [
   { name: "ホーム", href: "/", icon: LayoutDashboard },
   { name: "エージェント", href: "/agents", icon: Bot },
   { name: "", href: "/agents/new", icon: Plus, isMain: true },
-  { name: "履歴", href: "/conversations", icon: MessageSquare },
+  { name: "履歴/発信", href: "/conversations", icon: MessageSquare },
   { name: "設定", href: "/settings", icon: Settings },
 ];
 
