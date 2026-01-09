@@ -60,25 +60,48 @@ export function useVoiceConversation(options: VoiceConversationOptions) {
     onMessage: (message: any) => {
       console.log('Message received:', message);
       
-      // Handle user transcript
-      if (message.type === 'user_transcript') {
-        const userMessage: TranscriptMessage = {
-          role: 'user',
-          text: message.user_transcription_event?.user_transcript || '',
-          timestamp: Date.now(),
-        };
-        transcriptRef.current = [...transcriptRef.current, userMessage];
-        setTranscript([...transcriptRef.current]);
+      // Handle user transcript - different possible message formats
+      if (message.type === 'user_transcript' || message.user_transcript) {
+        const userText = message.user_transcription_event?.user_transcript || 
+                        message.user_transcript ||
+                        message.text ||
+                        '';
+        if (userText) {
+          const userMessage: TranscriptMessage = {
+            role: 'user',
+            text: userText,
+            timestamp: Date.now(),
+          };
+          transcriptRef.current = [...transcriptRef.current, userMessage];
+          setTranscript([...transcriptRef.current]);
+        }
       }
       
-      // Handle agent response
-      if (message.type === 'agent_response') {
-        const agentMessage: TranscriptMessage = {
-          role: 'agent',
-          text: message.agent_response_event?.agent_response || '',
+      // Handle agent response - different possible message formats
+      if (message.type === 'agent_response' || message.agent_response) {
+        const agentText = message.agent_response_event?.agent_response ||
+                         message.agent_response ||
+                         message.text ||
+                         '';
+        if (agentText) {
+          const agentMessage: TranscriptMessage = {
+            role: 'agent',
+            text: agentText,
+            timestamp: Date.now(),
+          };
+          transcriptRef.current = [...transcriptRef.current, agentMessage];
+          setTranscript([...transcriptRef.current]);
+        }
+      }
+
+      // Handle transcript message with role field
+      if (message.role && message.message) {
+        const transcriptMessage: TranscriptMessage = {
+          role: message.role === 'user' ? 'user' : 'agent',
+          text: message.message,
           timestamp: Date.now(),
         };
-        transcriptRef.current = [...transcriptRef.current, agentMessage];
+        transcriptRef.current = [...transcriptRef.current, transcriptMessage];
         setTranscript([...transcriptRef.current]);
       }
     },

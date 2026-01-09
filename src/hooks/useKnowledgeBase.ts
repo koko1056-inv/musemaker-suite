@@ -7,6 +7,7 @@ export interface KnowledgeBase {
   workspace_id: string;
   name: string;
   description: string | null;
+  folder_id: string | null;
   created_at: string;
   updated_at: string;
 }
