@@ -144,6 +144,16 @@ const handler = async (req: Request): Promise<Response> => {
 
       const eventTitle = eventLabels[event_type];
 
+      // カスタムテンプレートがある場合は使用
+      let customContent = "";
+      if (notification.message_template) {
+        customContent = replaceTemplateVariables(
+          notification.message_template, 
+          templateVariables, 
+          extractedData
+        );
+      }
+
       let htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -158,6 +168,7 @@ const handler = async (req: Request): Promise<Response> => {
             .label { color: #666; font-size: 14px; }
             .value { font-weight: 500; }
             .summary { background: white; padding: 16px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #333; }
+            .custom-message { background: white; padding: 16px; border-radius: 8px; margin-top: 16px; white-space: pre-wrap; }
             .extracted { background: #f0f0ff; padding: 16px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #8b5cf6; }
             .extracted-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e0e0ff; }
             .extracted-key { color: #6b21a8; font-family: monospace; font-size: 12px; }
@@ -176,57 +187,65 @@ const handler = async (req: Request): Promise<Response> => {
             <div class="content">
       `;
 
-      if (phone_number) {
+      // カスタムテンプレートがある場合はそれを表示
+      if (customContent) {
         htmlContent += `
-          <div class="info-row">
-            <span class="label">電話番号</span>
-            <span class="value">${phone_number}</span>
-          </div>
+          <div class="custom-message">${customContent.replace(/\n/g, '<br>')}</div>
         `;
-      }
-
-      if (formattedDuration) {
-        htmlContent += `
-          <div class="info-row">
-            <span class="label">通話時間</span>
-            <span class="value">${formattedDuration}</span>
-          </div>
-        `;
-      }
-
-      if (outcome) {
-        htmlContent += `
-          <div class="info-row">
-            <span class="label">結果</span>
-            <span class="value">${outcome}</span>
-          </div>
-        `;
-      }
-
-      if (notification.include_summary && summary) {
-        htmlContent += `
-          <div class="summary">
-            <h3 style="margin: 0 0 8px; font-size: 14px; color: #666;">📝 サマリー</h3>
-            <p style="margin: 0;">${summary}</p>
-          </div>
-        `;
-      }
-
-      // Add extracted data section
-      if (Object.keys(extractedData).length > 0) {
-        htmlContent += `
-          <div class="extracted">
-            <h3 style="margin: 0 0 12px; font-size: 14px; color: #6b21a8;">📊 抽出データ</h3>
-        `;
-        for (const [key, value] of Object.entries(extractedData)) {
+      } else {
+        // デフォルトの表示
+        if (phone_number) {
           htmlContent += `
-            <div class="extracted-row">
-              <span class="extracted-key">${key}</span>
-              <span class="value">${value}</span>
+            <div class="info-row">
+              <span class="label">電話番号</span>
+              <span class="value">${phone_number}</span>
             </div>
           `;
         }
-        htmlContent += `</div>`;
+
+        if (formattedDuration) {
+          htmlContent += `
+            <div class="info-row">
+              <span class="label">通話時間</span>
+              <span class="value">${formattedDuration}</span>
+            </div>
+          `;
+        }
+
+        if (outcome) {
+          htmlContent += `
+            <div class="info-row">
+              <span class="label">結果</span>
+              <span class="value">${outcome}</span>
+            </div>
+          `;
+        }
+
+        if (notification.include_summary && summary) {
+          htmlContent += `
+            <div class="summary">
+              <h3 style="margin: 0 0 8px; font-size: 14px; color: #666;">📝 サマリー</h3>
+              <p style="margin: 0;">${summary}</p>
+            </div>
+          `;
+        }
+
+        // Add extracted data section
+        if (Object.keys(extractedData).length > 0) {
+          htmlContent += `
+            <div class="extracted">
+              <h3 style="margin: 0 0 12px; font-size: 14px; color: #6b21a8;">📊 抽出データ</h3>
+          `;
+          for (const [key, value] of Object.entries(extractedData)) {
+            htmlContent += `
+              <div class="extracted-row">
+                <span class="extracted-key">${key}</span>
+                <span class="value">${value}</span>
+              </div>
+            `;
+          }
+          htmlContent += `</div>`;
+        }
       }
 
       if (notification.include_transcript && transcript && transcript.length > 0) {
