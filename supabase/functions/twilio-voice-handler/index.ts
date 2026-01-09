@@ -19,7 +19,6 @@ serve(async (req) => {
 
     if (!agentId) {
       console.error('Missing agentId parameter');
-      // Return TwiML error response
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say language="ja-JP">エラーが発生しました。エージェントIDが指定されていません。</Say>
@@ -55,25 +54,6 @@ serve(async (req) => {
       });
     }
 
-    // Get workspace to get ElevenLabs API key
-    const { data: workspace, error: workspaceError } = await supabase
-      .from('workspaces')
-      .select('elevenlabs_api_key')
-      .eq('id', agent.workspace_id)
-      .single();
-
-    if (workspaceError || !workspace?.elevenlabs_api_key) {
-      console.error('Workspace or ElevenLabs API key not found:', workspaceError);
-      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say language="ja-JP">エラーが発生しました。ElevenLabsの設定が必要です。</Say>
-  <Hangup/>
-</Response>`;
-      return new Response(twiml, {
-        headers: { 'Content-Type': 'text/xml' },
-      });
-    }
-
     if (!agent.elevenlabs_agent_id) {
       console.error('Agent does not have ElevenLabs agent ID');
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -86,46 +66,22 @@ serve(async (req) => {
       });
     }
 
-    // Get a signed URL for the ElevenLabs conversation
-    const elevenLabsResponse = await fetch(
-      `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agent.elevenlabs_agent_id}`,
-      {
-        method: 'GET',
-        headers: {
-          'xi-api-key': workspace.elevenlabs_api_key,
-        },
-      }
-    );
-
-    if (!elevenLabsResponse.ok) {
-      const errorText = await elevenLabsResponse.text();
-      console.error('Failed to get ElevenLabs signed URL:', errorText);
-      const twiml = `<?xml version="1.0" encoding="UTF-8"?>
-<Response>
-  <Say language="ja-JP">エラーが発生しました。AIエージェントへの接続に失敗しました。</Say>
-  <Hangup/>
-</Response>`;
-      return new Response(twiml, {
-        headers: { 'Content-Type': 'text/xml' },
-      });
-    }
-
-    const { signed_url } = await elevenLabsResponse.json();
-    console.log('Got ElevenLabs signed URL for agent:', agent.elevenlabs_agent_id);
-
-    // Return TwiML that connects to ElevenLabs via WebSocket
-    // Using <Connect><Stream> to stream audio to ElevenLabs
+    // Return TwiML that connects to our WebSocket media stream handler
+    // The WebSocket handler will bridge Twilio to ElevenLabs
+    const wsUrl = supabaseUrl.replace('https://', 'wss://').replace('http://', 'ws://');
+    const mediaStreamUrl = `${wsUrl}/functions/v1/twilio-media-stream?agentId=${agentId}&outboundCallId=${outboundCallId || ''}`;
+    
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Connect>
-    <Stream url="${signed_url}">
+    <Stream url="${mediaStreamUrl}">
       <Parameter name="agentId" value="${agent.elevenlabs_agent_id}"/>
       <Parameter name="outboundCallId" value="${outboundCallId || ''}"/>
     </Stream>
   </Connect>
 </Response>`;
 
-    console.log('Returning TwiML with ElevenLabs stream connection');
+    console.log('Returning TwiML with media stream URL:', mediaStreamUrl);
 
     return new Response(twiml, {
       headers: { 'Content-Type': 'text/xml' },
@@ -133,7 +89,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in twilio-voice-handler:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
