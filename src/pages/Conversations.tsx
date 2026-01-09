@@ -855,6 +855,7 @@ function OutboundChatView({
   onBack,
   cancelCall,
   onMarkAsRead,
+  extractionFieldNameMap,
 }: { 
   agent: {
     agentId: string;
@@ -869,6 +870,7 @@ function OutboundChatView({
   onBack: () => void;
   cancelCall: (id: string) => void;
   onMarkAsRead: (callId: string) => void;
+  extractionFieldNameMap: Map<string, Map<string, string>>;
 }) {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
@@ -1031,7 +1033,38 @@ function OutboundChatView({
                           </div>
                         )}
 
-                        {/* Audio Player */}
+                        {/* Extracted Data */}
+                        {call.conversation.extracted_data && (call.conversation.extracted_data as Array<{ field_key: string; field_value: string | null }>).length > 0 && (
+                          <div className="bg-violet-50 dark:bg-violet-950/30 rounded-2xl p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Variable className="h-4 w-4 text-violet-600" />
+                              <span className="text-sm font-medium text-violet-800 dark:text-violet-200">抽出データ</span>
+                            </div>
+                            <div className="grid gap-2">
+                              {(call.conversation.extracted_data as Array<{ field_key: string; field_value: string | null }>).map((item) => {
+                                const agentFieldMap = extractionFieldNameMap.get(call.agent_id);
+                                const fieldName = agentFieldMap?.get(item.field_key);
+                                return (
+                                  <div key={item.field_key} className="flex items-start justify-between gap-2 text-sm">
+                                    <div className="flex flex-col gap-0.5">
+                                      {fieldName && (
+                                        <span className="text-violet-800 dark:text-violet-200 text-xs font-medium">
+                                          {fieldName}
+                                        </span>
+                                      )}
+                                      <span className="text-violet-600 dark:text-violet-400 font-mono text-xs bg-violet-100 dark:bg-violet-900/50 px-2 py-0.5 rounded inline-block w-fit">
+                                        {item.field_key}
+                                      </span>
+                                    </div>
+                                    <span className="text-violet-900 dark:text-violet-100 text-right flex-1 truncate font-medium">
+                                      {item.field_value || '-'}
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                         {call.conversation.audio_url && (
                           <div className="flex justify-center">
                             <AudioPlayer audioUrl={call.conversation.audio_url} />
@@ -1538,6 +1571,7 @@ export default function Conversations() {
               onBack={() => setSelectedOutboundAgentId(null)}
               cancelCall={cancelCall}
               onMarkAsRead={markOutboundAsRead}
+              extractionFieldNameMap={extractionFieldNameMap}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">

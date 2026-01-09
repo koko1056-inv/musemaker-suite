@@ -17,6 +17,7 @@ export interface OutboundCallWithConversation extends OutboundCall {
     audio_url: string | null;
     outcome: string | null;
     metadata: Record<string, unknown> | null;
+    extracted_data?: Array<{ field_key: string; field_value: string | null }>;
   } | null;
 }
 
@@ -43,7 +44,8 @@ export function useOutboundCalls(agentId?: string) {
             key_points,
             audio_url,
             outcome,
-            metadata
+            metadata,
+            extracted_data:conversation_extracted_data(field_key, field_value)
           )
         `)
         .eq('workspace_id', workspace.id)
