@@ -91,7 +91,20 @@ serve(async (req) => {
 
     console.log('Conversation saved successfully:', data.id);
 
-    // Trigger webhooks and summary generation asynchronously
+    // Get agent info for notifications
+    const { data: agent } = await supabase
+      .from('agents')
+      .select('name, workspace_id')
+      .eq('id', agentId)
+      .single();
+
+    const workspaceId = agent?.workspace_id;
+    const agentName = agent?.name || 'AIエージェント';
+
+    // Determine event type based on status
+    const eventType = status === 'failed' ? 'call_failed' : 'call_end';
+
+    // Trigger webhooks, notifications, and summary generation asynchronously
     const backgroundTasks = async () => {
       try {
         // Trigger webhooks
@@ -124,6 +137,54 @@ serve(async (req) => {
         });
       } catch (summaryError) {
         console.error('Error generating summary:', summaryError);
+      }
+
+      // Send Slack notifications
+      if (workspaceId) {
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-slack-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              workspace_id: workspaceId,
+              event_type: eventType,
+              agent_name: agentName,
+              phone_number: phoneNumber,
+              duration_seconds: durationSeconds,
+              outcome: outcome,
+              transcript: transcript,
+            }),
+          });
+          console.log('Slack notification triggered');
+        } catch (slackError) {
+          console.error('Error sending Slack notification:', slackError);
+        }
+
+        // Send email notifications
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-email-notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              workspace_id: workspaceId,
+              event_type: eventType,
+              agent_name: agentName,
+              phone_number: phoneNumber,
+              duration_seconds: durationSeconds,
+              outcome: outcome,
+              transcript: transcript,
+            }),
+          });
+          console.log('Email notification triggered');
+        } catch (emailError) {
+          console.error('Error sending email notification:', emailError);
+        }
       }
     };
 
