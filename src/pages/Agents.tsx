@@ -327,8 +327,8 @@ export default function Agents() {
           <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6 md:mb-8">
             <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                  <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                  <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-foreground">{agents.length}</p>
@@ -338,8 +338,8 @@ export default function Agents() {
             </div>
             <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-green-500/10 shrink-0">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-green-500" />
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-foreground">
@@ -351,8 +351,8 @@ export default function Agents() {
             </div>
             <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-amber-500/10 shrink-0">
-                  <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-amber-500" />
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                  <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-foreground">
@@ -364,8 +364,8 @@ export default function Agents() {
             </div>
             <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-500/10 shrink-0">
-                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
                 </div>
                 <div>
                   <p className="text-xl sm:text-2xl font-bold text-foreground">
