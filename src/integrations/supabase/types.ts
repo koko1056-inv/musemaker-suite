@@ -923,6 +923,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_demo_workspace_membership: { Args: never; Returns: string }
       is_workspace_admin: {
         Args: { _user_id: string; _workspace_id: string }
         Returns: boolean

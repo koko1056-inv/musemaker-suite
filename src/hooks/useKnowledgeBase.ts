@@ -28,6 +28,16 @@ export interface KnowledgeItem {
 
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
+async function ensureDemoWorkspaceMembership() {
+  // Note: Supabase types are generated and may not include this RPC yet.
+  const rpc = (supabase.rpc as any) as (fn: string, args?: any) => Promise<{ error?: any }>;
+  const { error } = await rpc("ensure_demo_workspace_membership");
+  if (error) {
+    // Non-fatal: the rest of the query/mutation may still work depending on policies.
+    console.warn("Failed to ensure demo workspace membership:", error);
+  }
+}
+
 // Helper function to sync knowledge item with ElevenLabs
 async function syncKnowledgeItemToElevenLabs(
   action: 'create' | 'update' | 'delete',
@@ -59,6 +69,8 @@ export function useKnowledgeBases() {
   return useQuery({
     queryKey: ["knowledge-bases"],
     queryFn: async () => {
+      await ensureDemoWorkspaceMembership();
+
       const { data, error } = await supabase
         .from("knowledge_bases")
         .select("*")
@@ -94,6 +106,8 @@ export function useCreateKnowledgeBase() {
 
   return useMutation({
     mutationFn: async (data: { name: string; description?: string }) => {
+      await ensureDemoWorkspaceMembership();
+
       const { data: result, error } = await supabase
         .from("knowledge_bases")
         .insert({
