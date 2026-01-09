@@ -341,17 +341,9 @@ export default function KnowledgeBase() {
             <div className="p-2 space-y-1">
               {isLoadingKbs ? (
                 <div className="p-4 text-center text-muted-foreground text-sm">読み込み中...</div>
-              ) : knowledgeBases.length === 0 ? (
-                <div className="p-6 text-center text-muted-foreground">
-                  <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
-                    <FolderOpen className="h-6 w-6 opacity-50" />
-                  </div>
-                  <p className="text-sm font-medium mb-1">まだありません</p>
-                  <p className="text-xs">「新規」ボタンで作成しましょう</p>
-                </div>
               ) : (
                 <>
-                  {/* Folders */}
+                  {/* Folders (show even when there are 0 knowledge bases) */}
                   {folders.map((folder) => (
                     <Collapsible
                       key={folder.id}
@@ -414,6 +406,17 @@ export default function KnowledgeBase() {
                           onMoveToFolder={handleMoveToFolder}
                         />
                       ))}
+                    </div>
+                  )}
+
+                  {/* Empty state (still show folders above) */}
+                  {knowledgeBases.length === 0 && (
+                    <div className="p-6 text-center text-muted-foreground">
+                      <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                        <FolderOpen className="h-6 w-6 opacity-50" />
+                      </div>
+                      <p className="text-sm font-medium mb-1">まだありません</p>
+                      <p className="text-xs">「新規」ボタンで作成しましょう</p>
                     </div>
                   )}
                 </>
