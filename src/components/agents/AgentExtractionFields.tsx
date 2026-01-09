@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -27,7 +27,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Plus, Trash2, Variable, HelpCircle, Edit2, Copy, Check } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Plus, Trash2, Variable, HelpCircle, Edit2, Copy, Check, ChevronDown, Sparkles, Zap, Mail, Phone, Calendar, Hash, ToggleLeft, Type } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface AgentExtractionFieldsProps {
@@ -35,18 +40,28 @@ interface AgentExtractionFieldsProps {
 }
 
 const fieldTypes = [
-  { value: "text", label: "テキスト", description: "自由形式のテキスト" },
-  { value: "email", label: "メールアドレス", description: "メールアドレス形式" },
-  { value: "phone", label: "電話番号", description: "電話番号形式" },
-  { value: "number", label: "数値", description: "数値データ" },
-  { value: "date", label: "日付", description: "日付形式" },
-  { value: "boolean", label: "はい/いいえ", description: "真偽値" },
+  { value: "text", label: "テキスト", icon: Type },
+  { value: "email", label: "メール", icon: Mail },
+  { value: "phone", label: "電話番号", icon: Phone },
+  { value: "number", label: "数値", icon: Hash },
+  { value: "date", label: "日付", icon: Calendar },
+  { value: "boolean", label: "はい/いいえ", icon: ToggleLeft },
+];
+
+const presetFields = [
+  { name: "お客様名", key: "customer_name", type: "text", description: "お客様が名乗った名前" },
+  { name: "電話番号", key: "phone_number", type: "phone", description: "連絡先の電話番号" },
+  { name: "メールアドレス", key: "email", type: "email", description: "連絡先のメールアドレス" },
+  { name: "予約日時", key: "reservation_date", type: "date", description: "予約希望日時" },
+  { name: "問い合わせ内容", key: "inquiry_content", type: "text", description: "お客様の質問や要望" },
 ];
 
 export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
   const { fields, isLoading, createField, updateField, deleteField } = useAgentExtractionFields(agentId);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingField, setEditingField] = useState<ExtractionField | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showUsageExample, setShowUsageExample] = useState(false);
   const [newField, setNewField] = useState({
     field_name: "",
     field_key: "",
@@ -93,6 +108,24 @@ export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
       is_required: false,
     });
     setIsCreateOpen(false);
+    setShowAdvanced(false);
+  };
+
+  const handlePresetClick = async (preset: typeof presetFields[0]) => {
+    // Check if already exists
+    if (fields.some(f => f.field_key === preset.key)) {
+      toast({ title: "このフィールドは既に追加されています", variant: "destructive" });
+      return;
+    }
+    
+    await createField.mutateAsync({
+      agent_id: agentId,
+      field_name: preset.name,
+      field_key: preset.key,
+      field_type: preset.type,
+      description: preset.description,
+      is_required: false,
+    });
   };
 
   const handleUpdate = async () => {
@@ -116,331 +149,361 @@ export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
+  const getFieldTypeIcon = (type: string) => {
+    const fieldType = fieldTypes.find(t => t.value === type);
+    return fieldType ? fieldType.icon : Type;
+  };
+
   if (isLoading) {
     return <div className="text-muted-foreground text-center py-8">読み込み中...</div>;
   }
 
   return (
-    <div className="space-y-6">
-      {/* 説明セクション */}
-      <Card className="bg-gradient-to-r from-violet-500/5 to-purple-500/10 border-violet-500/20">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="p-3 bg-violet-500/10 rounded-full">
-              <Variable className="h-6 w-6 text-violet-500" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold mb-2">抽出変数とは？</h3>
-              <p className="text-muted-foreground mb-4">
-                通話中にAIが自動的に抽出する情報を定義できます。<br />
-                抽出したデータはWebhookやメール通知で変数として利用可能です。
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/10 text-violet-500 font-bold text-sm">1</div>
-                  <span className="text-sm">抽出項目を設定</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/10 text-violet-500 font-bold text-sm">2</div>
-                  <span className="text-sm">通話からAIが抽出</span>
-                </div>
-                <div className="flex items-center gap-3 p-3 bg-background rounded-lg">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-full bg-violet-500/10 text-violet-500 font-bold text-sm">3</div>
-                  <span className="text-sm">Webhook等で活用</span>
-                </div>
-              </div>
-            </div>
+    <div className="space-y-4">
+      {/* コンパクトヘッダー */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Sparkles className="h-5 w-5 text-primary" />
           </div>
-        </CardContent>
-      </Card>
-
-      {/* ヘッダーと追加ボタン */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            抽出フィールド
-            <Badge variant="secondary" className="ml-2">{fields.length}件</Badge>
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            通話から抽出したい情報を定義
-          </p>
+          <div>
+            <h3 className="font-semibold">AI抽出変数</h3>
+            <p className="text-xs text-muted-foreground">
+              通話からAIが自動抽出 → Webhook・通知で利用
+            </p>
+          </div>
         </div>
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="lg" className="w-full sm:w-auto">
-              <Plus className="mr-2 h-5 w-5" />
-              フィールドを追加
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-xl">抽出フィールドを追加</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-5 pt-4">
-              <div className="space-y-2">
-                <Label>フィールド名 *</Label>
-                <Input
-                  placeholder="例: お客様の名前、予約日時、問い合わせ内容"
-                  value={newField.field_name}
-                  onChange={(e) => handleNameChange(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label>変数キー</Label>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p>Webhookで使用する変数名です。</p>
-                        <p className="mt-1 font-mono text-xs">{"{{extracted.customer_name}}"}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
-                <Input
-                  placeholder="customer_name"
-                  value={newField.field_key}
-                  onChange={(e) => setNewField({ ...newField, field_key: e.target.value })}
-                  className="font-mono text-sm"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>データタイプ</Label>
-                <Select
-                  value={newField.field_type}
-                  onValueChange={(value) => setNewField({ ...newField, field_type: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {fieldTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        <div>
-                          <span>{type.label}</span>
-                          <span className="text-muted-foreground text-xs ml-2">
-                            {type.description}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>説明（AIへのヒント）</Label>
-                <Textarea
-                  placeholder="例: お客様がお名前を名乗った場合に抽出してください"
-                  value={newField.description}
-                  onChange={(e) => setNewField({ ...newField, description: e.target.value })}
-                  rows={2}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label>必須フィールド</Label>
-                  <p className="text-xs text-muted-foreground">
-                    通話中に必ず取得すべき情報
-                  </p>
-                </div>
-                <Switch
-                  checked={newField.is_required}
-                  onCheckedChange={(checked) => setNewField({ ...newField, is_required: checked })}
-                />
-              </div>
-
-              <Button
-                onClick={handleCreate}
-                disabled={!newField.field_name || !newField.field_key || createField.isPending}
-                className="w-full h-12 text-base"
-              >
-                {createField.isPending ? "作成中..." : "フィールドを作成"}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        <Badge variant="secondary" className="font-mono">
+          {fields.length}件
+        </Badge>
       </div>
 
-      {/* フィールドリスト */}
+      {/* フィールドリスト または 空状態 */}
       {fields.length === 0 ? (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <div className="p-4 bg-muted rounded-full mb-4">
-              <Variable className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <h4 className="font-semibold text-lg mb-2">抽出フィールドが未設定です</h4>
-            <p className="text-muted-foreground text-center max-w-sm mb-4">
-              「フィールドを追加」から、<br />
-              通話中に抽出したい情報を設定しましょう
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Badge variant="secondary" className="text-sm py-1 px-3">お客様名</Badge>
-              <Badge variant="secondary" className="text-sm py-1 px-3">電話番号</Badge>
-              <Badge variant="secondary" className="text-sm py-1 px-3">予約日時</Badge>
-              <Badge variant="secondary" className="text-sm py-1 px-3">問い合わせ内容</Badge>
+        <Card className="border-dashed border-2">
+          <CardContent className="py-8">
+            <div className="text-center space-y-4">
+              <div className="inline-flex p-3 bg-muted rounded-full">
+                <Variable className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <div>
+                <p className="font-medium">抽出したい情報を設定しましょう</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  よく使う項目をクリックで追加
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-2 pt-2">
+                {presetFields.map((preset) => (
+                  <Button
+                    key={preset.key}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePresetClick(preset)}
+                    disabled={createField.isPending}
+                    className="gap-1.5"
+                  >
+                    <Plus className="h-3 w-3" />
+                    {preset.name}
+                  </Button>
+                ))}
+              </div>
             </div>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {fields.map((field) => (
-            <Card key={field.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    <div className="p-2.5 bg-violet-500/10 rounded-lg shrink-0">
-                      <Variable className="h-5 w-5 text-violet-500" />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-semibold">{field.field_name}</h4>
-                        <Badge variant="outline" className="text-xs">
-                          {fieldTypes.find(t => t.value === field.field_type)?.label || field.field_type}
-                        </Badge>
-                        {field.is_required && (
-                          <Badge variant="default" className="text-xs">必須</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <code className="text-xs bg-muted px-2 py-1 rounded font-mono">
-                          {`{{extracted.${field.field_key}}}`}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6"
-                          onClick={() => handleCopyKey(field.field_key)}
-                        >
-                          {copiedKey === field.field_key ? (
-                            <Check className="h-3 w-3 text-green-500" />
-                          ) : (
-                            <Copy className="h-3 w-3" />
-                          )}
-                        </Button>
-                      </div>
-                      {field.description && (
-                        <p className="text-xs text-muted-foreground mt-1">{field.description}</p>
-                      )}
-                    </div>
+        <div className="space-y-2">
+          {fields.map((field) => {
+            const TypeIcon = getFieldTypeIcon(field.field_type);
+            return (
+              <div
+                key={field.id}
+                className="group flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
+              >
+                <div className="p-2 bg-primary/10 rounded-md">
+                  <TypeIcon className="h-4 w-4 text-primary" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium truncate">{field.field_name}</span>
+                    {field.is_required && (
+                      <Badge variant="default" className="text-[10px] px-1.5 py-0">必須</Badge>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setEditingField(field)}
-                        >
-                          <Edit2 className="h-4 w-4 mr-1" />
-                          編集
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-lg">
-                        <DialogHeader>
-                          <DialogTitle>フィールドを編集</DialogTitle>
-                        </DialogHeader>
-                        {editingField && (
-                          <div className="space-y-5 pt-4">
-                            <div className="space-y-2">
-                              <Label>フィールド名</Label>
-                              <Input
-                                value={editingField.field_name}
-                                onChange={(e) => setEditingField({ ...editingField, field_name: e.target.value })}
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>変数キー（変更不可）</Label>
-                              <Input value={editingField.field_key} disabled className="font-mono text-sm" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>データタイプ</Label>
-                              <Select
-                                value={editingField.field_type}
-                                onValueChange={(value) => setEditingField({ ...editingField, field_type: value })}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {fieldTypes.map((type) => (
-                                    <SelectItem key={type.value} value={type.value}>
-                                      {type.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>説明</Label>
-                              <Textarea
-                                value={editingField.description || ""}
-                                onChange={(e) => setEditingField({ ...editingField, description: e.target.value })}
-                                rows={2}
-                              />
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <Label>必須フィールド</Label>
-                              <Switch
-                                checked={editingField.is_required}
-                                onCheckedChange={(checked) => setEditingField({ ...editingField, is_required: checked })}
-                              />
-                            </div>
-                            <Button
-                              onClick={handleUpdate}
-                              disabled={updateField.isPending}
-                              className="w-full"
-                            >
-                              {updateField.isPending ? "更新中..." : "更新する"}
-                            </Button>
-                          </div>
-                        )}
-                      </DialogContent>
-                    </Dialog>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deleteField.mutate(field.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <code className="text-[11px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                      {`{{extracted.${field.field_key}}}`}
+                    </code>
+                    <button
+                      onClick={() => handleCopyKey(field.field_key)}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                      {copiedKey === field.field_key ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <Copy className="h-3 w-3 text-muted-foreground" />
+                      )}
+                    </button>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setEditingField(field)}
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>フィールドを編集</DialogTitle>
+                      </DialogHeader>
+                      {editingField && (
+                        <div className="space-y-4 pt-2">
+                          <div className="space-y-2">
+                            <Label>フィールド名</Label>
+                            <Input
+                              value={editingField.field_name}
+                              onChange={(e) => setEditingField({ ...editingField, field_name: e.target.value })}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-muted-foreground">変数キー（変更不可）</Label>
+                            <Input value={editingField.field_key} disabled className="font-mono text-sm bg-muted" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>データタイプ</Label>
+                            <Select
+                              value={editingField.field_type}
+                              onValueChange={(value) => setEditingField({ ...editingField, field_type: value })}
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {fieldTypes.map((type) => (
+                                  <SelectItem key={type.value} value={type.value}>
+                                    <div className="flex items-center gap-2">
+                                      <type.icon className="h-4 w-4" />
+                                      {type.label}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2">
+                            <Label>AIへのヒント</Label>
+                            <Textarea
+                              value={editingField.description || ""}
+                              onChange={(e) => setEditingField({ ...editingField, description: e.target.value })}
+                              placeholder="どのような情報を抽出すべきか説明"
+                              rows={2}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between py-2">
+                            <Label>必須フィールド</Label>
+                            <Switch
+                              checked={editingField.is_required}
+                              onCheckedChange={(checked) => setEditingField({ ...editingField, is_required: checked })}
+                            />
+                          </div>
+                          <Button
+                            onClick={handleUpdate}
+                            disabled={updateField.isPending}
+                            className="w-full"
+                          >
+                            {updateField.isPending ? "更新中..." : "保存"}
+                          </Button>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => deleteField.mutate(field.id)}
+                    disabled={deleteField.isPending}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
-      {/* 使用例 */}
+      {/* フィールド追加ボタン（フィールドがある場合） */}
       {fields.length > 0 && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Webhookでの使用例</CardTitle>
-            <CardDescription>
-              抽出したデータは以下の形式でWebhookペイロードに含まれます
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <pre className="bg-muted p-4 rounded-lg text-xs overflow-auto">
-{`{
-  "conversation_id": "uuid",
-  "agent_name": "カスタマーサポート",
-  "summary": "...",
-  "extracted_data": {
-${fields.map(f => `    "${f.field_key}": "抽出された値"`).join(",\n")}
-  }
-}`}
-            </pre>
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap gap-2">
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Plus className="h-4 w-4" />
+                カスタム追加
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>抽出フィールドを追加</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <div className="space-y-2">
+                  <Label>フィールド名 <span className="text-destructive">*</span></Label>
+                  <Input
+                    placeholder="例: お客様の名前"
+                    value={newField.field_name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>データタイプ</Label>
+                  <Select
+                    value={newField.field_type}
+                    onValueChange={(value) => setNewField({ ...newField, field_type: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {fieldTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          <div className="flex items-center gap-2">
+                            <type.icon className="h-4 w-4" />
+                            {type.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between text-muted-foreground">
+                      詳細設定
+                      <ChevronDown className={`h-4 w-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="space-y-4 pt-2">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Label>変数キー</Label>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Webhookで使用する変数名</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      <Input
+                        value={newField.field_key}
+                        onChange={(e) => setNewField({ ...newField, field_key: e.target.value })}
+                        className="font-mono text-sm"
+                        placeholder="customer_name"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>AIへのヒント</Label>
+                      <Textarea
+                        placeholder="どのような情報を抽出すべきか説明"
+                        value={newField.description}
+                        onChange={(e) => setNewField({ ...newField, description: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between py-1">
+                      <Label>必須フィールド</Label>
+                      <Switch
+                        checked={newField.is_required}
+                        onCheckedChange={(checked) => setNewField({ ...newField, is_required: checked })}
+                      />
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
+
+                <Button
+                  onClick={handleCreate}
+                  disabled={!newField.field_name || !newField.field_key || createField.isPending}
+                  className="w-full"
+                >
+                  {createField.isPending ? "作成中..." : "追加"}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* プリセット追加ボタン */}
+          {presetFields
+            .filter(preset => !fields.some(f => f.field_key === preset.key))
+            .slice(0, 3)
+            .map((preset) => (
+              <Button
+                key={preset.key}
+                variant="ghost"
+                size="sm"
+                onClick={() => handlePresetClick(preset)}
+                disabled={createField.isPending}
+                className="gap-1 text-muted-foreground hover:text-foreground"
+              >
+                <Plus className="h-3 w-3" />
+                {preset.name}
+              </Button>
+            ))}
+        </div>
+      )}
+
+      {/* 使い方ヒント */}
+      {fields.length > 0 && (
+        <Collapsible open={showUsageExample} onOpenChange={setShowUsageExample}>
+          <CollapsibleTrigger asChild>
+            <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-full">
+              <Zap className="h-4 w-4" />
+              <span>使い方を見る</span>
+              <ChevronDown className={`h-4 w-4 ml-auto transition-transform ${showUsageExample ? 'rotate-180' : ''}`} />
+            </button>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="mt-3 p-4 rounded-lg bg-muted/50 space-y-3">
+              <div>
+                <p className="text-sm font-medium mb-2">Webhook / メール / Slackで使用</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {fields.map((field) => (
+                    <button
+                      key={field.id}
+                      onClick={() => handleCopyKey(field.field_key)}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-background border text-xs font-mono hover:bg-accent transition-colors"
+                    >
+                      {`{{extracted.${field.field_key}}}`}
+                      {copiedKey === field.field_key ? (
+                        <Check className="h-3 w-3 text-green-500" />
+                      ) : (
+                        <Copy className="h-3 w-3 opacity-50" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                <p>例：メール本文に <code className="bg-background px-1 rounded">{"{{extracted.customer_name}}"}</code> と書くと、抽出された顧客名に置換されます</p>
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
       )}
     </div>
   );
