@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -75,6 +75,7 @@ interface ConversationDisplay {
   actionItems: string[];
   iconName: string;
   iconColor: string;
+  isRead: boolean;
 }
 
 interface AgentConversations {
@@ -83,6 +84,7 @@ interface AgentConversations {
   conversations: ConversationDisplay[];
   lastConversation: ConversationDisplay;
   totalConversations: number;
+  unreadCount: number;
   iconName: string;
   iconColor: string;
   phoneNumber?: string;
@@ -246,11 +248,15 @@ function AgentListItem({
           >
             <IconComponent className="h-6 w-6 text-white" />
           </div>
-          {agent.totalConversations > 1 && (
-            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-[10px] font-bold text-primary-foreground">{agent.totalConversations}</span>
+          {agent.unreadCount > 0 ? (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-destructive-foreground">{agent.unreadCount}</span>
             </div>
-          )}
+          ) : agent.totalConversations > 1 ? (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-muted rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-muted-foreground">{agent.totalConversations}</span>
+            </div>
+          ) : null}
         </div>
 
         {/* Content */}
@@ -489,6 +495,7 @@ function ChatView({
   statusFilter,
   setDateFilter,
   setStatusFilter,
+  onMarkAllAsRead,
 }: { 
   agent: AgentConversations;
   onBack: () => void;
@@ -496,9 +503,17 @@ function ChatView({
   statusFilter: string;
   setDateFilter: (value: "all" | "today" | "week" | "month") => void;
   setStatusFilter: (value: "all" | "completed" | "failed" | "in_progress") => void;
+  onMarkAllAsRead: (agentId: string) => void;
 }) {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
+
+  // Mark all conversations as read when opening agent
+  useEffect(() => {
+    if (agent.unreadCount > 0) {
+      onMarkAllAsRead(agent.agentId);
+    }
+  }, [agent.agentId, agent.unreadCount, onMarkAllAsRead]);
   
   // Filter conversations for this agent
   const filteredConversations = agent.conversations.filter((conv) => {
@@ -710,6 +725,7 @@ function OutboundAgentListItem({
     calls: any[];
     lastCall: any;
     totalCalls: number;
+    unreadCount: number;
     iconName: string;
     iconColor: string;
   };
@@ -740,11 +756,15 @@ function OutboundAgentListItem({
           >
             <IconComponent className="h-6 w-6 text-white" />
           </div>
-          {agent.totalCalls > 1 && (
-            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-[10px] font-bold text-primary-foreground">{agent.totalCalls}</span>
+          {agent.unreadCount > 0 ? (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-destructive-foreground">{agent.unreadCount}</span>
             </div>
-          )}
+          ) : agent.totalCalls > 1 ? (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-muted rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-muted-foreground">{agent.totalCalls}</span>
+            </div>
+          ) : null}
         </div>
 
         {/* Content */}
@@ -790,6 +810,7 @@ function OutboundChatView({
   agent,
   onBack,
   cancelCall,
+  onMarkAllAsRead,
 }: { 
   agent: {
     agentId: string;
@@ -797,14 +818,23 @@ function OutboundChatView({
     calls: any[];
     lastCall: any;
     totalCalls: number;
+    unreadCount: number;
     iconName: string;
     iconColor: string;
   };
   onBack: () => void;
   cancelCall: (id: string) => void;
+  onMarkAllAsRead: (agentId: string) => void;
 }) {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const IconComponent = getAgentIcon(agent.iconName);
+
+  // Mark all calls as read when opening agent
+  useEffect(() => {
+    if (agent.unreadCount > 0) {
+      onMarkAllAsRead(agent.agentId);
+    }
+  }, [agent.agentId, agent.unreadCount, onMarkAllAsRead]);
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
@@ -1070,8 +1100,8 @@ export default function Conversations() {
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [batchCallDialogOpen, setBatchCallDialogOpen] = useState(false);
   const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
-  const { conversations, isLoading } = useConversations();
-  const { outboundCalls, isLoading: isOutboundLoading, cancelCall } = useOutboundCalls();
+  const { conversations, isLoading, markAsRead, markAllAsRead, unreadCount } = useConversations();
+  const { outboundCalls, isLoading: isOutboundLoading, cancelCall, markAsRead: markOutboundAsRead, markAllAsRead: markAllOutboundAsRead, unreadCount: outboundUnreadCount } = useOutboundCalls();
 
   // Handle tab change - clear selections
   const handleTabChange = (tab: "conversations" | "outbound") => {
@@ -1142,6 +1172,7 @@ export default function Conversations() {
       actionItems: conv.metadata?.action_items || [],
       iconName: (conv.agent as any)?.icon_name || 'bot',
       iconColor: (conv.agent as any)?.icon_color || '#10b981',
+      isRead: conv.is_read,
     })),
     [conversations]
   );
@@ -1160,12 +1191,14 @@ export default function Conversations() {
       .map(([agentId, convs]) => {
         const sorted = convs.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
         const assignedPhone = phoneNumbers.find(p => p.agent_id === agentId);
+        const unreadConvs = sorted.filter(c => !c.isRead);
         return {
           agentId,
           agentName: sorted[0].agent,
           conversations: sorted,
           lastConversation: sorted[0],
           totalConversations: sorted.length,
+          unreadCount: unreadConvs.length,
           iconName: sorted[0].iconName,
           iconColor: sorted[0].iconColor,
           phoneNumber: assignedPhone?.phone_number,
@@ -1190,12 +1223,14 @@ export default function Conversations() {
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
         const agentInfo = getAgentInfo(agentId);
+        const unreadCalls = sorted.filter(c => !c.is_read);
         return {
           agentId,
           agentName: agentInfo.name,
           calls: sorted,
           lastCall: sorted[0],
           totalCalls: sorted.length,
+          unreadCount: unreadCalls.length,
           iconName: agentInfo.iconName,
           iconColor: agentInfo.iconColor,
         };
@@ -1282,13 +1317,23 @@ export default function Conversations() {
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as "conversations" | "outbound")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
-              <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
+              <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background relative">
                   <Phone className="h-4 w-4" />
                   受信履歴
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 bg-destructive rounded-full flex items-center justify-center text-[10px] font-bold text-destructive-foreground">
+                      {unreadCount}
+                    </span>
+                  )}
                 </TabsTrigger>
-                <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
+                <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background relative">
                   <PhoneOutgoing className="h-4 w-4" />
                   発信履歴
+                  {outboundUnreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 bg-destructive rounded-full flex items-center justify-center text-[10px] font-bold text-destructive-foreground">
+                      {outboundUnreadCount}
+                    </span>
+                  )}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -1378,12 +1423,14 @@ export default function Conversations() {
               statusFilter={statusFilter}
               setDateFilter={setDateFilter}
               setStatusFilter={setStatusFilter}
+              onMarkAllAsRead={markAllAsRead}
             />
           ) : activeTab === "outbound" && selectedOutboundAgent ? (
             <OutboundChatView
               agent={selectedOutboundAgent}
               onBack={() => setSelectedOutboundAgentId(null)}
               cancelCall={cancelCall}
+              onMarkAllAsRead={markAllOutboundAsRead}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">

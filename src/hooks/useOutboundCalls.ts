@@ -137,11 +137,49 @@ export function useOutboundCalls(agentId?: string) {
     },
   });
 
+  const markAsRead = useCallback(async (callId: string) => {
+    try {
+      const { error } = await supabase
+        .from('outbound_calls')
+        .update({ is_read: true })
+        .eq('id', callId);
+
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['outbound-calls'] });
+    } catch (error) {
+      console.error('Error marking call as read:', error);
+    }
+  }, [queryClient]);
+
+  const markAllAsRead = useCallback(async (agentId?: string) => {
+    try {
+      let query = supabase
+        .from('outbound_calls')
+        .update({ is_read: true })
+        .eq('is_read', false);
+
+      if (agentId) {
+        query = query.eq('agent_id', agentId);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['outbound-calls'] });
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  }, [queryClient]);
+
+  const unreadCount = outboundCalls.filter(c => !c.is_read).length;
+
   return {
     outboundCalls,
     isLoading,
     isInitiating,
     initiateCall,
     cancelCall: cancelCall.mutate,
+    markAsRead,
+    markAllAsRead,
+    unreadCount,
   };
 }

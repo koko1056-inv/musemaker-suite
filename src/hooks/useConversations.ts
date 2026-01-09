@@ -45,6 +45,7 @@ interface Conversation {
   audio_url: string | null;
   summary: string | null;
   key_points: string[];
+  is_read: boolean;
   metadata: {
     sentiment?: string;
     action_items?: string[];
@@ -103,9 +104,57 @@ export function useConversations() {
     fetchConversations();
   }, [fetchConversations]);
 
+  const markAsRead = useCallback(async (conversationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ is_read: true })
+        .eq('id', conversationId);
+
+      if (error) throw error;
+
+      setConversations(prev => 
+        prev.map(conv => 
+          conv.id === conversationId ? { ...conv, is_read: true } : conv
+        )
+      );
+    } catch (error) {
+      console.error('Error marking conversation as read:', error);
+    }
+  }, []);
+
+  const markAllAsRead = useCallback(async (agentId?: string) => {
+    try {
+      let query = supabase
+        .from('conversations')
+        .update({ is_read: true })
+        .eq('is_read', false);
+
+      if (agentId) {
+        query = query.eq('agent_id', agentId);
+      }
+
+      const { error } = await query;
+      if (error) throw error;
+
+      setConversations(prev => 
+        prev.map(conv => 
+          (!agentId || conv.agent_id === agentId) ? { ...conv, is_read: true } : conv
+        )
+      );
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  }, []);
+
+  const unreadCount = conversations.filter(c => !c.is_read).length;
+
   return {
     conversations,
     isLoading,
     refetch: fetchConversations,
+    markAsRead,
+    markAllAsRead,
+    unreadCount,
   };
 }
