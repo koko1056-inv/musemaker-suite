@@ -166,8 +166,8 @@ export default function Settings() {
                 value="notifications" 
                 className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
-                <Slack className="h-4 w-4" />
-                Slack
+                <Bell className="h-4 w-4" />
+                連携
               </TabsTrigger>
               <TabsTrigger 
                 value="billing" 
