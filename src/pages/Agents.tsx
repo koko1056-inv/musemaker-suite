@@ -42,6 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Plus,
   Search,
@@ -63,6 +64,7 @@ import {
   FolderOpen,
   ChevronRight,
   FolderInput,
+  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useAgents } from "@/hooks/useAgents";
@@ -70,6 +72,7 @@ import { useAgentFolders } from "@/hooks/useAgentFolders";
 import { usePhoneNumbers } from "@/hooks/usePhoneNumbers";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { FolderManager } from "@/components/agents/FolderManager";
+import { KnowledgeBaseSection } from "@/components/agents/KnowledgeBaseSection";
 import { toast } from "sonner";
 
 // Voice name mapping with friendly descriptions
@@ -89,6 +92,7 @@ export default function Agents() {
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [mobileTab, setMobileTab] = useState<"agents" | "knowledge">("agents");
   
   const { workspace } = useWorkspace();
   const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
@@ -381,59 +385,96 @@ export default function Agents() {
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6 md:mb-8">
-            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{agents.length}</p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">総数</p>
-                </div>
-              </div>
-            </div>
-            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">
-                    {agents.filter(a => a.status === 'published').length}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">公開中</p>
-                </div>
-              </div>
-            </div>
-            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">
-                    {agents.filter(a => a.status === 'draft').length}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">下書き</p>
-                </div>
-              </div>
-            </div>
-            <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                  <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                </div>
-                <div>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">
-                    {agents.filter(a => a.elevenlabs_agent_id).length}
-                  </p>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">通話可能</p>
-                </div>
-              </div>
+          {/* Mobile Tabs */}
+          <div className="lg:hidden mb-5">
+            <div className="flex bg-muted rounded-lg p-1">
+              <button
+                onClick={() => setMobileTab("agents")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mobileTab === "agents"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Bot className="h-4 w-4" />
+                エージェント
+              </button>
+              <button
+                onClick={() => setMobileTab("knowledge")}
+                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                  mobileTab === "knowledge"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                ナレッジ
+              </button>
             </div>
           </div>
+
+          {/* Mobile Knowledge Tab Content */}
+          {mobileTab === "knowledge" && (
+            <div className="lg:hidden">
+              <KnowledgeBaseSection />
+            </div>
+          )}
+
+          {/* Agent Content - Show on desktop always, mobile only when agents tab is active */}
+          <div className={`${mobileTab === "knowledge" ? "hidden lg:block" : ""}`}>
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6 md:mb-8">
+              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                    <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">{agents.length}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">総数</p>
+                  </div>
+                </div>
+              </div>
+              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {agents.filter(a => a.status === 'published').length}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">公開中</p>
+                  </div>
+                </div>
+              </div>
+              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                    <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {agents.filter(a => a.status === 'draft').length}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">下書き</p>
+                  </div>
+                </div>
+              </div>
+              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
+                    <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground">
+                      {agents.filter(a => a.elevenlabs_agent_id).length}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">通話可能</p>
+                  </div>
+                </div>
+              </div>
+            </div>
 
           {/* Search and Filters */}
           <div className="mb-4 sm:mb-5 md:mb-6 flex flex-col gap-3">
@@ -767,6 +808,7 @@ export default function Agents() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         </div>
       </TooltipProvider>
     </AppLayout>
