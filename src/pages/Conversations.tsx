@@ -93,6 +93,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   const togglePlayPause = () => {
     if (!audioRef.current) return;
@@ -112,8 +113,9 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
   };
 
   const handleLoadedMetadata = () => {
-    if (audioRef.current) {
+    if (audioRef.current && isFinite(audioRef.current.duration)) {
       setDuration(audioRef.current.duration);
+      setIsLoaded(true);
     }
   };
 
@@ -129,14 +131,22 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
     setCurrentTime(0);
   };
 
+  const formatTime = (seconds: number): string => {
+    if (!isFinite(seconds) || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   return (
-    <div className="flex items-center gap-3 bg-muted/50 rounded-full px-4 py-2 max-w-[280px]">
+    <div className="flex items-center gap-2 sm:gap-3 bg-muted/50 rounded-full px-3 sm:px-4 py-2 max-w-[280px] w-full">
       <audio
         ref={audioRef}
         src={audioUrl}
         onTimeUpdate={handleTimeUpdate}
         onLoadedMetadata={handleLoadedMetadata}
         onEnded={handleEnded}
+        preload="metadata"
       />
       
       <Button
@@ -144,6 +154,7 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
         size="icon"
         className="h-8 w-8 rounded-full shrink-0"
         onClick={togglePlayPause}
+        disabled={!isLoaded}
       >
         {isPlaying ? (
           <Pause className="h-4 w-4" />
@@ -155,14 +166,15 @@ function AudioPlayer({ audioUrl }: { audioUrl: string }) {
       <div className="flex-1 space-y-0.5 min-w-0">
         <Slider
           value={[currentTime]}
-          max={duration || 100}
+          max={duration || 1}
           step={0.1}
           onValueChange={handleSeek}
           className="cursor-pointer"
+          disabled={!isLoaded}
         />
         <div className="flex justify-between text-[10px] text-muted-foreground">
-          <span>{formatDuration(Math.floor(currentTime))}</span>
-          <span>{formatDuration(Math.floor(duration))}</span>
+          <span>{formatTime(currentTime)}</span>
+          <span>{isLoaded ? formatTime(duration) : '--:--'}</span>
         </div>
       </div>
     </div>
