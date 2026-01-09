@@ -97,6 +97,12 @@ serve(async (req) => {
         formData.append('StatusCallbackEvent', 'ringing');
         formData.append('StatusCallbackEvent', 'answered');
         formData.append('StatusCallbackEvent', 'completed');
+        
+        // Enable call recording
+        formData.append('Record', 'true');
+        formData.append('RecordingStatusCallback', `${supabaseUrl}/functions/v1/twilio-recording-status?outboundCallId=${call.id}`);
+        formData.append('RecordingStatusCallbackEvent', 'completed');
+        formData.append('RecordingChannels', 'dual');
 
         const twilioResponse = await fetch(
           `https://api.twilio.com/2010-04-01/Accounts/${workspace.twilio_account_sid}/Calls.json`,
