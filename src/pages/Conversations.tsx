@@ -697,6 +697,296 @@ function ChatView({
   );
 }
 
+// Outbound Agent List Item Component
+function OutboundAgentListItem({ 
+  agent, 
+  isSelected, 
+  onClick,
+  onCall,
+}: { 
+  agent: {
+    agentId: string;
+    agentName: string;
+    calls: any[];
+    lastCall: any;
+    totalCalls: number;
+    iconName: string;
+    iconColor: string;
+  };
+  isSelected: boolean;
+  onClick: () => void;
+  onCall: () => void;
+}) {
+  const lastCall = agent.lastCall;
+  const IconComponent = getAgentIcon(agent.iconName);
+  const lastCallDate = new Date(lastCall.created_at);
+  const hasConversation = lastCall.conversation?.summary || lastCall.conversation?.transcript?.length > 0;
+  
+  return (
+    <div
+      className={`px-4 py-3 cursor-pointer transition-colors ${
+        isSelected 
+          ? 'bg-primary/8' 
+          : 'hover:bg-muted/50 active:bg-muted/70'
+      }`}
+      onClick={onClick}
+    >
+      <div className="flex items-center gap-3">
+        {/* Agent Avatar */}
+        <div className="relative shrink-0">
+          <div 
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: agent.iconColor }}
+          >
+            <IconComponent className="h-6 w-6 text-white" />
+          </div>
+          {agent.totalCalls > 1 && (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-primary-foreground">{agent.totalCalls}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-medium text-foreground truncate">
+              {agent.agentName}
+            </span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatRelativeDate(lastCallDate)}
+            </span>
+          </div>
+          
+          <p className="text-sm text-muted-foreground truncate mt-0.5">
+            {hasConversation && lastCall.conversation?.summary
+              ? lastCall.conversation.summary 
+              : `${lastCall.to_number} への発信`
+            }
+          </p>
+        </div>
+
+        {/* Call Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full shrink-0 text-primary hover:bg-primary/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCall();
+          }}
+        >
+          <PhoneOutgoing className="h-4 w-4" />
+        </Button>
+
+        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+      </div>
+    </div>
+  );
+}
+
+// Outbound Chat View Component
+function OutboundChatView({ 
+  agent,
+  onBack,
+  cancelCall,
+}: { 
+  agent: {
+    agentId: string;
+    agentName: string;
+    calls: any[];
+    lastCall: any;
+    totalCalls: number;
+    iconName: string;
+    iconColor: string;
+  };
+  onBack: () => void;
+  cancelCall: (id: string) => void;
+}) {
+  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
+  const IconComponent = getAgentIcon(agent.iconName);
+
+  return (
+    <div className="flex flex-col h-full w-full bg-background">
+      {/* Header */}
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-3 bg-background border-b border-border sticky top-0 z-10">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-8 w-8 shrink-0"
+          onClick={onBack}
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        
+        <div 
+          className="h-9 w-9 sm:h-10 sm:w-10 rounded-full flex items-center justify-center shadow-sm shrink-0"
+          style={{ backgroundColor: agent.iconColor }}
+        >
+          <IconComponent className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-foreground truncate text-sm sm:text-base">{agent.agentName}</h2>
+          <p className="text-xs text-muted-foreground">
+            {agent.totalCalls}件の発信
+          </p>
+        </div>
+      </div>
+
+      {/* Call List */}
+      <ScrollArea className="flex-1">
+        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+          {agent.calls.map((call, index) => {
+            const callDate = new Date(call.created_at);
+            const isExpanded = selectedCallId === call.id;
+            const hasConversation = call.conversation && (
+              (call.conversation.transcript && call.conversation.transcript.length > 0) ||
+              call.conversation.summary
+            );
+            const showDateSeparator = index === 0 || 
+              format(callDate, 'yyyy-MM-dd') !== format(new Date(agent.calls[index - 1].created_at), 'yyyy-MM-dd');
+
+            return (
+              <div key={call.id}>
+                {/* Date Separator */}
+                {showDateSeparator && (
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="bg-muted text-muted-foreground text-xs px-3 py-1 rounded-full">
+                      {isToday(callDate) ? '今日' : 
+                       isYesterday(callDate) ? '昨日' : 
+                       format(callDate, 'M月d日（E）', { locale: ja })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Call Card */}
+                <div 
+                  className={`bg-muted/30 rounded-2xl overflow-hidden transition-all duration-200 ${
+                    isExpanded ? 'ring-1 ring-primary/20' : hasConversation ? 'hover:bg-muted/50 cursor-pointer' : ''
+                  }`}
+                >
+                  {/* Header */}
+                  <div 
+                    className="flex items-center gap-3 p-3 sm:p-4"
+                    onClick={() => hasConversation && setSelectedCallId(isExpanded ? null : call.id)}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 text-sm flex-wrap">
+                        <span className="font-medium">
+                          {format(callDate, 'HH:mm')}
+                        </span>
+                        <span className="font-mono text-muted-foreground">
+                          {call.to_number}
+                        </span>
+                        {call.duration_seconds && (
+                          <span className="text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {formatDuration(call.duration_seconds)}
+                          </span>
+                        )}
+                      </div>
+                      {call.conversation?.summary && (
+                        <p className={`text-sm text-muted-foreground mt-1 ${isExpanded ? '' : 'line-clamp-1'}`}>
+                          {call.conversation.summary}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <OutboundStatusBadge status={call.status} result={call.result} />
+                    
+                    {(call.status === 'scheduled' || call.status === 'initiating') && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelCall(call.id);
+                        }}
+                        className="rounded-xl text-xs text-muted-foreground hover:text-destructive shrink-0"
+                      >
+                        キャンセル
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Expanded Content */}
+                  {isExpanded && call.conversation && (
+                    <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 border-t border-border/50">
+                      <div className="pt-3 sm:pt-4 space-y-4">
+                        {/* Summary */}
+                        {call.conversation.summary && (
+                          <div className="bg-muted/30 rounded-2xl p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <FileText className="h-4 w-4 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-xs font-medium text-muted-foreground mb-1">AI要約</p>
+                                <p className="text-sm leading-relaxed">{call.conversation.summary}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Key Points */}
+                        {call.conversation.key_points && call.conversation.key_points.length > 0 && (
+                          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Lightbulb className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm font-medium text-amber-800 dark:text-amber-200">重要ポイント</span>
+                            </div>
+                            <ul className="space-y-1.5">
+                              {call.conversation.key_points.map((point: string, i: number) => (
+                                <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
+                                  <span className="text-amber-500 mt-1">•</span>
+                                  <span>{point}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* Audio Player */}
+                        {call.conversation.audio_url && (
+                          <div className="flex justify-center">
+                            <AudioPlayer audioUrl={call.conversation.audio_url} />
+                          </div>
+                        )}
+
+                        {/* Transcript */}
+                        {call.conversation.transcript && call.conversation.transcript.length > 0 && (
+                          <div className="space-y-2">
+                            {(call.conversation.transcript as TranscriptMessage[]).map((msg, i, arr) => {
+                              const prevMsg = arr[i - 1];
+                              const showAvatar = !prevMsg || prevMsg.role !== msg.role;
+                              
+                              return (
+                                <ChatBubble
+                                  key={i}
+                                  message={msg}
+                                  isAgent={msg.role === 'agent'}
+                                  agentIcon={agent.iconName}
+                                  agentColor={agent.iconColor}
+                                  showAvatar={showAvatar}
+                                />
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
 // Outbound Call Status Badge Component
 function OutboundStatusBadge({ status, result }: { status: string; result?: string | null }) {
   switch (status) {
@@ -776,12 +1066,19 @@ export default function Conversations() {
   const [dateFilter, setDateFilter] = useState<"all" | "today" | "week" | "month">("all");
   const [statusFilter, setStatusFilter] = useState<"all" | "completed" | "failed" | "in_progress">("all");
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [selectedOutboundCallId, setSelectedOutboundCallId] = useState<string | null>(null);
+  const [selectedOutboundAgentId, setSelectedOutboundAgentId] = useState<string | null>(null);
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [batchCallDialogOpen, setBatchCallDialogOpen] = useState(false);
   const [callAgentId, setCallAgentId] = useState<string | undefined>(undefined);
   const { conversations, isLoading } = useConversations();
   const { outboundCalls, isLoading: isOutboundLoading, cancelCall } = useOutboundCalls();
+
+  // Handle tab change - clear selections
+  const handleTabChange = (tab: "conversations" | "outbound") => {
+    setActiveTab(tab);
+    setSelectedAgentId(null);
+    setSelectedOutboundAgentId(null);
+  };
   const { agents } = useAgents();
   const { workspace } = useWorkspace();
   const { phoneNumbers, assignToAgent, unassignFromAgent } = usePhoneNumbers(workspace?.id);
@@ -877,13 +1174,51 @@ export default function Conversations() {
       .sort((a, b) => b.lastConversation.rawDate.getTime() - a.lastConversation.rawDate.getTime());
   }, [displayConversations, phoneNumbers]);
 
+  // Group outbound calls by agent
+  const agentOutboundCalls = useMemo(() => {
+    const groupedMap = new Map<string, typeof outboundCalls>();
+    
+    outboundCalls.forEach((call) => {
+      const existing = groupedMap.get(call.agent_id) || [];
+      existing.push(call);
+      groupedMap.set(call.agent_id, existing);
+    });
+
+    return Array.from(groupedMap.entries())
+      .map(([agentId, calls]) => {
+        const sorted = calls.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        const agentInfo = getAgentInfo(agentId);
+        return {
+          agentId,
+          agentName: agentInfo.name,
+          calls: sorted,
+          lastCall: sorted[0],
+          totalCalls: sorted.length,
+          iconName: agentInfo.iconName,
+          iconColor: agentInfo.iconColor,
+        };
+      })
+      .sort((a, b) => 
+        new Date(b.lastCall.created_at).getTime() - new Date(a.lastCall.created_at).getTime()
+      );
+  }, [outboundCalls, agents]);
+
   // Filter agents by search
   const filteredAgents = agentConversations.filter((agent) =>
     agent.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     agent.conversations.some(c => c.phone.includes(searchQuery))
   );
 
+  // Filter outbound agents by search
+  const filteredOutboundAgents = agentOutboundCalls.filter((agent) =>
+    agent.agentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    agent.calls.some(c => c.to_number.includes(searchQuery))
+  );
+
   const selectedAgent = agentConversations.find(a => a.agentId === selectedAgentId);
+  const selectedOutboundAgent = agentOutboundCalls.find(a => a.agentId === selectedOutboundAgentId);
 
   return (
     <AppLayout>
@@ -891,7 +1226,7 @@ export default function Conversations() {
         {/* Left Panel */}
         <div 
           className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-background ${
-            selectedAgentId ? 'hidden md:flex' : 'flex'
+            (activeTab === "conversations" && selectedAgentId) || (activeTab === "outbound" && selectedOutboundAgentId) ? 'hidden md:flex' : 'flex'
           }`}
         >
           {/* Header */}
@@ -905,7 +1240,7 @@ export default function Conversations() {
                 <p className="text-xs text-muted-foreground">
                   {activeTab === "conversations" 
                     ? `${agentConversations.length}件のエージェント`
-                    : `${outboundCalls.length}件の発信`
+                    : `${agentOutboundCalls.length}件のエージェント`
                   }
                 </p>
               </div>
@@ -945,7 +1280,7 @@ export default function Conversations() {
             </div>
 
             {/* Tabs */}
-            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "conversations" | "outbound")} className="w-full">
+            <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as "conversations" | "outbound")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
               <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background">
                   <Phone className="h-4 w-4" />
@@ -995,13 +1330,13 @@ export default function Conversations() {
                 </div>
               )
             ) : (
-              // Outbound Calls List
+              // Outbound Calls List - Grouped by Agent
               isOutboundLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 gap-2">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                   <p className="text-sm text-muted-foreground">読み込み中...</p>
                 </div>
-              ) : outboundCalls.length === 0 ? (
+              ) : filteredOutboundAgents.length === 0 ? (
                 <div className="text-center py-16 px-4 text-muted-foreground">
                   <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                     <PhoneOutgoing className="h-8 w-8 opacity-30" />
@@ -1010,174 +1345,19 @@ export default function Conversations() {
                   <p className="text-sm mt-1">発信すると、ここに表示されます</p>
                 </div>
               ) : (
-                <div className="p-3 space-y-2">
-                  {outboundCalls
-                    .filter(call => 
-                      call.to_number.includes(searchQuery) ||
-                      getAgentName(call.agent_id).toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map((call) => {
-                      const agentInfo = getAgentInfo(call.agent_id);
-                      const IconComponent = getAgentIcon(agentInfo.iconName);
-                      const isExpanded = selectedOutboundCallId === call.id;
-                      const hasConversation = call.conversation && (
-                        (call.conversation.transcript && call.conversation.transcript.length > 0) ||
-                        call.conversation.summary
-                      );
-                      
-                      return (
-                        <div
-                          key={call.id}
-                          className={`rounded-2xl bg-muted/30 overflow-hidden transition-all duration-200 ${
-                            isExpanded ? 'ring-1 ring-primary/20' : hasConversation ? 'hover:bg-muted/50 cursor-pointer' : ''
-                          }`}
-                        >
-                          {/* Header */}
-                          <div 
-                            className="flex items-center gap-3 p-3"
-                            onClick={() => hasConversation && setSelectedOutboundCallId(isExpanded ? null : call.id)}
-                          >
-                            {/* Agent Icon */}
-                            <div 
-                              className="h-10 w-10 rounded-full flex items-center justify-center shrink-0"
-                              style={{ backgroundColor: agentInfo.iconColor }}
-                            >
-                              <IconComponent className="h-5 w-5 text-white" />
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-mono text-sm">{call.to_number}</span>
-                                <OutboundStatusBadge status={call.status} result={call.result} />
-                                {hasConversation && (
-                                  <Badge variant="outline" className="text-xs h-5 gap-1">
-                                    <MessageCircle className="h-3 w-3" />
-                                    会話あり
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                                <span>{agentInfo.name}</span>
-                                <span>
-                                  {call.scheduled_at
-                                    ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
-                                    : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
-                                </span>
-                                {call.duration_seconds && (
-                                  <span className="flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {formatOutboundDuration(call.duration_seconds)}
-                                  </span>
-                                )}
-                              </div>
-                              {/* Show summary preview when collapsed */}
-                              {!isExpanded && call.conversation?.summary && (
-                                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                                  {call.conversation.summary}
-                                </p>
-                              )}
-                            </div>
-                            
-                            {/* Cancel Button */}
-                            {(call.status === 'scheduled' || call.status === 'initiating') && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  cancelCall(call.id);
-                                }}
-                                className="rounded-xl text-xs text-muted-foreground hover:text-destructive shrink-0"
-                              >
-                                キャンセル
-                              </Button>
-                            )}
-
-                            {/* Expand indicator */}
-                            {hasConversation && (
-                              <ChevronRight className={`h-4 w-4 text-muted-foreground/50 shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-                            )}
-                          </div>
-
-                          {/* Expanded Content - Conversation Details */}
-                          {isExpanded && call.conversation && (
-                            <div className="px-4 pb-4 pt-0 border-t border-border/50">
-                              <div className="pt-4 space-y-4">
-                                {/* Summary */}
-                                {call.conversation.summary && (
-                                  <div className="bg-muted/30 rounded-2xl p-4">
-                                    <div className="flex items-start gap-3">
-                                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                        <FileText className="h-4 w-4 text-primary" />
-                                      </div>
-                                      <div>
-                                        <p className="text-xs font-medium text-muted-foreground mb-1">AI要約</p>
-                                        <p className="text-sm leading-relaxed">{call.conversation.summary}</p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Key Points */}
-                                {call.conversation.key_points && call.conversation.key_points.length > 0 && (
-                                  <div className="bg-amber-50 dark:bg-amber-950/30 rounded-2xl p-4">
-                                    <div className="flex items-center gap-2 mb-2">
-                                      <Lightbulb className="h-4 w-4 text-amber-600" />
-                                      <span className="text-sm font-medium text-amber-800 dark:text-amber-200">重要ポイント</span>
-                                    </div>
-                                    <ul className="space-y-1.5">
-                                      {call.conversation.key_points.map((point, i) => (
-                                        <li key={i} className="text-sm text-amber-900 dark:text-amber-100 flex items-start gap-2">
-                                          <span className="text-amber-500 mt-1">•</span>
-                                          <span>{point}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-
-                                {/* Audio Player */}
-                                {call.conversation.audio_url && (
-                                  <div className="flex justify-center">
-                                    <AudioPlayer audioUrl={call.conversation.audio_url} />
-                                  </div>
-                                )}
-
-                                {/* Transcript */}
-                                {call.conversation.transcript && call.conversation.transcript.length > 0 && (
-                                  <div className="space-y-2">
-                                    {(call.conversation.transcript as TranscriptMessage[]).map((msg, i, arr) => {
-                                      const prevMsg = arr[i - 1];
-                                      const showAvatar = !prevMsg || prevMsg.role !== msg.role;
-                                      
-                                      return (
-                                        <ChatBubble
-                                          key={i}
-                                          message={msg}
-                                          isAgent={msg.role === 'agent'}
-                                          agentIcon={agentInfo.iconName}
-                                          agentColor={agentInfo.iconColor}
-                                          showAvatar={showAvatar}
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                )}
-
-                                {/* No transcript message */}
-                                {(!call.conversation.transcript || call.conversation.transcript.length === 0) && !call.conversation.summary && (
-                                  <div className="text-center py-8 text-muted-foreground">
-                                    <MessageCircle className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                                    <p className="text-sm">会話の詳細はまだ準備中です</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
+                <div className="divide-y divide-border/50">
+                  {filteredOutboundAgents.map((agent) => (
+                    <OutboundAgentListItem
+                      key={agent.agentId}
+                      agent={agent}
+                      isSelected={selectedOutboundAgentId === agent.agentId}
+                      onClick={() => setSelectedOutboundAgentId(agent.agentId)}
+                      onCall={() => {
+                        setCallAgentId(agent.agentId);
+                        setCallDialogOpen(true);
+                      }}
+                    />
+                  ))}
                 </div>
               )
             )}
@@ -1187,10 +1367,10 @@ export default function Conversations() {
         {/* Chat View (Right Panel) */}
         <div 
           className={`flex-1 bg-muted/20 ${
-            selectedAgentId ? 'flex' : 'hidden md:flex'
+            (activeTab === "conversations" && selectedAgentId) || (activeTab === "outbound" && selectedOutboundAgentId) ? 'flex' : 'hidden md:flex'
           }`}
         >
-          {selectedAgent ? (
+          {activeTab === "conversations" && selectedAgent ? (
             <ChatView 
               agent={selectedAgent}
               onBack={() => setSelectedAgentId(null)}
@@ -1198,6 +1378,12 @@ export default function Conversations() {
               statusFilter={statusFilter}
               setDateFilter={setDateFilter}
               setStatusFilter={setStatusFilter}
+            />
+          ) : activeTab === "outbound" && selectedOutboundAgent ? (
+            <OutboundChatView
+              agent={selectedOutboundAgent}
+              onBack={() => setSelectedOutboundAgentId(null)}
+              cancelCall={cancelCall}
             />
           ) : (
             <div className="flex-1 flex items-center justify-center">
