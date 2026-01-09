@@ -30,6 +30,7 @@ import {
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
+import { AIAgentBuilder } from "@/components/agents/AIAgentBuilder";
 import {
   Dialog,
   DialogContent,
@@ -69,11 +70,14 @@ export default function AgentEditor() {
   const creationMethod = searchParams.get("method"); // "template", "scratch", or "ai"
   
   // If method is "scratch", skip template selection
+  // If method is "ai", show AI builder
   const shouldShowTemplates = isNew && creationMethod !== "scratch" && creationMethod !== "ai";
+  const shouldShowAIBuilder = isNew && creationMethod === "ai";
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
   const [showTemplates, setShowTemplates] = useState(shouldShowTemplates);
+  const [showAIBuilder, setShowAIBuilder] = useState(shouldShowAIBuilder);
   const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
@@ -301,6 +305,21 @@ export default function AgentEditor() {
     setCurrentStep(1);
   };
 
+  const handleAIConfigReady = (template: AgentTemplate) => {
+    setAgentName(template.defaultValues.name);
+    setDescription(template.defaultValues.description);
+    setSystemPrompt(template.defaultValues.systemPrompt);
+    setMaxCallDuration(template.defaultValues.maxCallDuration);
+    setVoiceSpeed(template.defaultValues.voiceSpeed);
+    setShowAIBuilder(false);
+    setCurrentStep(1);
+  };
+
+  const handleSkipAIBuilder = () => {
+    setShowAIBuilder(false);
+    setCurrentStep(1);
+  };
+
   return (
     <AppLayout>
       <TooltipProvider>
@@ -462,7 +481,7 @@ export default function AgentEditor() {
           </header>
 
           {/* Progress Steps */}
-          {isNew && !showTemplates && (
+          {isNew && !showTemplates && !showAIBuilder && (
             <div className="bg-background/80 backdrop-blur-sm border-b border-border px-4 py-4 sticky top-[73px] z-10">
               <div className="flex items-center justify-center gap-2 sm:gap-4 max-w-xl mx-auto">
                 {[
@@ -517,8 +536,26 @@ export default function AgentEditor() {
                 />
               )}
 
+              {/* AI Agent Builder (for AI creation method) */}
+              {isNew && showAIBuilder && (
+                <div className="max-w-2xl mx-auto">
+                  <div className="mb-6 text-center">
+                    <h2 className="text-2xl font-bold mb-2">AIアシストで作成</h2>
+                    <p className="text-muted-foreground">
+                      会話形式で最適なエージェント設定を生成します
+                    </p>
+                  </div>
+                  <AIAgentBuilder onConfigReady={handleAIConfigReady} />
+                  <div className="mt-4 text-center">
+                    <Button variant="ghost" onClick={handleSkipAIBuilder}>
+                      スキップして手動で設定
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Step 1: Basic Info */}
-              {!showTemplates && (currentStep === 1 || !isNew) && (
+              {!showTemplates && !showAIBuilder && (currentStep === 1 || !isNew) && (
                 <Card className="border-2 shadow-sm">
                   <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-3 text-lg">
