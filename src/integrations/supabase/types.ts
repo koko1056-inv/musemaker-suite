@@ -221,6 +221,7 @@ export type Database = {
           duration_seconds: number | null
           ended_at: string | null
           id: string
+          is_read: boolean
           key_points: Json | null
           metadata: Json | null
           outcome: string | null
@@ -236,6 +237,7 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          is_read?: boolean
           key_points?: Json | null
           metadata?: Json | null
           outcome?: string | null
@@ -251,6 +253,7 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          is_read?: boolean
           key_points?: Json | null
           metadata?: Json | null
           outcome?: string | null
@@ -503,6 +506,7 @@ export type Database = {
           duration_seconds: number | null
           ended_at: string | null
           id: string
+          is_read: boolean
           metadata: Json | null
           phone_number_id: string | null
           result: string | null
@@ -521,6 +525,7 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          is_read?: boolean
           metadata?: Json | null
           phone_number_id?: string | null
           result?: string | null
@@ -539,6 +544,7 @@ export type Database = {
           duration_seconds?: number | null
           ended_at?: string | null
           id?: string
+          is_read?: boolean
           metadata?: Json | null
           phone_number_id?: string | null
           result?: string | null
