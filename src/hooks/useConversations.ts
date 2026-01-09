@@ -1,38 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
-const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
-
-async function ensureDemoWorkspaceMembership() {
-  try {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return;
-
-    const { error } = await supabase.from("workspace_members").insert({
-      user_id: user.id,
-      workspace_id: DEMO_WORKSPACE_ID,
-      role: "owner",
-    });
-
-    if (error) {
-      // Ignore duplicate membership
-      if (!String(error.message || "").toLowerCase().includes("duplicate")) {
-        console.warn("Failed to ensure demo workspace membership:", error);
-      }
-    }
-  } catch (error) {
-    console.warn("Failed to ensure demo workspace membership:", error);
-  }
-}
+import { ensureDemoWorkspaceMembership } from '@/lib/workspace';
 
 interface TranscriptMessage {
   role: 'agent' | 'user';
   text: string;
 }
 
-interface Conversation {
+export interface Conversation {
   id: string;
   agent_id: string;
   phone_number: string | null;
@@ -65,12 +42,11 @@ interface Conversation {
 }
 
 export function useConversations() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
-  const fetchConversations = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  const { data: conversations = [], isLoading } = useQuery({
+    queryKey: ['conversations'],
+    queryFn: async () => {
       await ensureDemoWorkspaceMembership();
 
       const { data, error } = await supabase
@@ -86,9 +62,8 @@ export function useConversations() {
         throw error;
       }
 
-      // Transform the data to match our interface
-      // Filter out outbound calls - they should only appear in outbound history
-      const transformedData = (data || [])
+      // Transform and filter out outbound calls
+      return (data || [])
         .filter((conv) => {
           const callType = (conv.metadata as { call_type?: string } | null)?.call_type;
           return callType !== 'outbound';
@@ -102,42 +77,35 @@ export function useConversations() {
             ? (conv.key_points as unknown as string[])
             : [],
           metadata: conv.metadata as Conversation['metadata'],
-        }));
+        })) as Conversation[];
+    },
+    staleTime: 30000, // 30 seconds
+  });
 
-      setConversations(transformedData);
-    } catch (error) {
-      console.error('Error fetching conversations:', error);
-      toast.error('会話履歴の取得に失敗しました');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
-  const markAsRead = useCallback(async (conversationId: string) => {
-    try {
+  const markAsReadMutation = useMutation({
+    mutationFn: async (conversationId: string) => {
       const { error } = await supabase
         .from('conversations')
         .update({ is_read: true })
         .eq('id', conversationId);
 
       if (error) throw error;
-
-      setConversations(prev => 
-        prev.map(conv => 
+      return conversationId;
+    },
+    onSuccess: (conversationId) => {
+      queryClient.setQueryData<Conversation[]>(['conversations'], (old) =>
+        old?.map((conv) =>
           conv.id === conversationId ? { ...conv, is_read: true } : conv
         )
       );
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error marking conversation as read:', error);
-    }
-  }, []);
+    },
+  });
 
-  const markAllAsRead = useCallback(async (agentId?: string) => {
-    try {
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async (agentId?: string) => {
       let query = supabase
         .from('conversations')
         .update({ is_read: true })
@@ -149,23 +117,43 @@ export function useConversations() {
 
       const { error } = await query;
       if (error) throw error;
-
-      setConversations(prev => 
-        prev.map(conv => 
+      return agentId;
+    },
+    onSuccess: (agentId) => {
+      queryClient.setQueryData<Conversation[]>(['conversations'], (old) =>
+        old?.map((conv) =>
           (!agentId || conv.agent_id === agentId) ? { ...conv, is_read: true } : conv
         )
       );
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error('Error marking all as read:', error);
-    }
-  }, []);
+    },
+  });
 
-  const unreadCount = conversations.filter(c => !c.is_read).length;
+  const markAsRead = useCallback(
+    (conversationId: string) => markAsReadMutation.mutate(conversationId),
+    [markAsReadMutation]
+  );
+
+  const markAllAsRead = useCallback(
+    (agentId?: string) => markAllAsReadMutation.mutate(agentId),
+    [markAllAsReadMutation]
+  );
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['conversations'] });
+  }, [queryClient]);
+
+  const unreadCount = useMemo(
+    () => conversations.filter((c) => !c.is_read).length,
+    [conversations]
+  );
 
   return {
     conversations,
     isLoading,
-    refetch: fetchConversations,
+    refetch,
     markAsRead,
     markAllAsRead,
     unreadCount,

@@ -44,8 +44,7 @@ async function syncWithElevenLabs(
   }
 }
 
-// Demo workspace ID for development
-const DEMO_WORKSPACE_ID = '00000000-0000-0000-0000-000000000001';
+import { DEMO_WORKSPACE_ID } from '@/lib/workspace';
 
 export function useAgents() {
   const [agents, setAgents] = useState<Agent[]>([]);
