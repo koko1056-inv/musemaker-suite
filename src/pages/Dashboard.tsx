@@ -43,13 +43,13 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <WelcomeDialog />
-      <div className="p-6 md:p-8 lg:p-12 mobile-safe-bottom max-w-6xl">
+      <div className="p-4 sm:p-6 md:p-8 lg:p-12 mobile-safe-bottom max-w-6xl">
         {/* Welcome Header */}
-        <div className="mb-12">
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight text-foreground mb-2">
+        <div className="mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground mb-1 sm:mb-2">
             おかえりなさい
           </h1>
-          <p className="text-base text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {hasAgents 
               ? "今日のダッシュボード" 
               : "最初のエージェントを作成しましょう"}
@@ -106,7 +106,7 @@ export default function Dashboard() {
         {/* Stats */}
         {hasAgents && (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-12">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
               {[
                 { label: "エージェント", value: agents?.length || 0, icon: Bot },
                 { label: "公開中", value: publishedAgents.length, icon: Phone },
@@ -115,15 +115,15 @@ export default function Dashboard() {
               ].map((stat, i) => (
                 <div
                   key={i}
-                  className="p-5 rounded-2xl bg-muted/30 border border-border"
+                  className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-muted/30 border border-border"
                 >
-                  <stat.icon className="h-5 w-5 text-muted-foreground mb-3" />
+                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-2 sm:mb-3" />
                   {isLoadingAgents || isLoadingConversations ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                   ) : (
                     <>
-                      <p className="text-2xl font-semibold tracking-tight">{stat.value}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
+                      <p className="text-xl sm:text-2xl font-semibold tracking-tight">{stat.value}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{stat.label}</p>
                     </>
                   )}
                 </div>
@@ -131,10 +131,10 @@ export default function Dashboard() {
             </div>
 
             {/* Create Button */}
-            <div className="mb-12">
-              <Button asChild size="lg" className="h-12 px-8 rounded-xl">
+            <div className="mb-8 sm:mb-12">
+              <Button asChild size="lg" className="h-11 sm:h-12 px-6 sm:px-8 rounded-xl text-sm sm:text-base">
                 <Link to="/agents/new">
-                  <Plus className="h-5 w-5 mr-2" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   新しいエージェント
                 </Link>
               </Button>
@@ -142,14 +142,14 @@ export default function Dashboard() {
 
             {/* Recent Agents */}
             <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-semibold">エージェント</h2>
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-base sm:text-lg font-semibold">エージェント</h2>
                 <Link 
                   to="/agents" 
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   すべて表示
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 </Link>
               </div>
 
@@ -158,35 +158,35 @@ export default function Dashboard() {
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : (
-                <div className="grid gap-3">
+                <div className="grid gap-2 sm:gap-3">
                   {recentAgents.map((agent) => (
                     <Link
                       key={agent.id}
                       to={`/agents/${agent.id}`}
-                      className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
+                      className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
                     >
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
+                      <div className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl transition-colors shrink-0 ${
                         agent.status === "published" 
                           ? "bg-foreground text-background" 
                           : "bg-muted text-muted-foreground group-hover:bg-foreground/10"
                       }`}>
-                        <Bot className="h-5 w-5" />
+                        <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-medium truncate">{agent.name}</p>
+                          <p className="font-medium truncate text-sm sm:text-base">{agent.name}</p>
                           <Badge 
                             variant={agent.status === "published" ? "default" : "secondary"}
-                            className="text-xs"
+                            className="text-[10px] sm:text-xs shrink-0"
                           >
                             {agent.status === "published" ? "公開中" : "下書き"}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground truncate">
+                        <p className="text-xs sm:text-sm text-muted-foreground truncate">
                           {agent.description || "説明なし"}
                         </p>
                       </div>
-                      <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     </Link>
                   ))}
                 </div>
