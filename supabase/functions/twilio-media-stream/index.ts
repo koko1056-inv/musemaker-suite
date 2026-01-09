@@ -225,29 +225,15 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Trigger summary generation asynchronously
+      // Trigger summary generation asynchronously (Slack notification will be triggered after summary is generated)
       fetch(`${supabaseUrl}/functions/v1/generate-summary`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${supabaseKey}`,
         },
-        body: JSON.stringify({ conversationId: convData.id }),
+        body: JSON.stringify({ conversationId: convData.id, agentId: agentId }),
       }).catch(err => console.error('Error triggering summary:', err));
-
-      // Trigger Slack notifications asynchronously
-      fetch(`${supabaseUrl}/functions/v1/send-slack-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseKey}`,
-        },
-        body: JSON.stringify({ 
-          conversationId: convData.id, 
-          agentId: agentId,
-          eventType: 'call_end'
-        }),
-      }).catch(err => console.error('Error triggering Slack notification:', err));
 
       // Trigger webhooks asynchronously
       fetch(`${supabaseUrl}/functions/v1/send-webhook`, {
