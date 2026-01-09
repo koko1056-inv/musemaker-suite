@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { useSlackIntegrations } from "@/hooks/useSlackIntegrations";
+import { useAgents } from "@/hooks/useAgents";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,6 +33,7 @@ import {
   Pencil,
   Check,
   X,
+  Variable,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +52,34 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
     toggleIntegration,
     testWebhook,
   } = useSlackIntegrations(workspaceId);
+  
+  const { agents } = useAgents();
+  
+  // 全エージェントの抽出フィールドを取得
+  const { data: allExtractionFields = [] } = useQuery({
+    queryKey: ["all-extraction-fields", workspaceId],
+    queryFn: async () => {
+      if (!agents || agents.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from("agent_extraction_fields")
+        .select("field_key, field_name, agent_id")
+        .in("agent_id", agents.map(a => a.id));
+
+      if (error) throw error;
+      
+      // field_keyでユニークにする
+      const uniqueFields = new Map<string, { field_key: string; field_name: string }>();
+      data?.forEach(field => {
+        if (!uniqueFields.has(field.field_key)) {
+          uniqueFields.set(field.field_key, { field_key: field.field_key, field_name: field.field_name });
+        }
+      });
+      
+      return Array.from(uniqueFields.values());
+    },
+    enabled: !!agents && agents.length > 0,
+  });
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -631,13 +663,34 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                                   ))}
                                 </div>
                               </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground mb-2">抽出データ変数 (エージェントで設定した項目):</p>
-                                <p className="text-xs text-muted-foreground">
-                                  <code className="bg-violet-100 dark:bg-violet-900/50 px-1.5 py-0.5 rounded text-violet-700 dark:text-violet-300">{"{{extracted.フィールドキー}}"}</code>
-                                  <span className="ml-2">例: {"{{extracted.customer_name}}"}</span>
-                                </p>
-                              </div>
+                              {allExtractionFields.length > 0 && (
+                                <div>
+                                  <div className="flex items-center gap-1.5 mb-2">
+                                    <Variable className="h-3.5 w-3.5 text-violet-500" />
+                                    <p className="text-xs text-muted-foreground">抽出変数:</p>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {allExtractionFields.map((field) => (
+                                      <Badge 
+                                        key={field.field_key} 
+                                        variant="outline" 
+                                        className="text-xs font-mono cursor-pointer hover:bg-violet-500/10 border-violet-500/30 text-violet-700 dark:text-violet-300"
+                                        onClick={() => setEditingTemplate((prev) => prev + `{{extracted.${field.field_key}}}`)}
+                                      >
+                                        <span className="opacity-50 mr-0.5">{field.field_name}:</span>
+                                        {`{{extracted.${field.field_key}}}`}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              {allExtractionFields.length === 0 && (
+                                <div>
+                                  <p className="text-xs text-muted-foreground">
+                                    抽出変数: エージェント設定で追加すると候補が表示されます
+                                  </p>
+                                </div>
+                              )}
                             </div>
                             <div className="flex gap-2">
                               <Button
