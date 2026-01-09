@@ -685,7 +685,7 @@ export default function Conversations() {
                 <MessageCircle className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">トーク</h1>
+                <h1 className="text-lg font-bold text-foreground">AI通話履歴</h1>
                 <p className="text-xs text-muted-foreground">
                   {agentConversations.length}件のエージェント
                 </p>
