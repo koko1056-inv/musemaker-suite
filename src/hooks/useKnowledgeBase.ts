@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { DEMO_WORKSPACE_ID, ensureDemoWorkspaceMembership } from "@/lib/workspace";
 
 export interface KnowledgeBase {
   id: string;
@@ -24,31 +25,6 @@ export interface KnowledgeItem {
   metadata: Record<string, unknown>;
   created_at: string;
   updated_at: string;
-}
-
-const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
-
-async function ensureDemoWorkspaceMembership() {
-  try {
-    const { data } = await supabase.auth.getUser();
-    const user = data.user;
-    if (!user) return;
-
-    const { error } = await supabase.from("workspace_members").insert({
-      user_id: user.id,
-      workspace_id: DEMO_WORKSPACE_ID,
-      role: "owner",
-    });
-
-    if (error) {
-      // Ignore duplicate membership
-      if (!String(error.message || "").toLowerCase().includes("duplicate")) {
-        console.warn("Failed to ensure demo workspace membership:", error);
-      }
-    }
-  } catch (error) {
-    console.warn("Failed to ensure demo workspace membership:", error);
-  }
 }
 
 // Helper function to sync knowledge item with ElevenLabs
