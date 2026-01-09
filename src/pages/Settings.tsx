@@ -472,7 +472,7 @@ export default function Settings() {
           </TabsContent>
 
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
+          <TabsContent value="notifications" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             {/* Slack連携 */}
             <SlackIntegrationManager workspaceId={workspaceId} />
             
