@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   Phone,
   PhoneOutgoing,
@@ -37,6 +44,8 @@ import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
 import { BatchCallDialog } from "@/components/outbound/BatchCallDialog";
 import { useConversations } from "@/hooks/useConversations";
 import { useAgents } from "@/hooks/useAgents";
+import { usePhoneNumbers } from "@/hooks/usePhoneNumbers";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { format, isToday, isYesterday, isThisWeek } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Slider } from "@/components/ui/slider";
@@ -76,6 +85,14 @@ interface AgentConversations {
   totalConversations: number;
   iconName: string;
   iconColor: string;
+  phoneNumber?: string;
+}
+
+interface PhoneNumberInfo {
+  phone_number: string;
+  phone_number_sid: string;
+  label: string | null;
+  agent_id: string | null;
 }
 
 function formatDuration(seconds: number | null): string {
@@ -197,74 +214,126 @@ function AgentListItem({
   isSelected, 
   onClick,
   onCall,
+  phoneNumbers,
+  onPhoneAssign,
 }: { 
   agent: AgentConversations;
   isSelected: boolean;
   onClick: () => void;
   onCall: () => void;
+  phoneNumbers: PhoneNumberInfo[];
+  onPhoneAssign: (agentId: string, phoneNumberSid: string) => void;
 }) {
   const lastConv = agent.lastConversation;
   const IconComponent = getAgentIcon(agent.iconName);
+  const assignedPhone = phoneNumbers.find(p => p.agent_id === agent.agentId);
   
   return (
     <div
-      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
+      className={`px-4 py-3 cursor-pointer transition-colors ${
         isSelected 
           ? 'bg-primary/8' 
           : 'hover:bg-muted/50 active:bg-muted/70'
       }`}
       onClick={onClick}
     >
-      {/* Agent Avatar */}
-      <div className="relative shrink-0">
-        <div 
-          className="h-12 w-12 rounded-full flex items-center justify-center shadow-sm"
-          style={{ backgroundColor: agent.iconColor }}
-        >
-          <IconComponent className="h-6 w-6 text-white" />
-        </div>
-        {agent.totalConversations > 1 && (
-          <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
-            <span className="text-[10px] font-bold text-primary-foreground">{agent.totalConversations}</span>
+      <div className="flex items-center gap-3">
+        {/* Agent Avatar */}
+        <div className="relative shrink-0">
+          <div 
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-sm"
+            style={{ backgroundColor: agent.iconColor }}
+          >
+            <IconComponent className="h-6 w-6 text-white" />
           </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-medium text-foreground truncate">
-            {agent.agentName}
-          </span>
-          <span className="text-xs text-muted-foreground shrink-0">
-            {formatRelativeDate(lastConv.rawDate)}
-          </span>
+          {agent.totalConversations > 1 && (
+            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-[10px] font-bold text-primary-foreground">{agent.totalConversations}</span>
+            </div>
+          )}
         </div>
-        
-        <p className="text-sm text-muted-foreground truncate mt-0.5">
-          {lastConv.summary 
-            ? lastConv.summary 
-            : lastConv.transcript.length > 0 
-              ? lastConv.transcript[lastConv.transcript.length - 1]?.text 
-              : `通話時間 ${lastConv.duration}`
-          }
-        </p>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-medium text-foreground truncate">
+              {agent.agentName}
+            </span>
+            <span className="text-xs text-muted-foreground shrink-0">
+              {formatRelativeDate(lastConv.rawDate)}
+            </span>
+          </div>
+          
+          <p className="text-sm text-muted-foreground truncate mt-0.5">
+            {lastConv.summary 
+              ? lastConv.summary 
+              : lastConv.transcript.length > 0 
+                ? lastConv.transcript[lastConv.transcript.length - 1]?.text 
+                : `通話時間 ${lastConv.duration}`
+            }
+          </p>
+        </div>
+
+        {/* Call Button */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full shrink-0 text-primary hover:bg-primary/10"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCall();
+          }}
+        >
+          <PhoneOutgoing className="h-4 w-4" />
+        </Button>
+
+        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
       </div>
 
-      {/* Call Button */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-9 w-9 rounded-full shrink-0 text-primary hover:bg-primary/10"
-        onClick={(e) => {
-          e.stopPropagation();
-          onCall();
-        }}
-      >
-        <PhoneOutgoing className="h-4 w-4" />
-      </Button>
-
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+      {/* Phone Number Assignment */}
+      {phoneNumbers.length > 0 && (
+        <div className="mt-2 ml-15 pl-[60px]" onClick={(e) => e.stopPropagation()}>
+          <Select
+            value={assignedPhone?.phone_number_sid || "none"}
+            onValueChange={(value) => onPhoneAssign(agent.agentId, value)}
+          >
+            <SelectTrigger className="h-8 text-xs w-full max-w-[200px]">
+              <div className="flex items-center gap-1.5">
+                <Phone className="h-3 w-3 text-muted-foreground" />
+                <SelectValue>
+                  {assignedPhone ? (
+                    <span className="font-mono text-xs">{assignedPhone.phone_number}</span>
+                  ) : (
+                    <span className="text-muted-foreground">電話番号を割り当て</span>
+                  )}
+                </SelectValue>
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">
+                <span className="text-muted-foreground">未割り当て</span>
+              </SelectItem>
+              {phoneNumbers.map((phone) => (
+                <SelectItem 
+                  key={phone.phone_number_sid} 
+                  value={phone.phone_number_sid}
+                  disabled={phone.agent_id !== null && phone.agent_id !== agent.agentId}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs">{phone.phone_number}</span>
+                    {phone.label && (
+                      <span className="text-muted-foreground text-xs">({phone.label})</span>
+                    )}
+                    {phone.agent_id && phone.agent_id !== agent.agentId && (
+                      <span className="text-muted-foreground text-xs">(使用中)</span>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
     </div>
   );
 }
@@ -713,6 +782,25 @@ export default function Conversations() {
   const { conversations, isLoading } = useConversations();
   const { outboundCalls, isLoading: isOutboundLoading, cancelCall } = useOutboundCalls();
   const { agents } = useAgents();
+  const { workspace } = useWorkspace();
+  const { phoneNumbers, assignToAgent, unassignFromAgent } = usePhoneNumbers(workspace?.id);
+
+  // Get phone number for an agent
+  const getAgentPhoneNumber = (agentId: string) => {
+    return phoneNumbers.find(p => p.agent_id === agentId);
+  };
+
+  // Handle phone number assignment
+  const handlePhoneAssign = async (agentId: string, phoneNumberSid: string) => {
+    if (phoneNumberSid === "none") {
+      const current = phoneNumbers.find(p => p.agent_id === agentId);
+      if (current) {
+        await unassignFromAgent(current.phone_number_sid);
+      }
+    } else {
+      await assignToAgent(phoneNumberSid, agentId);
+    }
+  };
 
   const getAgentName = (id: string) => {
     const agent = agents.find(a => a.id === id);
@@ -773,6 +861,7 @@ export default function Conversations() {
     return Array.from(groupedMap.entries())
       .map(([agentId, convs]) => {
         const sorted = convs.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
+        const assignedPhone = phoneNumbers.find(p => p.agent_id === agentId);
         return {
           agentId,
           agentName: sorted[0].agent,
@@ -781,10 +870,11 @@ export default function Conversations() {
           totalConversations: sorted.length,
           iconName: sorted[0].iconName,
           iconColor: sorted[0].iconColor,
+          phoneNumber: assignedPhone?.phone_number,
         };
       })
       .sort((a, b) => b.lastConversation.rawDate.getTime() - a.lastConversation.rawDate.getTime());
-  }, [displayConversations]);
+  }, [displayConversations, phoneNumbers]);
 
   // Filter agents by search
   const filteredAgents = agentConversations.filter((agent) =>
@@ -897,6 +987,8 @@ export default function Conversations() {
                         setCallAgentId(agent.agentId);
                         setCallDialogOpen(true);
                       }}
+                      phoneNumbers={phoneNumbers}
+                      onPhoneAssign={handlePhoneAssign}
                     />
                   ))}
                 </div>

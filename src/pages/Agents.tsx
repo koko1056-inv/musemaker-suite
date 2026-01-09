@@ -36,6 +36,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Plus,
   Search,
   Bot,
@@ -60,6 +67,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useAgents } from "@/hooks/useAgents";
 import { useAgentFolders } from "@/hooks/useAgentFolders";
+import { usePhoneNumbers } from "@/hooks/usePhoneNumbers";
+import { useWorkspace } from "@/hooks/useWorkspace";
 import { FolderManager } from "@/components/agents/FolderManager";
 import { toast } from "sonner";
 
@@ -81,8 +90,27 @@ export default function Agents() {
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   
+  const { workspace } = useWorkspace();
   const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
   const { folders, createFolder, updateFolder, deleteFolder } = useAgentFolders();
+  const { phoneNumbers, assignToAgent, unassignFromAgent } = usePhoneNumbers(workspace?.id);
+
+  // Get phone number for an agent
+  const getAgentPhoneNumber = (agentId: string) => {
+    return phoneNumbers.find(p => p.agent_id === agentId);
+  };
+
+  // Handle phone number assignment
+  const handlePhoneAssign = async (agentId: string, phoneNumberSid: string) => {
+    if (phoneNumberSid === "none") {
+      const current = phoneNumbers.find(p => p.agent_id === agentId);
+      if (current) {
+        await unassignFromAgent(current.phone_number_sid);
+      }
+    } else {
+      await assignToAgent(phoneNumberSid, agentId);
+    }
+  };
 
   // Filter agents based on search and status
   const filteredAgents = agents.filter((agent) => {
@@ -155,6 +183,7 @@ export default function Agents() {
     const voiceInfo = getVoiceInfo(agent.voice_id);
     const isPublished = agent.status === "published";
     const isReady = !!agent.elevenlabs_agent_id;
+    const assignedPhone = getAgentPhoneNumber(agent.id);
 
     return (
       <div
@@ -267,6 +296,51 @@ export default function Agents() {
               )}
             </div>
           </div>
+
+          {/* Phone Number Assignment */}
+          {phoneNumbers.length > 0 && (
+            <div className="mb-3 sm:mb-4">
+              <Select
+                value={assignedPhone?.phone_number_sid || "none"}
+                onValueChange={(value) => handlePhoneAssign(agent.id, value)}
+              >
+                <SelectTrigger className="h-9 text-xs sm:text-sm">
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                    <SelectValue placeholder="電話番号を割り当て">
+                      {assignedPhone ? (
+                        <span className="font-mono">{assignedPhone.phone_number}</span>
+                      ) : (
+                        <span className="text-muted-foreground">電話番号を割り当て</span>
+                      )}
+                    </SelectValue>
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    <span className="text-muted-foreground">未割り当て</span>
+                  </SelectItem>
+                  {phoneNumbers.map((phone) => (
+                    <SelectItem 
+                      key={phone.phone_number_sid} 
+                      value={phone.phone_number_sid}
+                      disabled={phone.agent_id !== null && phone.agent_id !== agent.id}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono">{phone.phone_number}</span>
+                        {phone.label && (
+                          <span className="text-muted-foreground text-xs">({phone.label})</span>
+                        )}
+                        {phone.agent_id && phone.agent_id !== agent.id && (
+                          <span className="text-muted-foreground text-xs">(使用中)</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Action Button */}
           <Button asChild variant="outline" className="w-full gap-2 group/btn h-9 sm:h-10 text-xs sm:text-sm">
