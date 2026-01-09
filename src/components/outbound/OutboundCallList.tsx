@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
+import { useState, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,12 +12,103 @@ import {
   Loader2,
   Calendar,
   X,
+  Play,
+  Pause,
+  Volume2,
 } from 'lucide-react';
 import { useOutboundCalls } from '@/hooks/useOutboundCalls';
+import { Slider } from '@/components/ui/slider';
 import { useAgents } from '@/hooks/useAgents';
 
 interface OutboundCallListProps {
   agentId?: string;
+}
+
+// Mini audio player component
+function MiniAudioPlayer({ audioUrl }: { audioUrl: string }) {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleEnded = () => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current) {
+      audioRef.current.currentTime = value[0];
+      setCurrentTime(value[0]);
+    }
+  };
+
+  const formatTime = (time: number) => {
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-2 bg-muted/50 rounded-xl px-3 py-2 min-w-[200px]" onClick={e => e.stopPropagation()}>
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={handleEnded}
+      />
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 rounded-full shrink-0"
+        onClick={togglePlay}
+      >
+        {isPlaying ? (
+          <Pause className="h-3.5 w-3.5" />
+        ) : (
+          <Play className="h-3.5 w-3.5 ml-0.5" />
+        )}
+      </Button>
+      <div className="flex-1 flex items-center gap-2">
+        <Slider
+          value={[currentTime]}
+          max={duration || 100}
+          step={0.1}
+          onValueChange={handleSeek}
+          className="flex-1"
+        />
+        <span className="text-xs text-muted-foreground w-10 text-right shrink-0">
+          {formatTime(currentTime)}
+        </span>
+      </div>
+      <Volume2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+    </div>
+  );
 }
 
 export function OutboundCallList({ agentId }: OutboundCallListProps) {
@@ -134,37 +226,44 @@ export function OutboundCallList({ agentId }: OutboundCallListProps) {
       {outboundCalls.map((call) => (
         <div
           key={call.id}
-          className="flex items-center gap-4 p-4 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-colors"
+          className="flex flex-col gap-3 p-4 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-colors"
         >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-3 mb-1">
-              <span className="font-mono text-sm">{call.to_number}</span>
-              {getStatusBadge(call.status, call.result)}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-1">
+                <span className="font-mono text-sm">{call.to_number}</span>
+                {getStatusBadge(call.status, call.result)}
+              </div>
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                {!agentId && (
+                  <span>{getAgentName(call.agent_id)}</span>
+                )}
+                <span>
+                  {call.scheduled_at
+                    ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
+                    : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
+                </span>
+                {call.duration_seconds && (
+                  <span>{formatDuration(call.duration_seconds)}</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              {!agentId && (
-                <span>{getAgentName(call.agent_id)}</span>
-              )}
-              <span>
-                {call.scheduled_at
-                  ? format(new Date(call.scheduled_at), 'M/d HH:mm', { locale: ja })
-                  : format(new Date(call.created_at), 'M/d HH:mm', { locale: ja })}
-              </span>
-              {call.duration_seconds && (
-                <span>{formatDuration(call.duration_seconds)}</span>
-              )}
-            </div>
+            
+            {(call.status === 'scheduled' || call.status === 'initiating') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => cancelCall(call.id)}
+                className="rounded-xl text-muted-foreground hover:text-destructive"
+              >
+                キャンセル
+              </Button>
+            )}
           </div>
-          
-          {(call.status === 'scheduled' || call.status === 'initiating') && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => cancelCall(call.id)}
-              className="rounded-xl text-muted-foreground hover:text-destructive"
-            >
-              キャンセル
-            </Button>
+
+          {/* Audio Player */}
+          {call.conversation?.audio_url && (
+            <MiniAudioPlayer audioUrl={call.conversation.audio_url} />
           )}
         </div>
       ))}
