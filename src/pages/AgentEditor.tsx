@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,11 +64,16 @@ import {
 export default function AgentEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const isNew = id === "new";
+  const creationMethod = searchParams.get("method"); // "template", "scratch", or "ai"
+  
+  // If method is "scratch", skip template selection
+  const shouldShowTemplates = isNew && creationMethod !== "scratch" && creationMethod !== "ai";
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
-  const [showTemplates, setShowTemplates] = useState(isNew);
+  const [showTemplates, setShowTemplates] = useState(shouldShowTemplates);
   const [currentStep, setCurrentStep] = useState(1);
   
   // Form state
