@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +53,8 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingWebhookId, setEditingWebhookId] = useState<string | null>(null);
   const [editingWebhookUrl, setEditingWebhookUrl] = useState("");
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState("");
   const [newIntegration, setNewIntegration] = useState({
     name: "",
     webhook_url: "",
@@ -579,6 +582,113 @@ export function SlackIntegrationManager({ workspaceId }: SlackIntegrationManager
                             </div>
                           </div>
                         </div>
+                      </div>
+
+                      {/* カスタムメッセージテンプレート */}
+                      <div className="space-y-3 pt-3 border-t">
+                        <div className="flex items-center justify-between">
+                          <h5 className="font-medium text-sm flex items-center gap-2">
+                            <FileText className="h-4 w-4" />
+                            カスタムメッセージ
+                          </h5>
+                          {editingTemplateId !== integration.id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingTemplateId(integration.id);
+                                setEditingTemplate(integration.message_template || "");
+                              }}
+                              className="h-7 gap-1 text-xs"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              編集
+                            </Button>
+                          )}
+                        </div>
+                        
+                        {editingTemplateId === integration.id ? (
+                          <div className="space-y-3">
+                            <Textarea
+                              value={editingTemplate}
+                              onChange={(e) => setEditingTemplate(e.target.value)}
+                              placeholder="例: 📞 {{agent_name}}で通話がありました&#10;📱 電話番号: {{phone_number}}&#10;⏱ 通話時間: {{duration_formatted}}&#10;&#10;📝 要約:&#10;{{summary}}"
+                              className="min-h-[120px] font-mono text-sm"
+                            />
+                            <div className="bg-muted/50 p-3 rounded-md">
+                              <p className="text-xs text-muted-foreground mb-2">使用可能な変数:</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {["agent_name", "phone_number", "duration_formatted", "duration_seconds", "outcome", "summary", "transcript", "event_type", "timestamp"].map((v) => (
+                                  <Badge 
+                                    key={v} 
+                                    variant="outline" 
+                                    className="text-xs font-mono cursor-pointer hover:bg-primary/10"
+                                    onClick={() => setEditingTemplate((prev) => prev + `{{${v}}}`)}
+                                  >
+                                    {`{{${v}}}`}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  await updateIntegration.mutateAsync({
+                                    id: integration.id,
+                                    message_template: editingTemplate || null,
+                                  });
+                                  setEditingTemplateId(null);
+                                  setEditingTemplate("");
+                                }}
+                                disabled={updateIntegration.isPending}
+                                className="gap-1"
+                              >
+                                <Check className="h-4 w-4" />
+                                保存
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingTemplateId(null);
+                                  setEditingTemplate("");
+                                }}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                              {integration.message_template && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={async () => {
+                                    await updateIntegration.mutateAsync({
+                                      id: integration.id,
+                                      message_template: null,
+                                    });
+                                    setEditingTemplateId(null);
+                                    setEditingTemplate("");
+                                  }}
+                                  className="text-destructive hover:text-destructive ml-auto"
+                                >
+                                  リセット
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            {integration.message_template ? (
+                              <pre className="text-xs text-muted-foreground bg-muted/50 p-3 rounded-md whitespace-pre-wrap font-mono">
+                                {integration.message_template}
+                              </pre>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                デフォルトのメッセージ形式を使用します。カスタマイズするには「編集」をクリック。
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* 削除ボタン */}

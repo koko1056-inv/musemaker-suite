@@ -14,6 +14,7 @@ interface SlackIntegration {
   notify_on_call_failed: boolean;
   include_transcript: boolean;
   include_summary: boolean;
+  message_template: string | null;
   created_at: string;
   updated_at: string;
 }
