@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { conversationId } = await req.json();
+    const { conversationId, agentId } = await req.json();
 
     if (!conversationId) {
       throw new Error('Conversation ID is required');
@@ -200,6 +200,22 @@ ${formattedTranscript}
     }
 
     console.log(`Summary generated for conversation ${conversationId}`);
+
+    // Trigger Slack notifications after summary is generated
+    if (agentId) {
+      fetch(`${supabaseUrl}/functions/v1/send-slack-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({ 
+          conversationId: conversationId, 
+          agentId: agentId,
+          eventType: 'call_end'
+        }),
+      }).catch(err => console.error('Error triggering Slack notification:', err));
+    }
 
     return new Response(JSON.stringify({ 
       success: true, 
