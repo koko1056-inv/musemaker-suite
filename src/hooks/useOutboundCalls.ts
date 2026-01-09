@@ -7,6 +7,19 @@ import type { Tables } from '@/integrations/supabase/types';
 
 type OutboundCall = Tables<'outbound_calls'>;
 
+// Extended type that includes conversation data
+export interface OutboundCallWithConversation extends OutboundCall {
+  conversation?: {
+    id: string;
+    transcript: Array<{ role: 'agent' | 'user'; text: string }>;
+    summary: string | null;
+    key_points: string[] | null;
+    audio_url: string | null;
+    outcome: string | null;
+    metadata: Record<string, unknown> | null;
+  } | null;
+}
+
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 export function useOutboundCalls(agentId?: string) {
@@ -21,7 +34,18 @@ export function useOutboundCalls(agentId?: string) {
 
       let query = supabase
         .from('outbound_calls')
-        .select('*')
+        .select(`
+          *,
+          conversation:conversations(
+            id,
+            transcript,
+            summary,
+            key_points,
+            audio_url,
+            outcome,
+            metadata
+          )
+        `)
         .eq('workspace_id', workspace.id)
         .order('created_at', { ascending: false });
 
@@ -36,9 +60,10 @@ export function useOutboundCalls(agentId?: string) {
         throw error;
       }
 
-      return data as OutboundCall[];
+      return data as OutboundCallWithConversation[];
     },
     enabled: !!workspace?.id,
+    refetchInterval: 5000, // Poll every 5 seconds to get updated conversation data
   });
 
   const initiateCall = useCallback(async (params: {
