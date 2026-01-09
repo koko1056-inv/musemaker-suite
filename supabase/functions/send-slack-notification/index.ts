@@ -6,19 +6,30 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-interface SlackMessage {
-  text: string;
-  blocks?: Array<{
-    type: string;
-    text?: {
-      type: string;
-      text: string;
-    };
-    fields?: Array<{
-      type: string;
-      text: string;
-    }>;
-  }>;
+// Slack Workflow用のペイロード構造
+// これらの変数がSlackワークフローで使用できます:
+// - event_type: "call_start" | "call_end" | "call_failed"
+// - agent_name: エージェント名
+// - phone_number: 電話番号
+// - duration_seconds: 通話時間(秒)
+// - duration_formatted: 通話時間(フォーマット済み: "X分Y秒")
+// - outcome: 通話結果
+// - summary: AI要約
+// - transcript_text: 会話内容(テキスト)
+// - timestamp: タイムスタンプ
+// - conversation_id: 会話ID
+
+interface SlackWorkflowPayload {
+  event_type: string;
+  agent_name: string;
+  phone_number: string;
+  duration_seconds: number;
+  duration_formatted: string;
+  outcome: string;
+  summary: string;
+  transcript_text: string;
+  timestamp: string;
+  conversation_id: string;
 }
 
 serve(async (req) => {
@@ -103,88 +114,32 @@ serve(async (req) => {
       });
     }
 
-    // Build Slack message
-    const buildSlackMessage = (integration: typeof integrations[0]): SlackMessage => {
-      const emoji = eventType === "call_end" ? "📞" : eventType === "call_start" ? "🔔" : "❌";
-      const eventLabel = eventType === "call_end" ? "通話終了" : eventType === "call_start" ? "通話開始" : "通話失敗";
-      
-      const duration = conversation.duration_seconds 
-        ? `${Math.floor(conversation.duration_seconds / 60)}分${conversation.duration_seconds % 60}秒`
-        : "不明";
+    // Format duration
+    const durationSeconds = conversation.duration_seconds || 0;
+    const durationFormatted = `${Math.floor(durationSeconds / 60)}分${durationSeconds % 60}秒`;
 
-      const blocks: SlackMessage["blocks"] = [
-        {
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `${emoji} *${eventLabel}*`,
-          },
-        },
-        {
-          type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: `*エージェント:*\n${agent.name}`,
-            },
-            {
-              type: "mrkdwn",
-              text: `*電話番号:*\n${conversation.phone_number || "不明"}`,
-            },
-          ],
-        },
-      ];
+    // Format transcript
+    const transcriptArray = conversation.transcript as Array<{ role: string; text: string }> | null;
+    let transcriptText = "";
+    if (Array.isArray(transcriptArray) && transcriptArray.length > 0) {
+      transcriptText = transcriptArray
+        .map((t) => `${t.role === "agent" ? "AI" : "お客様"}: ${t.text}`)
+        .join("\n");
+    }
 
-      // Add duration for call_end
-      if (eventType === "call_end") {
-        blocks.push({
-          type: "section",
-          fields: [
-            {
-              type: "mrkdwn",
-              text: `*通話時間:*\n${duration}`,
-            },
-            {
-              type: "mrkdwn",
-              text: `*結果:*\n${conversation.outcome || "完了"}`,
-            },
-          ],
-        });
-      }
-
-      // Add summary if configured and available
-      if (integration.include_summary && conversation.summary) {
-        blocks.push({
-          type: "section",
-          text: {
-            type: "mrkdwn",
-            text: `*📋 要約:*\n${conversation.summary}`,
-          },
-        });
-      }
-
-      // Add transcript if configured and available
-      if (integration.include_transcript && conversation.transcript) {
-        const transcriptArray = conversation.transcript as Array<{ role: string; text: string }>;
-        if (Array.isArray(transcriptArray) && transcriptArray.length > 0) {
-          const transcriptText = transcriptArray
-            .map((t) => `${t.role === "agent" ? "🤖" : "👤"} ${t.text}`)
-            .join("\n")
-            .slice(0, 2800); // Slack has a limit
-          
-          blocks.push({
-            type: "section",
-            text: {
-              type: "mrkdwn",
-              text: `*💬 会話内容:*\n${transcriptText}`,
-            },
-          });
-        }
-      }
-
+    // Build payload for Slack Workflow
+    const buildWorkflowPayload = (integration: typeof integrations[0]): SlackWorkflowPayload => {
       return {
-        text: `${emoji} ${eventLabel}: ${agent.name} - ${conversation.phone_number || "不明"}`,
-        blocks,
+        event_type: eventType,
+        agent_name: agent.name,
+        phone_number: conversation.phone_number || "不明",
+        duration_seconds: durationSeconds,
+        duration_formatted: durationFormatted,
+        outcome: conversation.outcome || "完了",
+        summary: integration.include_summary && conversation.summary ? conversation.summary : "",
+        transcript_text: integration.include_transcript ? transcriptText : "",
+        timestamp: new Date().toISOString(),
+        conversation_id: conversationId,
       };
     };
 
@@ -192,16 +147,17 @@ serve(async (req) => {
     const results = await Promise.all(
       applicableIntegrations.map(async (integration) => {
         try {
-          const message = buildSlackMessage(integration);
+          const payload = buildWorkflowPayload(integration);
           
-          console.log(`Sending Slack notification to: ${integration.name}`);
+          console.log(`Sending Slack workflow notification to: ${integration.name}`);
+          console.log(`Payload: ${JSON.stringify(payload)}`);
 
           const response = await fetch(integration.webhook_url, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify(message),
+            body: JSON.stringify(payload),
           });
 
           const responseText = await response.text();

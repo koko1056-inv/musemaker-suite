@@ -50,6 +50,7 @@ interface Conversation {
     sentiment?: string;
     action_items?: string[];
     summarized_at?: string;
+    call_type?: 'inbound' | 'outbound';
   } | null;
   agent?: {
     name: string;
@@ -80,16 +81,22 @@ export function useConversations() {
       }
 
       // Transform the data to match our interface
-      const transformedData = (data || []).map((conv) => ({
-        ...conv,
-        transcript: Array.isArray(conv.transcript) 
-          ? (conv.transcript as unknown as TranscriptMessage[])
-          : [],
-        key_points: Array.isArray(conv.key_points)
-          ? (conv.key_points as unknown as string[])
-          : [],
-        metadata: conv.metadata as Conversation['metadata'],
-      }));
+      // Filter out outbound calls - they should only appear in outbound history
+      const transformedData = (data || [])
+        .filter((conv) => {
+          const callType = (conv.metadata as { call_type?: string } | null)?.call_type;
+          return callType !== 'outbound';
+        })
+        .map((conv) => ({
+          ...conv,
+          transcript: Array.isArray(conv.transcript) 
+            ? (conv.transcript as unknown as TranscriptMessage[])
+            : [],
+          key_points: Array.isArray(conv.key_points)
+            ? (conv.key_points as unknown as string[])
+            : [],
+          metadata: conv.metadata as Conversation['metadata'],
+        }));
 
       setConversations(transformedData);
     } catch (error) {
