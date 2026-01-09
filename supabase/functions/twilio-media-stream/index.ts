@@ -15,49 +15,50 @@ Deno.serve(async (req) => {
   const agentId = url.searchParams.get('agentId');
   const outboundCallId = url.searchParams.get('outboundCallId');
 
-  console.log(`WebSocket connection for agent ${agentId}, outbound call ${outboundCallId}`);
+  console.log(`WebSocket connection request for agent ${agentId}, outbound call ${outboundCallId}`);
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
-
-  // Get agent details to get ElevenLabs agent ID
-  const { data: agent, error: agentError } = await supabase
-    .from('agents')
-    .select('id, name, elevenlabs_agent_id, workspace_id')
-    .eq('id', agentId)
-    .single();
-
-  if (agentError || !agent || !agent.elevenlabs_agent_id) {
-    console.error('Agent not found or missing ElevenLabs ID:', agentError);
-    return new Response("Agent not found", { status: 404 });
-  }
-
-  // Get workspace to get ElevenLabs API key
-  const { data: workspace, error: workspaceError } = await supabase
-    .from('workspaces')
-    .select('elevenlabs_api_key')
-    .eq('id', agent.workspace_id)
-    .single();
-
-  if (workspaceError || !workspace?.elevenlabs_api_key) {
-    console.error('Workspace or ElevenLabs API key not found:', workspaceError);
-    return new Response("ElevenLabs API key not configured", { status: 400 });
-  }
-
-  // Upgrade to WebSocket
+  // CRITICAL: Upgrade to WebSocket FIRST before any async operations
   const { socket: twilioSocket, response } = Deno.upgradeWebSocket(req);
 
+  // Initialize variables
   let elevenLabsSocket: WebSocket | null = null;
   let streamSid: string | null = null;
   let callSid: string | null = null;
-  
-  // Audio buffers and state
-  const audioQueue: string[] = [];
-  let isProcessing = false;
 
   twilioSocket.onopen = async () => {
     console.log("Twilio WebSocket connected");
     
     try {
+      const supabase = createClient(supabaseUrl, supabaseKey);
+
+      // Get agent details to get ElevenLabs agent ID
+      const { data: agent, error: agentError } = await supabase
+        .from('agents')
+        .select('id, name, elevenlabs_agent_id, workspace_id')
+        .eq('id', agentId)
+        .single();
+
+      if (agentError || !agent || !agent.elevenlabs_agent_id) {
+        console.error('Agent not found or missing ElevenLabs ID:', agentError);
+        twilioSocket.close();
+        return;
+      }
+
+      // Get workspace to get ElevenLabs API key
+      const { data: workspace, error: workspaceError } = await supabase
+        .from('workspaces')
+        .select('elevenlabs_api_key')
+        .eq('id', agent.workspace_id)
+        .single();
+
+      if (workspaceError || !workspace?.elevenlabs_api_key) {
+        console.error('Workspace or ElevenLabs API key not found:', workspaceError);
+        twilioSocket.close();
+        return;
+      }
+
+      console.log(`Agent found: ${agent.name}, ElevenLabs ID: ${agent.elevenlabs_agent_id}`);
+
       // Get signed URL for ElevenLabs conversation
       const signedUrlResponse = await fetch(
         `https://api.elevenlabs.io/v1/convai/conversation/get_signed_url?agent_id=${agent.elevenlabs_agent_id}`,
