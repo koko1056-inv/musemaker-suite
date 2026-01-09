@@ -33,10 +33,12 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
+import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slack } from "lucide-react";
 
 // Demo workspace ID for testing when not authenticated
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
@@ -168,8 +170,8 @@ export default function Settings() {
                 Webhook
               </TabsTrigger>
               <TabsTrigger value="notifications" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
-                <Bell className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                通知
+                <Slack className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                Slack
               </TabsTrigger>
               <TabsTrigger value="billing" className="gap-1.5 sm:gap-2 text-xs sm:text-sm px-2.5 sm:px-3 py-1.5 sm:py-2">
                 <CreditCard className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -471,6 +473,10 @@ export default function Settings() {
 
           {/* Notifications Tab */}
           <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
+            {/* Slack連携 */}
+            <SlackIntegrationManager workspaceId={workspaceId} />
+            
+            {/* メール通知 */}
             <div className="glass rounded-xl card-shadow p-4 sm:p-6">
               <h3 className="font-semibold text-foreground mb-4 sm:mb-6 text-sm sm:text-base">メール通知</h3>
               <div className="space-y-3 sm:space-y-4">

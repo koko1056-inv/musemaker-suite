@@ -705,6 +705,62 @@ export type Database = {
           },
         ]
       }
+      slack_integrations: {
+        Row: {
+          channel_name: string | null
+          created_at: string
+          id: string
+          include_summary: boolean
+          include_transcript: boolean
+          is_active: boolean
+          name: string
+          notify_on_call_end: boolean
+          notify_on_call_failed: boolean
+          notify_on_call_start: boolean
+          updated_at: string
+          webhook_url: string
+          workspace_id: string
+        }
+        Insert: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          name: string
+          notify_on_call_end?: boolean
+          notify_on_call_failed?: boolean
+          notify_on_call_start?: boolean
+          updated_at?: string
+          webhook_url: string
+          workspace_id: string
+        }
+        Update: {
+          channel_name?: string | null
+          created_at?: string
+          id?: string
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          name?: string
+          notify_on_call_end?: boolean
+          notify_on_call_failed?: boolean
+          notify_on_call_start?: boolean
+          updated_at?: string
+          webhook_url?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "slack_integrations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           conversation_id: string | null
