@@ -18,6 +18,7 @@ const corsHeaders = {
 // - {{transcript}}: 会話内容(テキスト)
 // - {{timestamp}}: タイムスタンプ
 // - {{conversation_id}}: 会話ID
+// - {{extracted.フィールド名}}: 抽出データ
 
 interface SlackWorkflowPayload {
   event_type: string;
@@ -30,16 +31,29 @@ interface SlackWorkflowPayload {
   transcript_text: string;
   timestamp: string;
   conversation_id: string;
+  extracted_data: Record<string, string>;
   text?: string; // カスタムメッセージ用
 }
 
 // テンプレート変数を実際の値に置換する関数
-function replaceTemplateVariables(template: string, variables: Record<string, string | number>): string {
+function replaceTemplateVariables(template: string, variables: Record<string, string | number>, extractedData: Record<string, string> = {}): string {
   let result = template;
+  
+  // 通常の変数を置換
   for (const [key, value] of Object.entries(variables)) {
     const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
     result = result.replace(regex, String(value));
   }
+  
+  // 抽出データの変数を置換 ({{extracted.key}} 形式)
+  for (const [key, value] of Object.entries(extractedData)) {
+    const regex = new RegExp(`{{\\s*extracted\\.${key}\\s*}}`, 'g');
+    result = result.replace(regex, String(value || ''));
+  }
+  
+  // 未定義の抽出データ変数をクリア
+  result = result.replace(/\{\{\s*extracted\.\w+\s*\}\}/g, '');
+  
   return result;
 }
 
@@ -138,6 +152,32 @@ serve(async (req) => {
         .join("\n");
     }
 
+    // Get extracted data for this conversation
+    const { data: extractedDataRows, error: extractedError } = await supabase
+      .from("conversation_extracted_data")
+      .select("field_key, field_value")
+      .eq("conversation_id", conversationId);
+
+    if (extractedError) {
+      console.error("Error fetching extracted data:", extractedError);
+    }
+
+    // Convert to object
+    const extractedData: Record<string, string> = {};
+    if (extractedDataRows) {
+      for (const row of extractedDataRows) {
+        extractedData[row.field_key] = row.field_value || '';
+      }
+    }
+
+    // Also check metadata.extracted_data
+    const metadataExtracted = (conversation.metadata as { extracted_data?: Record<string, string> })?.extracted_data;
+    if (metadataExtracted) {
+      Object.assign(extractedData, metadataExtracted);
+    }
+
+    console.log(`Found ${Object.keys(extractedData).length} extracted data fields`);
+
     // テンプレート変数用のマッピング
     const templateVariables: Record<string, string | number> = {
       event_type: eventType,
@@ -165,11 +205,12 @@ serve(async (req) => {
         transcript_text: integration.include_transcript ? transcriptText : "",
         timestamp: new Date().toISOString(),
         conversation_id: conversationId,
+        extracted_data: extractedData,
       };
 
       // カスタムメッセージテンプレートがある場合は text フィールドに追加
       if (integration.message_template) {
-        payload.text = replaceTemplateVariables(integration.message_template, templateVariables);
+        payload.text = replaceTemplateVariables(integration.message_template, templateVariables, extractedData);
       }
 
       return payload;

@@ -51,12 +51,17 @@ interface Conversation {
     action_items?: string[];
     summarized_at?: string;
     call_type?: 'inbound' | 'outbound';
+    extracted_data?: Record<string, string>;
   } | null;
   agent?: {
     name: string;
     icon_name?: string;
     icon_color?: string;
   };
+  extracted_data?: Array<{
+    field_key: string;
+    field_value: string;
+  }>;
 }
 
 export function useConversations() {
@@ -72,7 +77,8 @@ export function useConversations() {
         .from('conversations')
         .select(`
           *,
-          agent:agents(name, icon_name, icon_color)
+          agent:agents(name, icon_name, icon_color),
+          extracted_data:conversation_extracted_data(field_key, field_value)
         `)
         .order('started_at', { ascending: false });
 
