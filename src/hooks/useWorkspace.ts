@@ -27,6 +27,8 @@ export const useWorkspace = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
+  const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
+
   // Fetch the user's workspace
   useEffect(() => {
     const fetchWorkspace = async () => {
@@ -37,7 +39,7 @@ export const useWorkspace = () => {
 
       try {
         // Get the user's workspace membership
-        const { data: memberData, error: memberError } = await supabase
+        let { data: memberData, error: memberError } = await supabase
           .from("workspace_members")
           .select("workspace_id, role")
           .eq("user_id", user.id)
@@ -50,8 +52,28 @@ export const useWorkspace = () => {
           return;
         }
 
+        // If the user has no workspace yet, auto-join the demo workspace (current UI assumes this).
         if (!memberData) {
-          // User has no workspace, they might need to create one
+          const { data: insertedMember, error: insertError } = await supabase
+            .from("workspace_members")
+            .insert({
+              user_id: user.id,
+              workspace_id: DEMO_WORKSPACE_ID,
+              role: "owner",
+            })
+            .select("workspace_id, role")
+            .maybeSingle();
+
+          if (insertError) {
+            console.error("Error creating demo workspace membership:", insertError);
+            setIsLoading(false);
+            return;
+          }
+
+          memberData = insertedMember;
+        }
+
+        if (!memberData) {
           setIsLoading(false);
           return;
         }
