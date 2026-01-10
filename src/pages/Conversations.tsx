@@ -103,6 +103,7 @@ export default function Conversations() {
       name: agent?.name || '不明',
       iconName: agent?.icon_name || 'bot',
       iconColor: agent?.icon_color || '#10b981',
+      customIconUrl: agent?.custom_icon_url || null,
     };
   };
 
@@ -174,6 +175,7 @@ export default function Conversations() {
         const sorted = convs.sort((a, b) => b.rawDate.getTime() - a.rawDate.getTime());
         const assignedPhone = phoneNumbers.find(p => p.agent_id === agentId);
         const unreadConvs = sorted.filter(c => !c.isRead);
+        const agent = agents.find(a => a.id === agentId);
         return {
           agentId,
           agentName: sorted[0].agent,
@@ -183,11 +185,12 @@ export default function Conversations() {
           unreadCount: unreadConvs.length,
           iconName: sorted[0].iconName,
           iconColor: sorted[0].iconColor,
+          customIconUrl: agent?.custom_icon_url || null,
           phoneNumber: assignedPhone?.phone_number,
         };
       })
       .sort((a, b) => b.lastConversation.rawDate.getTime() - a.lastConversation.rawDate.getTime());
-  }, [displayConversations, phoneNumbers]);
+  }, [displayConversations, phoneNumbers, agents]);
 
   // Group outbound calls by agent
   const agentOutboundCalls = useMemo(() => {
@@ -215,6 +218,7 @@ export default function Conversations() {
           unreadCount: unreadCalls.length,
           iconName: agentInfo.iconName,
           iconColor: agentInfo.iconColor,
+          customIconUrl: agentInfo.customIconUrl,
         };
       })
       .sort((a, b) => 

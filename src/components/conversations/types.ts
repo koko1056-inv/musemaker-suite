@@ -41,6 +41,7 @@ export interface AgentConversations {
   unreadCount: number;
   iconName: string;
   iconColor: string;
+  customIconUrl?: string | null;
   phoneNumber?: string;
 }
 
@@ -60,4 +61,5 @@ export interface OutboundAgentInfo {
   unreadCount: number;
   iconName: string;
   iconColor: string;
+  customIconUrl?: string | null;
 }
