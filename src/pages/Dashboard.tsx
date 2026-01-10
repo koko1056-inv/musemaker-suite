@@ -1,6 +1,7 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings } from "lucide-react";
+import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
@@ -163,13 +164,23 @@ export default function Dashboard() {
                       to={`/agents/${agent.id}`}
                       className="flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
                     >
-                      <div className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl transition-colors shrink-0 ${
-                        agent.status === "published" 
-                          ? "bg-foreground text-background" 
-                          : "bg-muted text-muted-foreground group-hover:bg-foreground/10"
-                      }`}>
-                        <Bot className="h-4 w-4 sm:h-5 sm:w-5" />
-                      </div>
+                                      <div className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl transition-colors shrink-0 ${
+                                        agent.status === "published" 
+                                          ? "bg-foreground text-background" 
+                                          : "bg-muted text-muted-foreground group-hover:bg-foreground/10"
+                                      }`}>
+                                        {agent.icon_name === 'custom' && agent.custom_icon_url ? (
+                                          <img 
+                                            src={agent.custom_icon_url} 
+                                            alt={agent.name}
+                                            className="h-6 w-6 sm:h-7 sm:w-7 rounded object-cover"
+                                          />
+                                        ) : (() => {
+                                          const iconName = agent.icon_name || 'Bot';
+                                          const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
+                                          return <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" style={agent.icon_color ? { color: agent.icon_color } : undefined} />;
+                                        })()}
+                                      </div>
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <p className="font-medium text-sm sm:text-base truncate max-w-[140px] sm:max-w-none">{agent.name}</p>

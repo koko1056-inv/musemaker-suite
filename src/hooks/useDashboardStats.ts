@@ -17,7 +17,7 @@ export function useDashboardStats() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('agents')
-        .select('id, name, description, status, icon_name, icon_color, created_at')
+        .select('id, name, description, status, icon_name, icon_color, custom_icon_url, created_at')
         .eq('workspace_id', DEMO_WORKSPACE_ID)
         .order('created_at', { ascending: false });
 
