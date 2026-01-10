@@ -38,6 +38,7 @@ interface Agent {
   folder_id: string | null;
   icon_name?: string | null;
   icon_color?: string | null;
+  custom_icon_url?: string | null;
 }
 
 interface PhoneNumber {
@@ -170,12 +171,22 @@ export function AgentListView({
 
               {/* Avatar */}
               <Link to={`/agents/${agent.id}`} className="shrink-0">
-                <div 
-                  className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center border-2 border-background shadow-md transition-transform group-hover:scale-105"
-                  style={{ backgroundColor: `${agentColor}20`, borderColor: agentColor }}
-                >
-                  <IconComponent className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: agentColor }} />
-                </div>
+                {agent.custom_icon_url && agent.icon_name === 'custom' ? (
+                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full overflow-hidden border-2 border-background shadow-md transition-transform group-hover:scale-105">
+                    <img 
+                      src={agent.custom_icon_url} 
+                      alt={agent.name} 
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div 
+                    className="h-12 w-12 sm:h-14 sm:w-14 rounded-full flex items-center justify-center border-2 border-background shadow-md transition-transform group-hover:scale-105"
+                    style={{ backgroundColor: `${agentColor}20`, borderColor: agentColor }}
+                  >
+                    <IconComponent className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: agentColor }} />
+                  </div>
+                )}
               </Link>
 
               {/* Agent Info */}

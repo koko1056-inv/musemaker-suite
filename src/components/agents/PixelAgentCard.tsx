@@ -38,6 +38,9 @@ interface Agent {
   status: "draft" | "published";
   elevenlabs_agent_id: string | null;
   folder_id: string | null;
+  icon_name?: string | null;
+  icon_color?: string | null;
+  custom_icon_url?: string | null;
 }
 
 interface PhoneNumber {
@@ -152,7 +155,7 @@ export function PixelAgentCard({
     return colors[hash % colors.length];
   };
 
-  const agentColor = getAgentColor(agent.id);
+  const agentColor = agent.icon_color || getAgentColor(agent.id);
 
   return (
     <div
@@ -170,7 +173,17 @@ export function PixelAgentCard({
         {/* Header with avatar and status */}
         <div className="flex items-start gap-3 mb-4">
           <Link to={`/agents/${agent.id}`} className="shrink-0">
-            <PixelRobotAvatar color={agentColor} isActive={isPublished && isReady} />
+            {agent.custom_icon_url && agent.icon_name === 'custom' ? (
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden">
+                <img 
+                  src={agent.custom_icon_url} 
+                  alt={agent.name} 
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            ) : (
+              <PixelRobotAvatar color={agentColor} isActive={isPublished && isReady} />
+            )}
           </Link>
           
           <div className="flex-1 min-w-0">

@@ -192,6 +192,7 @@ export default function AgentEditor() {
   const [elevenlabsAgentId, setElevenLabsAgentId] = useState<string | null>(null);
   const [iconName, setIconName] = useState("bot");
   const [iconColor, setIconColor] = useState("#10b981");
+  const [customIconUrl, setCustomIconUrl] = useState<string | null>(null);
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   
   // VAD settings
@@ -248,6 +249,7 @@ export default function AgentEditor() {
           setElevenLabsAgentId(agent.elevenlabs_agent_id || null);
           setIconName((agent as any).icon_name || "bot");
           setIconColor((agent as any).icon_color || "#10b981");
+          setCustomIconUrl((agent as any).custom_icon_url || null);
           setSelectedFolderId(agent.folder_id || null);
           setVadThreshold((agent as any).vad_threshold ?? 0.5);
           setVadSilenceDuration((agent as any).vad_silence_duration_ms ?? 500);
@@ -288,6 +290,7 @@ export default function AgentEditor() {
         fallback_behavior: "end",
         icon_name: iconName,
         icon_color: iconColor,
+        custom_icon_url: customIconUrl,
         folder_id: selectedFolderId,
         vad_mode: "server_vad",
         vad_threshold: vadThreshold,
@@ -312,7 +315,7 @@ export default function AgentEditor() {
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
     status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
-    iconName, iconColor, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId
+    iconName, iconColor, customIconUrl, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
@@ -525,8 +528,10 @@ export default function AgentEditor() {
               <AgentIconPicker
                 iconName={iconName}
                 iconColor={iconColor}
+                customIconUrl={customIconUrl || undefined}
                 onIconChange={setIconName}
                 onColorChange={setIconColor}
+                onCustomIconChange={setCustomIconUrl}
               />
             </div>
             {folders.length > 0 && (
