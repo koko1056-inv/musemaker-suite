@@ -31,6 +31,8 @@ import {
   Filter,
   CheckCircle2,
   FileEdit,
+  LayoutGrid,
+  LayoutList,
 } from "lucide-react";
 import { useAgents } from "@/hooks/useAgents";
 import { useAgentFolders } from "@/hooks/useAgentFolders";
@@ -39,6 +41,7 @@ import { useWorkspace } from "@/hooks/useWorkspace";
 import { FolderManager } from "@/components/agents/FolderManager";
 import { KnowledgeBaseSection } from "@/components/agents/KnowledgeBaseSection";
 import { PixelAgentCard } from "@/components/agents/PixelAgentCard";
+import { AgentListView } from "@/components/agents/AgentListView";
 import { FolderSection } from "@/components/agents/FolderSection";
 import { AgentOverviewStats } from "@/components/agents/AgentOverviewStats";
 import { toast } from "sonner";
@@ -49,6 +52,7 @@ export default function Agents() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"agents" | "knowledge">("agents");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
   
   const { workspace } = useWorkspace();
   const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
@@ -233,6 +237,26 @@ export default function Agents() {
                   </Button>
                 </div>
                 
+                {/* View Mode Toggle */}
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+                  <Button
+                    variant={viewMode === "list" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("list")}
+                    className="h-7 w-7 p-0"
+                  >
+                    <LayoutList className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "grid" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("grid")}
+                    className="h-7 w-7 p-0"
+                  >
+                    <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                </div>
+                
                 <FolderManager
                   folders={folders}
                   onCreateFolder={createFolder}
@@ -331,8 +355,37 @@ export default function Agents() {
                   </div>
                 </div>
               </div>
+            ) : viewMode === "list" ? (
+              /* List View */
+              <div className="space-y-6">
+                {/* All agents in list format */}
+                <AgentListView
+                  agents={filteredAgents}
+                  phoneNumbers={phoneNumbers}
+                  folders={folders}
+                  getAgentPhoneNumber={getAgentPhoneNumber}
+                  onPhoneAssign={handlePhoneAssign}
+                  onDuplicate={handleDuplicate}
+                  onDelete={setDeleteAgentId}
+                  onMoveToFolder={handleMoveToFolder}
+                />
+                
+                {/* Create New Button */}
+                <Link
+                  to="/agents/new"
+                  className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <Plus className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">新しいエージェント</p>
+                    <p className="text-xs text-muted-foreground">クリックして作成</p>
+                  </div>
+                </Link>
+              </div>
             ) : (
-              /* Agent list with folders */
+              /* Grid View with folders */
               <div className="space-y-4">
                 {/* Folders first */}
                 {folders.map(folder => (
