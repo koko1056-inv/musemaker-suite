@@ -20,6 +20,34 @@ interface ExportPayload {
   extracted_data?: Record<string, string>;
 }
 
+interface ColumnMapping {
+  [key: string]: string; // key: header name
+}
+
+// 基本列のキー
+const BASE_COLUMN_KEYS = [
+  "_datetime",
+  "_agent_name",
+  "_phone_number",
+  "_duration",
+  "_outcome",
+  "_status",
+  "_summary",
+  "_transcript",
+];
+
+// デフォルトのカラムマッピング
+const DEFAULT_COLUMN_MAPPING: ColumnMapping = {
+  "_datetime": "日時",
+  "_agent_name": "エージェント名",
+  "_phone_number": "電話番号",
+  "_duration": "通話時間",
+  "_outcome": "結果",
+  "_status": "ステータス",
+  "_summary": "要約",
+  "_transcript": "トランスクリプト",
+};
+
 async function refreshAccessToken(
   supabase: any,
   integration: any,
@@ -281,36 +309,74 @@ serve(async (req) => {
         continue;
       }
 
-      // Build headers and row data
-      const headers: string[] = ["日時", "エージェント名", "電話番号", "通話時間", "結果", "ステータス"];
+      // カラムマッピングを取得（設定がなければデフォルトを使用）
+      const columnMapping: ColumnMapping = integration.column_mapping || DEFAULT_COLUMN_MAPPING;
+      
+      // マッピングに基づいてヘッダーと行データを構築
+      const headers: string[] = [];
+      const row: string[] = [];
       const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
-      const row: string[] = [
-        now,                                          // 日時
-        agent_name,                                   // エージェント名
-        phone_number || "-",                          // 電話番号
-        formatDuration(duration_seconds),             // 通話時間
-        outcome || "-",                               // 結果
-        event_type === "call_failed" ? "失敗" : "完了", // ステータス
-      ];
 
-      // Add optional fields
-      if (integration.include_summary) {
-        headers.push("要約");
-        row.push(summary || "-");
+      // 基本列の値を準備
+      const baseValues: Record<string, string> = {
+        "_datetime": now,
+        "_agent_name": agent_name,
+        "_phone_number": phone_number || "-",
+        "_duration": formatDuration(duration_seconds),
+        "_outcome": outcome || "-",
+        "_status": event_type === "call_failed" ? "失敗" : "完了",
+        "_summary": summary || "-",
+        "_transcript": formatTranscript(transcript),
+      };
+
+      // カラムマッピングの順序で列を追加
+      for (const [key, header] of Object.entries(columnMapping)) {
+        // 基本列
+        if (key.startsWith("_") && baseValues[key] !== undefined) {
+          // サマリーとトランスクリプトは設定で有効な場合のみ
+          if (key === "_summary" && !integration.include_summary) continue;
+          if (key === "_transcript" && !integration.include_transcript) continue;
+          
+          headers.push(header);
+          row.push(baseValues[key]);
+        }
+        // 抽出データ列
+        else if (key.startsWith("extract_") && integration.include_extracted_data && extracted_data) {
+          const fieldKey = key.replace("extract_", "");
+          headers.push(header);
+          row.push(extracted_data[fieldKey] || "-");
+        }
       }
 
-      if (integration.include_transcript) {
-        headers.push("トランスクリプト");
-        row.push(formatTranscript(transcript));
-      }
+      // カラムマッピングが空の場合はデフォルトの動作（後方互換性）
+      if (headers.length === 0) {
+        headers.push("日時", "エージェント名", "電話番号", "通話時間", "結果", "ステータス");
+        row.push(
+          now,
+          agent_name,
+          phone_number || "-",
+          formatDuration(duration_seconds),
+          outcome || "-",
+          event_type === "call_failed" ? "失敗" : "完了"
+        );
 
-      if (integration.include_extracted_data && extracted_data) {
-        headers.push("抽出データ");
-        // Add extracted data as JSON or individual columns
-        const extractedStr = Object.entries(extracted_data)
-          .map(([key, value]) => `${key}: ${value}`)
-          .join("\n");
-        row.push(extractedStr || "-");
+        if (integration.include_summary) {
+          headers.push("要約");
+          row.push(summary || "-");
+        }
+
+        if (integration.include_transcript) {
+          headers.push("トランスクリプト");
+          row.push(formatTranscript(transcript));
+        }
+
+        if (integration.include_extracted_data && extracted_data) {
+          headers.push("抽出データ");
+          const extractedStr = Object.entries(extracted_data)
+            .map(([k, v]) => `${k}: ${v}`)
+            .join("\n");
+          row.push(extractedStr || "-");
+        }
       }
 
       // Append to spreadsheet (with auto header)
