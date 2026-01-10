@@ -2,11 +2,19 @@ import React, { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, Clock, CheckCircle, XCircle, MessageCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, Clock, CheckCircle, XCircle, MessageCircle, Share2, Copy, MessageSquare, Mail, ChevronDown } from "lucide-react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 import { format, isToday, isYesterday } from "date-fns";
 import { ja } from "date-fns/locale";
 import { ConversationDetail } from "./ConversationDetail";
+import { ShareConversationDialog } from "./ShareConversationDialog";
+import { useToast } from "@/hooks/use-toast";
 import type { AgentConversations, ConversationDisplay } from "./types";
 
 interface ChatViewProps {
@@ -29,7 +37,74 @@ const ChatViewComponent = ({
   onMarkAsRead,
 }: ChatViewProps) => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareConversation, setShareConversation] = useState<ConversationDisplay | null>(null);
+  const { toast } = useToast();
   const IconComponent = getAgentIcon(agent.iconName);
+
+  const generateShareText = useCallback((conv: ConversationDisplay) => {
+    const callDate = format(conv.rawDate, 'yyyy年M月d日 HH:mm', { locale: ja });
+    
+    let text = `📞 受電記録\n`;
+    text += `━━━━━━━━━━━━━━━\n`;
+    text += `エージェント: ${agent.agentName}\n`;
+    text += `発信者: ${conv.phone}\n`;
+    text += `日時: ${callDate}\n`;
+    text += `通話時間: ${conv.duration}\n`;
+    text += `━━━━━━━━━━━━━━━\n\n`;
+    
+    if (conv.summary) {
+      text += `📝 要約\n${conv.summary}\n\n`;
+    }
+    
+    if (conv.keyPoints && conv.keyPoints.length > 0) {
+      text += `💡 重要ポイント\n`;
+      conv.keyPoints.forEach((point, i) => {
+        text += `  ${i + 1}. ${point}\n`;
+      });
+      text += '\n';
+    }
+    
+    if (conv.transcript && conv.transcript.length > 0) {
+      text += `💬 会話ログ\n`;
+      conv.transcript.forEach(msg => {
+        const role = msg.role === 'agent' ? '🤖 AI' : '👤 お客様';
+        text += `${role}: ${msg.text}\n`;
+      });
+    }
+    
+    return text;
+  }, [agent.agentName]);
+
+  const handleCopyToClipboard = useCallback(async (conv: ConversationDisplay) => {
+    const text = generateShareText(conv);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `受電記録 - ${agent.agentName}`,
+          text: text,
+        });
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "コピーしました",
+        description: "会話内容をクリップボードにコピーしました",
+      });
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
+      toast({
+        title: "エラー",
+        description: "コピーに失敗しました",
+        variant: "destructive",
+      });
+    }
+  }, [generateShareText, agent.agentName, toast]);
+
+  const handleOpenShareDialog = useCallback((conv: ConversationDisplay) => {
+    setShareConversation(conv);
+    setShareDialogOpen(true);
+  }, []);
 
   const handleSelectConversation = useCallback((conv: ConversationDisplay) => {
     setSelectedConversationId(prevId => {
@@ -217,13 +292,38 @@ const ChatViewComponent = ({
                     {/* Expanded Content */}
                     {isExpanded && (
                       <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-0 border-t border-border/50">
-                        <div className="pt-3 sm:pt-4">
-                          <ConversationDetail
-                            conversation={conv}
-                            agentIconName={agent.iconName}
-                            agentIconColor={agent.iconColor}
-                          />
+                        {/* Share Actions */}
+                        <div className="flex justify-end pt-3 mb-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-muted-foreground">
+                                <Share2 className="h-4 w-4" />
+                                共有
+                                <ChevronDown className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem onClick={() => handleCopyToClipboard(conv)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                クリップボードにコピー
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleOpenShareDialog(conv)}>
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Slackに送信
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleOpenShareDialog(conv)}>
+                                <Mail className="h-4 w-4 mr-2" />
+                                メールで送信
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
+                        
+                        <ConversationDetail
+                          conversation={conv}
+                          agentIconName={agent.iconName}
+                          agentIconColor={agent.iconColor}
+                        />
                       </div>
                     )}
                   </div>
@@ -233,6 +333,16 @@ const ChatViewComponent = ({
           )}
         </div>
       </ScrollArea>
+
+      {/* Share Dialog */}
+      {shareConversation && (
+        <ShareConversationDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          conversationId={shareConversation.id}
+          phoneNumber={shareConversation.phone}
+        />
+      )}
     </div>
   );
 };
