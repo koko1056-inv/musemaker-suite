@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -53,6 +53,7 @@ export default function Settings() {
     updateWorkspace,
     updateElevenLabsApiKey,
     updateTwilioCredentials,
+    updateGoogleCalendarCredentials,
     isAuthenticated
   } = useWorkspace();
   const [apiKeyVisible, setApiKeyVisible] = useState(false);
@@ -84,6 +85,12 @@ export default function Settings() {
   const [twilioSidVisible, setTwilioSidVisible] = useState(false);
   const [twilioTokenVisible, setTwilioTokenVisible] = useState(false);
 
+  // Google Calendar credentials state
+  const [googleClientId, setGoogleClientId] = useState("");
+  const [googleClientSecret, setGoogleClientSecret] = useState("");
+  const [googleClientIdVisible, setGoogleClientIdVisible] = useState(false);
+  const [googleClientSecretVisible, setGoogleClientSecretVisible] = useState(false);
+
   // Initialize form values when workspace loads
   useEffect(() => {
     if (workspace) {
@@ -96,6 +103,12 @@ export default function Settings() {
       }
       if (workspace.twilio_auth_token) {
         setTwilioAuthToken("••••••••••••••••");
+      }
+      if (workspace.google_client_id) {
+        setGoogleClientId("••••••••••••••••");
+      }
+      if (workspace.google_client_secret) {
+        setGoogleClientSecret("••••••••••••••••");
       }
     }
   }, [workspace]);
@@ -142,6 +155,20 @@ export default function Settings() {
   const workspaceId = workspace?.id || DEMO_WORKSPACE_ID;
   const hasApiKey = workspace?.elevenlabs_api_key || apiKey === "••••••••••••••••";
   const hasTwilioCredentials = workspace?.twilio_account_sid && workspace?.twilio_auth_token;
+  const hasGoogleCalendarCredentials = workspace?.google_client_id && workspace?.google_client_secret;
+
+  const handleSaveGoogleCalendarCredentials = async () => {
+    if (googleClientId === "••••••••••••••••" && googleClientSecret === "••••••••••••••••") return;
+    const clientIdToSave = googleClientId === "••••••••••••••••" ? workspace?.google_client_id || "" : googleClientId;
+    const clientSecretToSave = googleClientSecret === "••••••••••••••••" ? workspace?.google_client_secret || "" : googleClientSecret;
+    if (clientIdToSave.trim() && clientSecretToSave.trim()) {
+      const success = await updateGoogleCalendarCredentials(clientIdToSave, clientSecretToSave);
+      if (success) {
+        setGoogleClientId("••••••••••••••••");
+        setGoogleClientSecret("••••••••••••••••");
+      }
+    }
+  };
 
   return (
     <AppLayout>
@@ -484,7 +511,7 @@ export default function Settings() {
           {/* Integrations Tab */}
           <TabsContent value="integrations" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
             {/* クイックステータス */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               <div className={`rounded-xl p-4 border ${hasApiKey ? 'bg-success/5 border-success/20' : 'bg-muted/30 border-border'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   {hasApiKey ? (
@@ -509,6 +536,19 @@ export default function Settings() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {hasTwilioCredentials ? '接続済み' : '未接続'}
+                </p>
+              </div>
+              <div className={`rounded-xl p-4 border ${hasGoogleCalendarCredentials ? 'bg-success/5 border-success/20' : 'bg-muted/30 border-border'}`}>
+                <div className="flex items-center gap-2 mb-1">
+                  {hasGoogleCalendarCredentials ? (
+                    <Check className="h-4 w-4 text-success" />
+                  ) : (
+                    <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
+                  )}
+                  <span className="text-sm font-medium">Google Calendar</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {hasGoogleCalendarCredentials ? '接続済み' : '未接続'}
                 </p>
               </div>
             </div>
@@ -679,6 +719,113 @@ export default function Settings() {
                       <ExternalLink className="h-4 w-4" />
                     </a>
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Google Calendar Integration */}
+            <div className="glass rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Google Calendar</h3>
+                      <p className="text-xs text-muted-foreground">
+                        通話情報をカレンダーに連携
+                      </p>
+                    </div>
+                  </div>
+                  {hasGoogleCalendarCredentials ? (
+                    <Badge className="bg-success/10 text-success gap-1 self-start text-xs border border-success/20">
+                      <Check className="h-3 w-3" />
+                      接続済み
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="self-start text-xs">未接続</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6 space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="google-client-id" className="text-sm font-medium">Client ID</Label>
+                  <div className="relative">
+                    <Input 
+                      id="google-client-id" 
+                      type={googleClientIdVisible ? "text" : "password"} 
+                      placeholder="xxxxx.apps.googleusercontent.com" 
+                      value={googleClientId} 
+                      onChange={e => setGoogleClientId(e.target.value)} 
+                      className="pr-10 h-10 text-sm font-mono" 
+                      disabled={!isAuthenticated} 
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" 
+                      onClick={() => setGoogleClientIdVisible(!googleClientIdVisible)}
+                    >
+                      {googleClientIdVisible ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="google-client-secret" className="text-sm font-medium">Client Secret</Label>
+                  <div className="relative">
+                    <Input 
+                      id="google-client-secret" 
+                      type={googleClientSecretVisible ? "text" : "password"} 
+                      placeholder="クライアントシークレットを入力" 
+                      value={googleClientSecret} 
+                      onChange={e => setGoogleClientSecret(e.target.value)} 
+                      className="pr-10 h-10 text-sm font-mono" 
+                      disabled={!isAuthenticated} 
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      className="absolute right-0 top-0 h-full px-3 hover:bg-transparent" 
+                      onClick={() => setGoogleClientSecretVisible(!googleClientSecretVisible)}
+                    >
+                      {googleClientSecretVisible ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                    <Shield className="h-3 w-3" />
+                    認証情報は暗号化されて安全に保存されます
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <Button 
+                    onClick={handleSaveGoogleCalendarCredentials} 
+                    className="h-10 text-sm" 
+                    disabled={isSaving || !isAuthenticated || (googleClientId === "••••••••••••••••" && googleClientSecret === "••••••••••••••••") || !googleClientId.trim() || !googleClientSecret.trim()}
+                  >
+                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "保存"}
+                  </Button>
+                  <Button variant="outline" className="gap-2 text-sm h-10" asChild>
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer">
+                      Google Cloud Console
+                      <ExternalLink className="h-4 w-4" />
+                    </a>
+                  </Button>
+                </div>
+
+                <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+                  <p className="font-medium text-foreground">設定手順：</p>
+                  <ol className="list-decimal list-inside space-y-0.5">
+                    <li>Google Cloud Consoleで新しいプロジェクトを作成</li>
+                    <li>Google Calendar APIを有効化</li>
+                    <li>OAuth 2.0クライアントIDを作成</li>
+                    <li>Client IDとClient Secretをここに入力</li>
+                  </ol>
                 </div>
               </div>
             </div>
