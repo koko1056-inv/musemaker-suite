@@ -5,7 +5,7 @@ export function MobileQuickActions() {
   const actions = [
     { to: "/agents/new", icon: Plus, label: "作成", primary: true },
     { to: "/conversations", icon: History, label: "履歴" },
-    { to: "/outbound-calls", icon: Phone, label: "発信" },
+    { to: "/conversations", icon: Phone, label: "発信" },
     { to: "/settings", icon: Settings, label: "設定" },
   ];
 
