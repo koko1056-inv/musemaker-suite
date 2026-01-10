@@ -7,9 +7,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Phone, PhoneOutgoing, ChevronRight } from "lucide-react";
+import { Phone, PhoneOutgoing, MessageSquare } from "lucide-react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
-import { formatRelativeDate } from "./utils";
 import type { AgentConversations, PhoneNumberInfo } from "./types";
 
 interface AgentListItemProps {
@@ -33,80 +32,103 @@ const AgentListItemComponent = ({
   const IconComponent = getAgentIcon(agent.iconName);
   const assignedPhone = phoneNumbers.find(p => p.agent_id === agent.agentId);
   
+  // Determine status for indicator dot
+  const hasUnread = agent.unreadCount > 0;
+  const hasInProgress = agent.conversations.some(c => c.status === 'in_progress');
+
+  // Get action button color based on status
+  const getActionButtonStyle = () => {
+    if (hasInProgress) {
+      return "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 border-emerald-500/30";
+    }
+    if (hasUnread) {
+      return "bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 border-blue-500/30";
+    }
+    return "bg-muted/50 text-muted-foreground hover:bg-muted border-muted";
+  };
+  
   return (
     <div
-      className={`px-4 py-3 cursor-pointer transition-colors ${
+      className={`px-4 py-4 cursor-pointer transition-colors ${
         isSelected 
           ? 'bg-primary/8' 
-          : 'hover:bg-muted/50 active:bg-muted/70'
+          : 'hover:bg-muted/30'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-4">
+        {/* Status Indicator */}
+        <div className="shrink-0 w-3 flex justify-center">
+          <div className={`h-2.5 w-2.5 rounded-full ${
+            hasInProgress ? 'bg-emerald-400 animate-pulse' :
+            hasUnread ? 'bg-blue-500' :
+            'bg-muted-foreground/30'
+          }`} />
+        </div>
+
         {/* Agent Avatar */}
         <div className="relative shrink-0">
           <div 
-            className="h-12 w-12 rounded-full flex items-center justify-center shadow-sm"
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-md ring-2 ring-background"
             style={{ backgroundColor: agent.iconColor }}
           >
             <IconComponent className="h-6 w-6 text-white" />
           </div>
-          {agent.unreadCount > 0 ? (
-            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive rounded-full flex items-center justify-center">
-              <span className="text-[10px] font-bold text-destructive-foreground">{agent.unreadCount}</span>
+          {/* Small indicator badge */}
+          {hasInProgress && (
+            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-emerald-500 rounded-full flex items-center justify-center ring-2 ring-background">
+              <Phone className="h-2.5 w-2.5 text-white" />
             </div>
-          ) : agent.totalConversations > 1 ? (
-            <div className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-muted rounded-full flex items-center justify-center">
-              <span className="text-[10px] font-bold text-muted-foreground">{agent.totalConversations}</span>
-            </div>
-          ) : null}
+          )}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <span className="font-medium text-foreground truncate">
-              {agent.agentName}
-            </span>
-            <span className="text-xs text-muted-foreground shrink-0">
-              {formatRelativeDate(lastConv.rawDate)}
-            </span>
-          </div>
-          
+          <h3 className="font-semibold text-foreground truncate">
+            {agent.agentName}
+          </h3>
           <p className="text-sm text-muted-foreground truncate mt-0.5">
             {lastConv.summary 
               ? lastConv.summary 
               : lastConv.transcript.length > 0 
                 ? lastConv.transcript[lastConv.transcript.length - 1]?.text 
-                : `通話時間 ${lastConv.duration}`
+                : `${agent.totalConversations}件の会話`
             }
           </p>
         </div>
 
-        {/* Call Button */}
+        {/* Action Button */}
         <Button
-          variant="ghost"
-          size="icon"
-          className="h-9 w-9 rounded-full shrink-0 text-primary hover:bg-primary/10"
+          variant="outline"
+          size="sm"
+          className={`shrink-0 gap-1.5 rounded-full h-9 px-4 border ${getActionButtonStyle()}`}
           onClick={(e) => {
             e.stopPropagation();
             onCall();
           }}
         >
-          <PhoneOutgoing className="h-4 w-4" />
+          {hasInProgress ? (
+            <>
+              <Phone className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">通話中</span>
+            </>
+          ) : (
+            <>
+              <MessageSquare className="h-3.5 w-3.5" />
+              <span className="text-xs font-medium">{agent.totalConversations}件</span>
+            </>
+          )}
         </Button>
-
-        <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
       </div>
 
       {/* Phone Number Assignment */}
       {phoneNumbers.length > 0 && (
-        <div className="mt-2 ml-15 pl-[60px]" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-3 ml-[76px]" onClick={(e) => e.stopPropagation()}>
           <Select
             value={assignedPhone?.phone_number_sid || "none"}
             onValueChange={(value) => onPhoneAssign(agent.agentId, value)}
           >
-            <SelectTrigger className="h-8 text-xs w-full max-w-[200px]">
+            <SelectTrigger className="h-8 text-xs w-full max-w-[200px] bg-muted/30 border-muted">
               <div className="flex items-center gap-1.5">
                 <Phone className="h-3 w-3 text-muted-foreground" />
                 <SelectValue>

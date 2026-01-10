@@ -149,7 +149,33 @@ const ConversationHistoryTableComponent = ({
     });
   }, [agent.conversations, dateFilter, statusFilter]);
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, isMobile: boolean = false) => {
+    if (isMobile) {
+      // Mobile: icon only
+      switch (status) {
+        case "completed":
+          return (
+            <div className="h-8 w-8 rounded-full bg-emerald-500/20 flex items-center justify-center">
+              <CheckCircle className="h-4 w-4 text-emerald-400" />
+            </div>
+          );
+        case "in_progress":
+          return (
+            <div className="h-8 w-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+              <Clock className="h-4 w-4 text-blue-400" />
+            </div>
+          );
+        case "failed":
+          return (
+            <div className="h-8 w-8 rounded-full bg-red-500/20 flex items-center justify-center">
+              <XCircle className="h-4 w-4 text-red-400" />
+            </div>
+          );
+        default:
+          return null;
+      }
+    }
+    // Desktop: full badge
     switch (status) {
       case "completed":
         return (
@@ -301,109 +327,184 @@ const ConversationHistoryTableComponent = ({
             </div>
           </div>
         ) : (
-          /* Table View */
-          <div className="p-4">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="w-8 text-muted-foreground font-normal text-xs"></TableHead>
-                  <TableHead className="text-muted-foreground font-normal text-xs">発信者</TableHead>
-                  <TableHead className="text-muted-foreground font-normal text-xs hidden sm:table-cell">概要</TableHead>
-                  <TableHead className="text-muted-foreground font-normal text-xs">時間</TableHead>
-                  <TableHead className="text-muted-foreground font-normal text-xs text-right">ステータス</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredConversations.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
-                      該当する会話がありません
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredConversations.map((conv, index) => {
+          /* Mobile-optimized Card List + Desktop Table */
+          <>
+            {/* Mobile View - Card List */}
+            <div className="sm:hidden">
+              {filteredConversations.length === 0 ? (
+                <div className="text-center py-16 text-muted-foreground">
+                  <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p className="font-medium">該当する会話がありません</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border/30">
+                  {filteredConversations.map((conv, index) => {
                     const showDateSeparator = index === 0 || 
                       format(conv.rawDate, 'yyyy-MM-dd') !== format(filteredConversations[index - 1].rawDate, 'yyyy-MM-dd');
 
                     return (
                       <React.Fragment key={conv.id}>
                         {showDateSeparator && (
-                          <TableRow className="hover:bg-transparent border-0">
-                            <TableCell colSpan={5} className="py-3 px-0">
-                              <div className="flex items-center gap-3">
-                                <div className="h-px flex-1 bg-border/50" />
-                                <span className="text-[11px] text-muted-foreground font-medium">
-                                  {isToday(conv.rawDate) ? '今日' : 
-                                   isYesterday(conv.rawDate) ? '昨日' : 
-                                   format(conv.rawDate, 'M月d日（E）', { locale: ja })}
-                                </span>
-                                <div className="h-px flex-1 bg-border/50" />
-                              </div>
-                            </TableCell>
-                          </TableRow>
+                          <div className="flex items-center justify-center py-3 bg-muted/20">
+                            <span className="text-[11px] text-muted-foreground font-medium px-3 py-1 bg-muted rounded-full">
+                              {isToday(conv.rawDate) ? '今日' : 
+                               isYesterday(conv.rawDate) ? '昨日' : 
+                               format(conv.rawDate, 'M月d日（E）', { locale: ja })}
+                            </span>
+                          </div>
                         )}
-                        <TableRow 
-                          className={`cursor-pointer transition-colors border-border/30 ${
+                        <div 
+                          className={`flex items-center gap-3 px-4 py-3 active:bg-muted/50 transition-colors ${
                             !conv.isRead ? 'bg-primary/5' : ''
                           }`}
                           onClick={() => handleSelectConversation(conv)}
                         >
-                          {/* Active Indicator */}
-                          <TableCell className="w-8 pr-0">
+                          {/* Status Indicator */}
+                          <div className="shrink-0 w-2">
                             <div className={`h-2 w-2 rounded-full ${
                               conv.status === 'in_progress' ? 'bg-emerald-400 animate-pulse' : 
                               !conv.isRead ? 'bg-primary' : 'bg-transparent'
                             }`} />
-                          </TableCell>
+                          </div>
 
-                          {/* Caller Info */}
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
-                                <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-700 text-white text-sm">
-                                  <User className="h-4 w-4" />
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="min-w-0">
-                                <p className="font-medium text-foreground truncate text-sm">
-                                  {conv.phone !== '不明' ? conv.phone : '不明な発信者'}
-                                </p>
-                                <p className="text-xs text-muted-foreground truncate">
-                                  {agent.agentName}
-                                </p>
-                              </div>
-                            </div>
-                          </TableCell>
+                          {/* Avatar */}
+                          <Avatar className="h-11 w-11 border-2 border-background shadow-sm shrink-0">
+                            <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-700 text-white">
+                              <User className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
 
-                          {/* Summary (hidden on mobile) */}
-                          <TableCell className="hidden sm:table-cell max-w-[200px]">
-                            <p className="text-sm text-muted-foreground truncate">
-                              {conv.summary || conv.transcript?.[0]?.text || '-'}
-                            </p>
-                          </TableCell>
-
-                          {/* Duration/Time */}
-                          <TableCell>
-                            <div className="text-sm">
-                              <p className="font-medium text-foreground">{conv.duration}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {format(conv.rawDate, 'HH:mm')}
+                          {/* Content */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-medium text-foreground truncate text-sm">
+                                {conv.phone !== '不明' ? conv.phone : '不明な発信者'}
                               </p>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {format(conv.rawDate, 'HH:mm')}
+                              </span>
                             </div>
-                          </TableCell>
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {conv.summary || conv.transcript?.[0]?.text || `通話時間: ${conv.duration}`}
+                            </p>
+                          </div>
 
-                          {/* Status */}
-                          <TableCell className="text-right">
-                            {getStatusBadge(conv.status)}
-                          </TableCell>
-                        </TableRow>
+                          {/* Status Badge */}
+                          <div className="shrink-0">
+                            {getStatusBadge(conv.status, true)}
+                          </div>
+                        </div>
                       </React.Fragment>
                     );
-                  })
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop View - Table */}
+            <div className="hidden sm:block p-4">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="w-8 text-muted-foreground font-normal text-xs"></TableHead>
+                    <TableHead className="text-muted-foreground font-normal text-xs">発信者</TableHead>
+                    <TableHead className="text-muted-foreground font-normal text-xs">概要</TableHead>
+                    <TableHead className="text-muted-foreground font-normal text-xs">時間</TableHead>
+                    <TableHead className="text-muted-foreground font-normal text-xs text-right">ステータス</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredConversations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                        該当する会話がありません
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredConversations.map((conv, index) => {
+                      const showDateSeparator = index === 0 || 
+                        format(conv.rawDate, 'yyyy-MM-dd') !== format(filteredConversations[index - 1].rawDate, 'yyyy-MM-dd');
+
+                      return (
+                        <React.Fragment key={conv.id}>
+                          {showDateSeparator && (
+                            <TableRow className="hover:bg-transparent border-0">
+                              <TableCell colSpan={5} className="py-3 px-0">
+                                <div className="flex items-center gap-3">
+                                  <div className="h-px flex-1 bg-border/50" />
+                                  <span className="text-[11px] text-muted-foreground font-medium">
+                                    {isToday(conv.rawDate) ? '今日' : 
+                                     isYesterday(conv.rawDate) ? '昨日' : 
+                                     format(conv.rawDate, 'M月d日（E）', { locale: ja })}
+                                  </span>
+                                  <div className="h-px flex-1 bg-border/50" />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          <TableRow 
+                            className={`cursor-pointer transition-colors border-border/30 ${
+                              !conv.isRead ? 'bg-primary/5' : ''
+                            }`}
+                            onClick={() => handleSelectConversation(conv)}
+                          >
+                            {/* Active Indicator */}
+                            <TableCell className="w-8 pr-0">
+                              <div className={`h-2 w-2 rounded-full ${
+                                conv.status === 'in_progress' ? 'bg-emerald-400 animate-pulse' : 
+                                !conv.isRead ? 'bg-primary' : 'bg-transparent'
+                              }`} />
+                            </TableCell>
+
+                            {/* Caller Info */}
+                            <TableCell>
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                                  <AvatarFallback className="bg-gradient-to-br from-slate-600 to-slate-700 text-white text-sm">
+                                    <User className="h-4 w-4" />
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                  <p className="font-medium text-foreground truncate text-sm">
+                                    {conv.phone !== '不明' ? conv.phone : '不明な発信者'}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {agent.agentName}
+                                  </p>
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            {/* Summary */}
+                            <TableCell className="max-w-[200px]">
+                              <p className="text-sm text-muted-foreground truncate">
+                                {conv.summary || conv.transcript?.[0]?.text || '-'}
+                              </p>
+                            </TableCell>
+
+                            {/* Duration/Time */}
+                            <TableCell>
+                              <div className="text-sm">
+                                <p className="font-medium text-foreground">{conv.duration}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(conv.rawDate, 'HH:mm')}
+                                </p>
+                              </div>
+                            </TableCell>
+
+                            {/* Status */}
+                            <TableCell className="text-right">
+                              {getStatusBadge(conv.status)}
+                            </TableCell>
+                          </TableRow>
+                        </React.Fragment>
+                      );
+                    })
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </ScrollArea>
 
