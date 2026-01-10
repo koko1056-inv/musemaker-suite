@@ -1061,7 +1061,7 @@ export default function AgentEditor() {
                   step={2} 
                   currentStep={currentStep} 
                   label="音声" 
-                  isComplete={canProceedToStep3}
+                  isComplete={Boolean(canProceedToStep3)}
                   onClick={() => canProceedToStep2 && setCurrentStep(2)}
                 />
                 <div className={`w-8 h-0.5 rounded ${currentStep > 2 ? 'bg-primary' : 'bg-border'}`} />
