@@ -51,6 +51,17 @@ export function useDashboardStats() {
       const agentIds = workspaceAgents?.map(a => a.id) || [];
 
       // Parallel queries for today's calls
+      // Get outbound call conversation IDs to exclude from inbound count (avoid double counting)
+      const { data: outboundWithConv } = await supabase
+        .from('outbound_calls')
+        .select('conversation_id')
+        .eq('workspace_id', DEMO_WORKSPACE_ID)
+        .not('conversation_id', 'is', null);
+      
+      const outboundConversationIds = new Set(
+        outboundWithConv?.map(o => o.conversation_id).filter(Boolean) || []
+      );
+
       const [conversationsResult, outboundResult, totalConversations, totalOutbound] = await Promise.all([
         // Today's inbound calls (filtered by workspace agents)
         agentIds.length > 0
@@ -66,39 +77,42 @@ export function useDashboardStats() {
           .select('id, status', { count: 'exact', head: false })
           .eq('workspace_id', DEMO_WORKSPACE_ID)
           .gte('created_at', todayISO),
-        // Total completed conversations (filtered by workspace agents)
+        // Total conversations (filtered by workspace agents)
         agentIds.length > 0
           ? supabase
               .from('conversations')
               .select('id, status', { count: 'exact', head: false })
               .in('agent_id', agentIds)
           : Promise.resolve({ data: [], error: null }),
-        // Total completed outbound calls (for success rate)
+        // Total outbound calls
         supabase
           .from('outbound_calls')
           .select('id, status', { count: 'exact', head: false })
           .eq('workspace_id', DEMO_WORKSPACE_ID),
       ]);
 
-      const todayInbound = conversationsResult.data?.filter(c => 
-        (c as any).metadata?.call_type !== 'outbound'
+      // Filter out conversations that are linked to outbound calls (avoid double counting)
+      const todayInboundOnly = conversationsResult.data?.filter(c => 
+        !outboundConversationIds.has(c.id)
       ).length || 0;
       const todayOutbound = outboundResult.data?.length || 0;
 
-      // Calculate success rate from all calls
-      const allInbound = totalConversations.data || [];
+      // Calculate success rate (exclude outbound-linked conversations)
+      const inboundOnly = totalConversations.data?.filter(c => 
+        !outboundConversationIds.has(c.id)
+      ) || [];
       const allOutbound = totalOutbound.data || [];
       
-      const inboundCompleted = allInbound.filter(c => c.status === 'completed').length;
+      const inboundCompleted = inboundOnly.filter(c => c.status === 'completed').length;
       const outboundCompleted = allOutbound.filter(c => c.status === 'completed').length;
-      const totalCalls = allInbound.length + allOutbound.length;
+      const totalCalls = inboundOnly.length + allOutbound.length;
       
       const successRate = totalCalls > 0 
         ? Math.round(((inboundCompleted + outboundCompleted) / totalCalls) * 100)
         : 0;
 
       return {
-        todayCount: todayInbound + todayOutbound,
+        todayCount: todayInboundOnly + todayOutbound,
         successRate,
       };
     },
