@@ -1,12 +1,19 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, ChevronDown, Share2, Copy, Check } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowLeft, ChevronDown, Share2, Copy, Check, MessageSquare, Mail } from "lucide-react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 import { format, isToday, isYesterday } from "date-fns";
 import { ja } from "date-fns/locale";
 import { OutboundCallCard } from "./OutboundCallCard";
 import { OutboundCallDetail } from "./OutboundCallDetail";
+import { ShareCallDialog } from "./ShareCallDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { OutboundAgentInfo, TranscriptMessage } from "./types";
 
@@ -27,6 +34,7 @@ const OutboundChatViewComponent = ({
 }: OutboundChatViewProps) => {
   const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { toast } = useToast();
   const IconComponent = getAgentIcon(agent.iconName);
 
@@ -183,19 +191,36 @@ const OutboundChatViewComponent = ({
                   </p>
                 </div>
                 
-                {/* Share Button */}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                  onClick={handleShare}
-                >
-                  {isCopied ? (
-                    <Check className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Share2 className="h-4 w-4" />
-                  )}
-                </Button>
+                {/* Share Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    >
+                      {isCopied ? (
+                        <Check className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Share2 className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem onClick={handleShare}>
+                      <Copy className="h-4 w-4 mr-2" />
+                      クリップボードにコピー
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Slackに送信
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setShareDialogOpen(true)}>
+                      <Mail className="h-4 w-4 mr-2" />
+                      メールで送信
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -259,6 +284,16 @@ const OutboundChatViewComponent = ({
           </div>
         )}
       </ScrollArea>
+
+      {/* Share Dialog */}
+      {selectedCall && (
+        <ShareCallDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          callId={selectedCall.id}
+          toNumber={selectedCall.to_number}
+        />
+      )}
     </div>
   );
 };
