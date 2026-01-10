@@ -296,8 +296,11 @@ export default function Conversations() {
 
             {/* Tabs */}
             <Tabs value={activeTab} onValueChange={(v) => handleTabChange(v as "conversations" | "outbound")} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 h-10 bg-muted/50 rounded-xl">
-                <TabsTrigger value="conversations" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background relative">
+              <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 rounded-xl p-1">
+                <TabsTrigger 
+                  value="conversations" 
+                  className="rounded-lg gap-2 text-sm font-medium relative transition-all data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
+                >
                   <Phone className="h-4 w-4" />
                   受信履歴
                   {unreadCount > 0 && (
@@ -306,7 +309,10 @@ export default function Conversations() {
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="outbound" className="rounded-lg gap-1.5 text-sm data-[state=active]:bg-background relative">
+                <TabsTrigger 
+                  value="outbound" 
+                  className="rounded-lg gap-2 text-sm font-medium relative transition-all data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
+                >
                   <PhoneOutgoing className="h-4 w-4" />
                   発信履歴
                   {outboundUnreadCount > 0 && (
