@@ -102,12 +102,26 @@ export const useWorkspaceMembers = () => {
 
       if (!user) throw new Error("認証が必要です");
 
-      const { error } = await supabase.from("workspace_invitations").insert({
-        workspace_id: workspace.id,
-        email: email.toLowerCase().trim(),
-        role,
-        invited_by: user.id,
-      });
+      // Get user profile for inviter name
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, email")
+        .eq("id", user.id)
+        .single();
+
+      const inviterName = profile?.full_name || profile?.email?.split("@")[0] || "チームメンバー";
+
+      // Insert invitation
+      const { data: invitation, error } = await supabase
+        .from("workspace_invitations")
+        .insert({
+          workspace_id: workspace.id,
+          email: email.toLowerCase().trim(),
+          role,
+          invited_by: user.id,
+        })
+        .select("id")
+        .single();
 
       if (error) {
         if (error.code === "23505") {
@@ -115,9 +129,30 @@ export const useWorkspaceMembers = () => {
         }
         throw error;
       }
+
+      // Send invitation email
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-invitation-email",
+        {
+          body: {
+            invitationId: invitation.id,
+            inviteeEmail: email.toLowerCase().trim(),
+            inviterName,
+            workspaceName: workspace.name,
+            role,
+          },
+        }
+      );
+
+      if (emailError) {
+        console.error("Failed to send invitation email:", emailError);
+        // Don't throw - invitation is still created, just email failed
+      }
+
+      return invitation;
     },
     onSuccess: () => {
-      toast.success("招待を送信しました");
+      toast.success("招待メールを送信しました");
       queryClient.invalidateQueries({
         queryKey: ["workspace-invitations", workspace?.id],
       });
