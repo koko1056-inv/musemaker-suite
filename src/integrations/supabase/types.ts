@@ -921,6 +921,80 @@ export type Database = {
           },
         ]
       }
+      spreadsheet_integrations: {
+        Row: {
+          agent_ids: string[] | null
+          column_mapping: Json | null
+          created_at: string
+          export_on_call_end: boolean
+          export_on_call_failed: boolean
+          google_access_token: string | null
+          google_refresh_token: string | null
+          id: string
+          include_extracted_data: boolean
+          include_summary: boolean
+          include_transcript: boolean
+          is_active: boolean
+          is_authorized: boolean
+          name: string
+          sheet_name: string | null
+          spreadsheet_id: string | null
+          token_expires_at: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_ids?: string[] | null
+          column_mapping?: Json | null
+          created_at?: string
+          export_on_call_end?: boolean
+          export_on_call_failed?: boolean
+          google_access_token?: string | null
+          google_refresh_token?: string | null
+          id?: string
+          include_extracted_data?: boolean
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          is_authorized?: boolean
+          name: string
+          sheet_name?: string | null
+          spreadsheet_id?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_ids?: string[] | null
+          column_mapping?: Json | null
+          created_at?: string
+          export_on_call_end?: boolean
+          export_on_call_failed?: boolean
+          google_access_token?: string | null
+          google_refresh_token?: string | null
+          id?: string
+          include_extracted_data?: boolean
+          include_summary?: boolean
+          include_transcript?: boolean
+          is_active?: boolean
+          is_authorized?: boolean
+          name?: string
+          sheet_name?: string | null
+          spreadsheet_id?: string | null
+          token_expires_at?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spreadsheet_integrations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           conversation_id: string | null

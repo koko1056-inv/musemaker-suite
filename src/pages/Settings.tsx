@@ -11,6 +11,7 @@ import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, Aler
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
+import { SpreadsheetIntegrationManager } from "@/components/notifications/SpreadsheetIntegrationManager";
 import { EmailNotificationManager } from "@/components/notifications/EmailNotificationManager";
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
@@ -848,6 +849,9 @@ export default function Settings() {
           <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
             {/* Slack連携 */}
             <SlackIntegrationManager workspaceId={workspaceId} />
+            
+            {/* スプレッドシート連携 */}
+            <SpreadsheetIntegrationManager workspaceId={workspaceId} />
             
             {/* メール通知 */}
             <EmailNotificationManager workspaceId={workspaceId} />
