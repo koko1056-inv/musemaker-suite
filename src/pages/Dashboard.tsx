@@ -1,13 +1,17 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { GlassIcon } from "@/components/ui/glass-icon";
-import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings } from "lucide-react";
+import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings, TrendingUp } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { MobileStatsCarousel } from "@/components/dashboard/MobileStatsCarousel";
+import { MobileAgentCard } from "@/components/dashboard/MobileAgentCard";
+import { MobileEmptyState } from "@/components/dashboard/MobileEmptyState";
+import { MobileQuickActions } from "@/components/dashboard/MobileQuickActions";
 
 const greetings = [
   "おかえりなさい",
@@ -38,27 +42,28 @@ export default function Dashboard() {
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
   }, []);
 
-  // Stats are now provided by useDashboardStats hook
-
   return (
     <AppLayout>
       <WelcomeDialog />
       <div className="p-4 sm:p-6 md:p-8 lg:p-12 mobile-safe-bottom max-w-6xl">
-        {/* Welcome Header */}
-        <div className="mb-8 sm:mb-12">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground mb-1 sm:mb-2">
+        {/* Mobile Header - Compact */}
+        <div className="mb-6 lg:mb-12">
+          <h1 className="text-xl sm:text-2xl lg:text-4xl font-semibold tracking-tight text-foreground mb-0.5 sm:mb-2">
             {greeting}
           </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             {hasAgents 
               ? "今日のダッシュボード" 
               : "最初のエージェントを作成しましょう"}
           </p>
         </div>
 
-        {/* Empty State */}
+        {/* Mobile Empty State */}
+        {!isLoadingAgents && !hasAgents && <MobileEmptyState />}
+
+        {/* Desktop Empty State */}
         {!isLoadingAgents && !hasAgents && (
-          <div className="mb-12">
+          <div className="hidden lg:block mb-12">
             <div className="rounded-3xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
               <div className="mx-auto mb-6">
                 <GlassIcon icon={Bot} size="2xl" iconSize="xl" variant="muted" className="mx-auto" />
@@ -79,9 +84,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Quick Actions for New Users */}
+        {/* Desktop Quick Actions for New Users */}
         {!isLoadingAgents && !hasAgents && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
+          <div className="hidden lg:grid grid-cols-3 gap-4 mb-12">
             {[
               { to: "/agents/new", icon: Bot, title: "エージェント作成", primary: true, variant: "primary" as const },
               { to: "/knowledge", icon: BookOpen, title: "ナレッジ登録", variant: "info" as const },
@@ -111,50 +116,57 @@ export default function Dashboard() {
         {/* Stats */}
         {hasAgents && (
           <>
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
+            {/* Mobile Quick Actions */}
+            <MobileQuickActions />
+
+            {/* Mobile Stats Carousel */}
+            <MobileStatsCarousel stats={stats} isLoading={isLoading} />
+
+            {/* Desktop Stats Grid */}
+            <div className="hidden lg:grid grid-cols-4 gap-4 mb-12">
               {[
                 { label: "エージェント", value: stats.totalAgents, icon: Bot, variant: "primary" as const },
                 { label: "公開中", value: stats.publishedAgents, icon: Phone, variant: "success" as const },
                 { label: "今日の通話", value: stats.todayCount, icon: MessageSquare, variant: "info" as const },
-                { label: "成功率", value: `${stats.successRate}%`, icon: ArrowRight, variant: "purple" as const },
+                { label: "成功率", value: `${stats.successRate}%`, icon: TrendingUp, variant: "purple" as const },
               ].map((stat, i) => (
                 <div
                   key={i}
-                  className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-muted/30 border border-border"
+                  className="p-5 rounded-2xl bg-muted/30 border border-border"
                 >
-                  <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-2 sm:mb-3" />
+                  <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-3" />
                   {isLoading ? (
-                    <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
+                    <Loader2 className="h-6 w-6 animate-spin" />
                   ) : (
                     <>
-                      <p className="text-xl sm:text-2xl font-semibold tracking-tight">{stat.value}</p>
-                      <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">{stat.label}</p>
+                      <p className="text-2xl font-semibold tracking-tight">{stat.value}</p>
+                      <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
                     </>
                   )}
                 </div>
               ))}
             </div>
 
-            {/* Create Button */}
-            <div className="mb-8 sm:mb-12">
-              <Button asChild size="lg" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 rounded-xl text-sm sm:text-base">
+            {/* Desktop Create Button */}
+            <div className="hidden lg:block mb-12">
+              <Button asChild size="lg" className="h-12 px-8 rounded-xl">
                 <Link to="/agents/new">
-                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                  <Plus className="h-5 w-5 mr-2" />
                   新しいエージェント
                 </Link>
               </Button>
             </div>
 
             {/* Recent Agents */}
-            <div>
-              <div className="flex items-center justify-between mb-4 sm:mb-6">
-                <h2 className="text-base sm:text-lg font-semibold">エージェント</h2>
+            <div className="mt-6 lg:mt-0">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base lg:text-lg font-semibold">エージェント</h2>
                 <Link 
                   to="/agents" 
-                  className="text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
                 >
-                  すべて表示
-                  <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  すべて
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
 
@@ -163,52 +175,62 @@ export default function Dashboard() {
                   <Loader2 className="h-6 w-6 animate-spin" />
                 </div>
               ) : (
-                <div className="grid gap-2 sm:gap-3">
-                  {recentAgents.map((agent) => (
-                    <Link
-                      key={agent.id}
-                      to={`/agents/${agent.id}`}
-                      className="flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
-                    >
-                      {agent.icon_name === 'custom' && agent.custom_icon_url ? (
-                        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border-2 border-background shadow-sm shrink-0">
-                          <img 
-                            src={agent.custom_icon_url} 
-                            alt={agent.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      ) : (() => {
-                        const iconName = agent.icon_name || 'Bot';
-                        const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
-                        const agentColor = agent.icon_color || (agent.status === "published" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))");
-                        return (
-                          <div 
-                            className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center border-2 border-background shadow-sm shrink-0 transition-transform group-hover:scale-105"
-                            style={{ backgroundColor: `${agent.icon_color || 'hsl(var(--muted))'}20`, borderColor: agentColor }}
-                          >
-                            <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: agentColor }} />
+                <>
+                  {/* Mobile Agent List */}
+                  <div className="lg:hidden space-y-2">
+                    {recentAgents.map((agent) => (
+                      <MobileAgentCard key={agent.id} agent={agent} />
+                    ))}
+                  </div>
+
+                  {/* Desktop Agent List */}
+                  <div className="hidden lg:grid gap-3">
+                    {recentAgents.map((agent) => (
+                      <Link
+                        key={agent.id}
+                        to={`/agents/${agent.id}`}
+                        className="flex items-center gap-3 p-4 rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
+                      >
+                        {agent.icon_name === 'custom' && agent.custom_icon_url ? (
+                          <div className="h-11 w-11 rounded-full overflow-hidden border-2 border-background shadow-sm shrink-0">
+                            <img 
+                              src={agent.custom_icon_url} 
+                              alt={agent.name}
+                              className="h-full w-full object-cover"
+                            />
                           </div>
-                        );
-                      })()}
-                      <div className="flex-1 min-w-0 overflow-hidden">
-                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <p className="font-medium text-sm sm:text-base truncate max-w-[140px] sm:max-w-none">{agent.name}</p>
-                          <Badge 
-                            variant={agent.status === "published" ? "default" : "secondary"}
-                            className="text-[10px] sm:text-xs shrink-0"
-                          >
-                            {agent.status === "published" ? "公開中" : "下書き"}
-                          </Badge>
+                        ) : (() => {
+                          const iconName = agent.icon_name || 'Bot';
+                          const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
+                          const agentColor = agent.icon_color || (agent.status === "published" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))");
+                          return (
+                            <div 
+                              className="h-11 w-11 rounded-full flex items-center justify-center border-2 border-background shadow-sm shrink-0 transition-transform group-hover:scale-105"
+                              style={{ backgroundColor: `${agent.icon_color || 'hsl(var(--muted))'}20`, borderColor: agentColor }}
+                            >
+                              <IconComponent className="h-5 w-5" style={{ color: agentColor }} />
+                            </div>
+                          );
+                        })()}
+                        <div className="flex-1 min-w-0 overflow-hidden">
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <p className="font-medium text-base truncate">{agent.name}</p>
+                            <Badge 
+                              variant={agent.status === "published" ? "default" : "secondary"}
+                              className="text-xs shrink-0"
+                            >
+                              {agent.status === "published" ? "公開中" : "下書き"}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {agent.description || "説明なし"}
+                          </p>
                         </div>
-                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 sm:truncate">
-                          {agent.description || "説明なし"}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0 mt-1 sm:mt-0" />
-                    </Link>
-                  ))}
-                </div>
+                        <ArrowRight className="h-5 w-5 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </>

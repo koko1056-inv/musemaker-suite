@@ -234,6 +234,16 @@
   @apply bg-foreground/20;
 }
 
+/* Hide scrollbar but allow scrolling */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Flow canvas */
 .flow-canvas {
   background-image: 
