@@ -31,9 +31,16 @@ export function useDashboardStats() {
   const { data: callStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['dashboard-call-stats'],
     queryFn: async () => {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayISO = today.toISOString();
+      // 東京時間（JST: UTC+9）で今日の開始時刻を計算
+      const now = new Date();
+      const tokyoOffset = 9 * 60; // JST is UTC+9
+      const localOffset = now.getTimezoneOffset();
+      const tokyoTime = new Date(now.getTime() + (tokyoOffset + localOffset) * 60 * 1000);
+      const todayTokyo = new Date(tokyoTime);
+      todayTokyo.setHours(0, 0, 0, 0);
+      // Convert back to UTC for database query
+      const todayUTC = new Date(todayTokyo.getTime() - (tokyoOffset + localOffset) * 60 * 1000);
+      const todayISO = todayUTC.toISOString();
 
       // Parallel queries for today's calls
       const [conversationsResult, outboundResult, totalConversations, totalOutbound] = await Promise.all([
