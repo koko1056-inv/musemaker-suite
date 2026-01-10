@@ -271,9 +271,13 @@ export type Database = {
           event_description_template: string
           event_duration_minutes: number
           event_title_template: string
+          google_access_token: string | null
+          google_refresh_token: string | null
           id: string
           is_active: boolean
+          is_authorized: boolean
           name: string
+          token_expires_at: string | null
           updated_at: string
           workspace_id: string
         }
@@ -286,9 +290,13 @@ export type Database = {
           event_description_template?: string
           event_duration_minutes?: number
           event_title_template?: string
+          google_access_token?: string | null
+          google_refresh_token?: string | null
           id?: string
           is_active?: boolean
+          is_authorized?: boolean
           name: string
+          token_expires_at?: string | null
           updated_at?: string
           workspace_id: string
         }
@@ -301,9 +309,13 @@ export type Database = {
           event_description_template?: string
           event_duration_minutes?: number
           event_title_template?: string
+          google_access_token?: string | null
+          google_refresh_token?: string | null
           id?: string
           is_active?: boolean
+          is_authorized?: boolean
           name?: string
+          token_expires_at?: string | null
           updated_at?: string
           workspace_id?: string
         }

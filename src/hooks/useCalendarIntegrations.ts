@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useCallback } from "react";
 
 export interface CalendarIntegration {
   id: string;
@@ -14,6 +15,10 @@ export interface CalendarIntegration {
   event_title_template: string;
   event_description_template: string;
   is_active: boolean;
+  is_authorized: boolean;
+  google_access_token: string | null;
+  google_refresh_token: string | null;
+  token_expires_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -174,6 +179,49 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
     },
   });
 
+  const startOAuthFlow = useCallback(async (integrationId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-oauth", {
+        body: { action: "get_auth_url", integration_id: integrationId },
+      });
+
+      if (error) throw error;
+      if (data?.auth_url) {
+        window.open(data.auth_url, "_blank", "width=500,height=600");
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      toast({
+        title: "エラー",
+        description: `OAuth認証の開始に失敗しました: ${message}`,
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
+
+  const revokeAuthorization = useMutation({
+    mutationFn: async (integrationId: string) => {
+      const { error } = await supabase.functions.invoke("google-calendar-oauth", {
+        body: { action: "revoke", integration_id: integrationId },
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["calendar-integrations", workspaceId] });
+      toast({
+        title: "認証を解除しました",
+        description: "Google Calendar連携の認証を解除しました。",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "エラー",
+        description: `認証解除に失敗しました: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     integrations: integrations || [],
     isLoading,
@@ -182,5 +230,7 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
     updateIntegration,
     deleteIntegration,
     toggleIntegration,
+    startOAuthFlow,
+    revokeAuthorization,
   };
 };
