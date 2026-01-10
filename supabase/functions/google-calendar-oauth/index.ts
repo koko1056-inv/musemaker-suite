@@ -239,6 +239,97 @@ serve(async (req) => {
       });
     }
 
+    if (action === "list_calendars") {
+      // Get integration with access token
+      const { data: integration, error: intError } = await supabase
+        .from("calendar_integrations")
+        .select("workspace_id, google_access_token, google_refresh_token, token_expires_at")
+        .eq("id", integration_id)
+        .single();
+
+      if (intError || !integration) {
+        return new Response(JSON.stringify({ error: "Integration not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!integration.google_access_token) {
+        return new Response(JSON.stringify({ error: "Not authorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let accessToken = integration.google_access_token;
+
+      // Check if token is expired and refresh if needed
+      if (integration.token_expires_at && new Date(integration.token_expires_at) < new Date()) {
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("google_client_id, google_client_secret")
+          .eq("id", integration.workspace_id)
+          .single();
+
+        if (workspace?.google_client_id && workspace?.google_client_secret && integration.google_refresh_token) {
+          const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: workspace.google_client_id,
+              client_secret: workspace.google_client_secret,
+              refresh_token: integration.google_refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const tokens = await tokenResponse.json();
+          if (!tokens.error) {
+            accessToken = tokens.access_token;
+            await supabase
+              .from("calendar_integrations")
+              .update({
+                google_access_token: tokens.access_token,
+                token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+              })
+              .eq("id", integration_id);
+          }
+        }
+      }
+
+      // Fetch calendars from Google Calendar API
+      const calendarResponse = await fetch(
+        "https://www.googleapis.com/calendar/v3/users/me/calendarList",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const calendarData = await calendarResponse.json();
+
+      if (calendarData.error) {
+        console.error("Calendar API error:", calendarData.error);
+        return new Response(JSON.stringify({ error: calendarData.error.message || "Failed to fetch calendars" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Map to simpler structure
+      const calendars = (calendarData.items || []).map((cal: { id: string; summary: string; primary?: boolean; backgroundColor?: string }) => ({
+        id: cal.id,
+        name: cal.summary,
+        primary: cal.primary || false,
+        color: cal.backgroundColor,
+      }));
+
+      return new Response(JSON.stringify({ calendars }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
