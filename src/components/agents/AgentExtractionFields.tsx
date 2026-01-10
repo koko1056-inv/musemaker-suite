@@ -211,130 +211,150 @@ export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-3">
           {fields.map((field) => {
             const TypeIcon = getFieldTypeIcon(field.field_type);
             return (
-              <div
-                key={field.id}
-                className="group flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
-              >
-                <div className="p-2 bg-primary/10 rounded-md">
-                  <TypeIcon className="h-4 w-4 text-primary" />
-                </div>
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium truncate">{field.field_name}</span>
-                    {field.is_required && (
-                      <Badge variant="default" className="text-[10px] px-1.5 py-0">必須</Badge>
-                    )}
+              <Card key={field.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  {/* ヘッダー部分 */}
+                  <div className="flex items-start gap-3 p-3 pb-2">
+                    <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                      <TypeIcon className="h-4 w-4 text-primary" />
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium">{field.field_name}</span>
+                        {field.is_required && (
+                          <Badge variant="default" className="text-[10px] px-1.5 py-0">必須</Badge>
+                        )}
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                          {fieldTypes.find(t => t.value === field.field_type)?.label || field.field_type}
+                        </Badge>
+                      </div>
+                      {field.description && (
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {field.description}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <code className="text-[11px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
-                      {`{{extracted.${field.field_key}}}`}
-                    </code>
+
+                  {/* 変数キー表示 */}
+                  <div className="px-3 pb-2">
                     <button
                       onClick={() => handleCopyKey(field.field_key)}
-                      className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded"
+                      className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md bg-muted/50 hover:bg-muted transition-colors group/copy"
                     >
-                      {copiedKey === field.field_key ? (
-                        <Check className="h-3 w-3 text-green-500" />
-                      ) : (
-                        <Copy className="h-3 w-3 text-muted-foreground" />
-                      )}
+                      <code className="text-xs text-muted-foreground font-mono truncate">
+                        {`{{extracted.${field.field_key}}}`}
+                      </code>
+                      <span className="shrink-0 flex items-center gap-1 text-xs text-muted-foreground">
+                        {copiedKey === field.field_key ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                            <span className="text-green-500">コピー済み</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5 group-hover/copy:text-foreground transition-colors" />
+                            <span className="hidden sm:inline group-hover/copy:text-foreground transition-colors">コピー</span>
+                          </>
+                        )}
+                      </span>
                     </button>
                   </div>
-                </div>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setEditingField(field)}
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>フィールドを編集</DialogTitle>
-                      </DialogHeader>
-                      {editingField && (
-                        <div className="space-y-4 pt-2">
-                          <div className="space-y-2">
-                            <Label>フィールド名</Label>
-                            <Input
-                              value={editingField.field_name}
-                              onChange={(e) => setEditingField({ ...editingField, field_name: e.target.value })}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-muted-foreground">変数キー（変更不可）</Label>
-                            <Input value={editingField.field_key} disabled className="font-mono text-sm bg-muted" />
-                          </div>
-                          <div className="space-y-2">
-                            <Label>データタイプ</Label>
-                            <Select
-                              value={editingField.field_type}
-                              onValueChange={(value) => setEditingField({ ...editingField, field_type: value })}
+                  {/* アクションボタン */}
+                  <div className="flex border-t">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <button
+                          onClick={() => setEditingField(field)}
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                          <span>編集</span>
+                        </button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>フィールドを編集</DialogTitle>
+                        </DialogHeader>
+                        {editingField && (
+                          <div className="space-y-4 pt-2">
+                            <div className="space-y-2">
+                              <Label>フィールド名</Label>
+                              <Input
+                                value={editingField.field_name}
+                                onChange={(e) => setEditingField({ ...editingField, field_name: e.target.value })}
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-muted-foreground">変数キー（変更不可）</Label>
+                              <Input value={editingField.field_key} disabled className="font-mono text-sm bg-muted" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>データタイプ</Label>
+                              <Select
+                                value={editingField.field_type}
+                                onValueChange={(value) => setEditingField({ ...editingField, field_type: value })}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {fieldTypes.map((type) => (
+                                    <SelectItem key={type.value} value={type.value}>
+                                      <div className="flex items-center gap-2">
+                                        <type.icon className="h-4 w-4" />
+                                        {type.label}
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>AIへのヒント</Label>
+                              <Textarea
+                                value={editingField.description || ""}
+                                onChange={(e) => setEditingField({ ...editingField, description: e.target.value })}
+                                placeholder="どのような情報を抽出すべきか説明"
+                                rows={2}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between py-2">
+                              <Label>必須フィールド</Label>
+                              <Switch
+                                checked={editingField.is_required}
+                                onCheckedChange={(checked) => setEditingField({ ...editingField, is_required: checked })}
+                              />
+                            </div>
+                            <Button
+                              onClick={handleUpdate}
+                              disabled={updateField.isPending}
+                              className="w-full"
                             >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {fieldTypes.map((type) => (
-                                  <SelectItem key={type.value} value={type.value}>
-                                    <div className="flex items-center gap-2">
-                                      <type.icon className="h-4 w-4" />
-                                      {type.label}
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              {updateField.isPending ? "更新中..." : "保存"}
+                            </Button>
                           </div>
-                          <div className="space-y-2">
-                            <Label>AIへのヒント</Label>
-                            <Textarea
-                              value={editingField.description || ""}
-                              onChange={(e) => setEditingField({ ...editingField, description: e.target.value })}
-                              placeholder="どのような情報を抽出すべきか説明"
-                              rows={2}
-                            />
-                          </div>
-                          <div className="flex items-center justify-between py-2">
-                            <Label>必須フィールド</Label>
-                            <Switch
-                              checked={editingField.is_required}
-                              onCheckedChange={(checked) => setEditingField({ ...editingField, is_required: checked })}
-                            />
-                          </div>
-                          <Button
-                            onClick={handleUpdate}
-                            disabled={updateField.isPending}
-                            className="w-full"
-                          >
-                            {updateField.isPending ? "更新中..." : "保存"}
-                          </Button>
-                        </div>
-                      )}
-                    </DialogContent>
-                  </Dialog>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-destructive hover:text-destructive"
-                    onClick={() => deleteField.mutate(field.id)}
-                    disabled={deleteField.isPending}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
+                        )}
+                      </DialogContent>
+                    </Dialog>
+                    <div className="w-px bg-border" />
+                    <button
+                      onClick={() => deleteField.mutate(field.id)}
+                      disabled={deleteField.isPending}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span>削除</span>
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
             );
           })}
         </div>
@@ -342,12 +362,39 @@ export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
 
       {/* フィールド追加ボタン（フィールドがある場合） */}
       {fields.length > 0 && (
-        <div className="flex flex-wrap gap-2">
+        <div className="space-y-3">
+          {/* プリセットボタン - スクロール可能 */}
+          {presetFields.filter(preset => !fields.some(f => f.field_key === preset.key)).length > 0 && (
+            <div className="overflow-x-auto -mx-4 px-4 pb-2">
+              <div className="flex gap-2 min-w-min">
+                {presetFields
+                  .filter(preset => !fields.some(f => f.field_key === preset.key))
+                  .map((preset) => {
+                    const PresetIcon = getFieldTypeIcon(preset.type);
+                    return (
+                      <Button
+                        key={preset.key}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePresetClick(preset)}
+                        disabled={createField.isPending}
+                        className="gap-2 shrink-0"
+                      >
+                        <PresetIcon className="h-3.5 w-3.5" />
+                        {preset.name}
+                      </Button>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
+          {/* カスタム追加ボタン */}
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button variant="outline" className="w-full gap-2">
                 <Plus className="h-4 w-4" />
-                カスタム追加
+                カスタムフィールドを追加
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -446,24 +493,6 @@ export function AgentExtractionFields({ agentId }: AgentExtractionFieldsProps) {
               </div>
             </DialogContent>
           </Dialog>
-
-          {/* プリセット追加ボタン */}
-          {presetFields
-            .filter(preset => !fields.some(f => f.field_key === preset.key))
-            .slice(0, 3)
-            .map((preset) => (
-              <Button
-                key={preset.key}
-                variant="ghost"
-                size="sm"
-                onClick={() => handlePresetClick(preset)}
-                disabled={createField.isPending}
-                className="gap-1 text-muted-foreground hover:text-foreground"
-              >
-                <Plus className="h-3 w-3" />
-                {preset.name}
-              </Button>
-            ))}
         </div>
       )}
 
