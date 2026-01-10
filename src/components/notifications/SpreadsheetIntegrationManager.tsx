@@ -435,9 +435,12 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
             </div>
             <h4 className="font-semibold text-lg mb-2">スプレッドシート連携が未設定です</h4>
             <p className="text-muted-foreground text-center max-w-sm mb-4">
-              「追加」ボタンから、<br />
-              通話データの出力先を設定しましょう
+              通話データを自動でスプレッドシートに出力できます
             </p>
+            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              最初の連携を追加
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -490,17 +493,6 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
 
                     {/* 右側: アクション */}
                     <div className="flex items-center gap-2 self-end sm:self-auto">
-                      {!integration.is_authorized && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="gap-1.5"
-                          onClick={() => handleAuthorize(integration.id)}
-                        >
-                          <LogIn className="h-3.5 w-3.5" />
-                          Google認証
-                        </Button>
-                      )}
                       <Switch
                         checked={integration.is_active}
                         onCheckedChange={(checked) =>
@@ -518,6 +510,29 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
                       </CollapsibleTrigger>
                     </div>
                   </div>
+
+                  {/* 未認証時のアラート */}
+                  {!integration.is_authorized && (
+                    <div className="mx-4 mb-4 p-4 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                          <AlertTriangle className="h-5 w-5 shrink-0" />
+                          <div>
+                            <p className="font-medium text-sm">Google認証が必要です</p>
+                            <p className="text-xs text-amber-600 dark:text-amber-500">スプレッドシートに書き込むには認証が必要です</p>
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          className="gap-2 bg-amber-600 hover:bg-amber-700 text-white shrink-0 w-full sm:w-auto"
+                          onClick={() => handleAuthorize(integration.id)}
+                        >
+                          <LogIn className="h-4 w-4" />
+                          Googleで認証する
+                        </Button>
+                      </div>
+                    </div>
+                  )}
 
                   <CollapsibleContent>
                     <div className="border-t px-4 sm:px-5 py-4 space-y-4 bg-muted/30">
