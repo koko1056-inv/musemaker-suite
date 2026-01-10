@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -19,7 +19,6 @@ import {
   Calendar,
   ChevronDown,
   ChevronUp,
-  Settings2,
   HelpCircle,
   Bell,
   PhoneOff,
@@ -34,6 +33,10 @@ import {
   Clock,
   FileText,
   Cloud,
+  Key,
+  LogOut,
+  CheckCircle,
+  XCircle,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -83,7 +86,25 @@ export function GoogleCalendarIntegrationManager({
     updateIntegration,
     deleteIntegration,
     toggleIntegration,
+    startOAuthFlow,
+    revokeAuthorization,
+    refetch,
   } = useCalendarIntegrations(workspaceId);
+
+  // OAuth成功メッセージを受信
+  React.useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'google-calendar-oauth-success') {
+        refetch();
+        toast({ 
+          title: "認証完了", 
+          description: "Google Calendarとの連携が完了しました。" 
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [refetch, toast]);
 
   // 全エージェントの抽出フィールドを取得
   const { data: allExtractionFields = [] } = useQuery({
@@ -505,6 +526,18 @@ export function GoogleCalendarIntegrationManager({
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        {integration.is_authorized ? (
+                          <span className="flex items-center gap-1 text-green-600 dark:text-green-400">
+                            <CheckCircle className="h-3 w-3" />
+                            認証済み
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                            <XCircle className="h-3 w-3" />
+                            未認証
+                          </span>
+                        )}
+                        <span>•</span>
                         {integration.agent_id ? (
                           <span className="flex items-center gap-1">
                             <Bot className="h-3 w-3" />
@@ -563,6 +596,71 @@ export function GoogleCalendarIntegrationManager({
                             value={integration.event_duration_minutes}
                             onChange={(e) => handleUpdateField(integration.id, "event_duration_minutes", parseInt(e.target.value) || 30)}
                           />
+                        </div>
+                      </div>
+
+                      {/* Google認証セクション */}
+                      <div className="space-y-3 p-4 rounded-lg border bg-muted/30">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Key className="h-4 w-4" />
+                            <Label className="text-sm font-medium">Google Calendar認証</Label>
+                          </div>
+                          {integration.is_authorized ? (
+                            <Badge variant="default" className="bg-green-500 hover:bg-green-600">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              認証済み
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                              <XCircle className="h-3 w-3 mr-1" />
+                              未認証
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          {integration.is_authorized 
+                            ? "Google Calendarへのアクセスが許可されています。イベントは自動的に作成されます。"
+                            : "Google Calendarにイベントを作成するには、Googleアカウントで認証する必要があります。"
+                          }
+                        </p>
+                        <div className="flex gap-2">
+                          {integration.is_authorized ? (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="outline" size="sm" className="gap-2">
+                                  <LogOut className="h-4 w-4" />
+                                  認証を解除
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>認証を解除しますか？</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Google Calendarへのアクセス権限を取り消します。イベントの自動作成は停止されます。
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => revokeAuthorization.mutate(integration.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    解除する
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          ) : (
+                            <Button 
+                              onClick={() => startOAuthFlow(integration.id)} 
+                              size="sm" 
+                              className="gap-2"
+                            >
+                              <Key className="h-4 w-4" />
+                              Googleで認証
+                            </Button>
+                          )}
                         </div>
                       </div>
 
