@@ -225,6 +225,21 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
     }
   }, []);
 
+  const listSheets = useCallback(async (integrationId: string, spreadsheetId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('google-sheets-oauth', {
+        body: { action: 'list_sheets', integration_id: integrationId, spreadsheet_id: spreadsheetId },
+      });
+
+      if (error) throw error;
+      return data?.sheets || [];
+    } catch (error) {
+      console.error('List sheets error:', error);
+      toast.error('シート一覧の取得に失敗しました');
+      return [];
+    }
+  }, []);
+
   const refetch = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['spreadsheet-integrations', workspaceId] });
   }, [queryClient, workspaceId]);
@@ -238,6 +253,7 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
     toggleIntegration,
     startOAuthFlow,
     listSpreadsheets,
+    listSheets,
     refetch,
   };
 }
