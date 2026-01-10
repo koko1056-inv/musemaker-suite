@@ -86,9 +86,6 @@ export function AppSidebar({
         <img src={musaLogo} alt="MUSA" className="h-12 w-auto" />
       </div>
 
-      {/* Workspace Selector */}
-      {workspace}
-
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
         <div className="space-y-1">
