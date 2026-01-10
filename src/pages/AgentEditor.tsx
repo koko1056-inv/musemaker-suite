@@ -30,7 +30,9 @@ import {
   ChevronDown,
   ChevronUp,
   Settings2,
+  Wand2,
 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
 import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
@@ -205,6 +207,7 @@ export default function AgentEditor() {
   const [playingPreviewId, setPlayingPreviewId] = useState<string | null>(null);
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(false);
 
   const { isLoading: isPlayingAudio, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
@@ -413,6 +416,33 @@ export default function AgentEditor() {
   const handleSkipAIBuilder = () => {
     setShowAIBuilder(false);
     setCurrentStep(1);
+  };
+
+  const handleGeneratePrompt = async () => {
+    if (!description.trim()) {
+      toast.error("概要を入力してください");
+      return;
+    }
+
+    setIsGeneratingPrompt(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-agent-prompt', {
+        body: { agentName, description, language: 'ja' }
+      });
+
+      if (error) throw error;
+
+      if (data?.prompt) {
+        setSystemPrompt(data.prompt);
+        setShowAdvanced(true);
+        toast.success("プロンプトを生成しました！");
+      }
+    } catch (error) {
+      console.error("Error generating prompt:", error);
+      toast.error("プロンプトの生成に失敗しました");
+    } finally {
+      setIsGeneratingPrompt(false);
+    }
   };
 
   // Render for existing agent (collapsible sections)
@@ -780,14 +810,57 @@ export default function AgentEditor() {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="例: お客様の電話を受け、予約や問い合わせに対応します"
+                placeholder="例: お客様の電話を受け、予約や問い合わせに対応します。営業時間の案内や、担当者への取り次ぎも行います。"
                 rows={4}
                 className="resize-none text-base"
               />
-              <p className="text-sm text-muted-foreground">
-                💡 具体的に書くと、AIがより正確に動作します
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  💡 具体的に書くと、AIがより正確に動作します
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGeneratePrompt}
+                  disabled={isGeneratingPrompt || !description.trim()}
+                  className="gap-2 shrink-0"
+                >
+                  {isGeneratingPrompt ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Wand2 className="h-4 w-4" />
+                  )}
+                  AIでプロンプト生成
+                </Button>
+              </div>
             </div>
+
+            {/* Generated System Prompt Preview */}
+            {systemPrompt && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  生成されたシステムプロンプト
+                </div>
+                <p className="text-sm text-muted-foreground line-clamp-3">
+                  {systemPrompt}
+                </p>
+                <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+                  <CollapsibleTrigger className="text-xs text-primary hover:underline">
+                    {showAdvanced ? "閉じる" : "全文を見る / 編集する"}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-2">
+                    <Textarea
+                      value={systemPrompt}
+                      onChange={(e) => setSystemPrompt(e.target.value)}
+                      rows={8}
+                      className="resize-none text-sm font-mono"
+                    />
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            )}
 
             {/* Optional: Folder & Icon */}
             <div className="pt-4 border-t">
