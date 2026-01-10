@@ -42,23 +42,37 @@ export function useDashboardStats() {
       const todayUTC = new Date(todayTokyo.getTime() - (tokyoOffset + localOffset) * 60 * 1000);
       const todayISO = todayUTC.toISOString();
 
+      // Get agent IDs for this workspace first
+      const { data: workspaceAgents } = await supabase
+        .from('agents')
+        .select('id')
+        .eq('workspace_id', DEMO_WORKSPACE_ID);
+      
+      const agentIds = workspaceAgents?.map(a => a.id) || [];
+
       // Parallel queries for today's calls
       const [conversationsResult, outboundResult, totalConversations, totalOutbound] = await Promise.all([
-        // Today's inbound calls
-        supabase
-          .from('conversations')
-          .select('id, status', { count: 'exact', head: false })
-          .gte('started_at', todayISO),
+        // Today's inbound calls (filtered by workspace agents)
+        agentIds.length > 0
+          ? supabase
+              .from('conversations')
+              .select('id, status', { count: 'exact', head: false })
+              .in('agent_id', agentIds)
+              .gte('started_at', todayISO)
+          : Promise.resolve({ data: [], error: null }),
         // Today's outbound calls
         supabase
           .from('outbound_calls')
           .select('id, status', { count: 'exact', head: false })
           .eq('workspace_id', DEMO_WORKSPACE_ID)
           .gte('created_at', todayISO),
-        // Total completed conversations (for success rate)
-        supabase
-          .from('conversations')
-          .select('id, status', { count: 'exact', head: false }),
+        // Total completed conversations (filtered by workspace agents)
+        agentIds.length > 0
+          ? supabase
+              .from('conversations')
+              .select('id, status', { count: 'exact', head: false })
+              .in('agent_id', agentIds)
+          : Promise.resolve({ data: [], error: null }),
         // Total completed outbound calls (for success rate)
         supabase
           .from('outbound_calls')
