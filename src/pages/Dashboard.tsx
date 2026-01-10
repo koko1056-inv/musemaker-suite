@@ -2,12 +2,10 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useAgents } from "@/hooks/useAgents";
-import { useConversations } from "@/hooks/useConversations";
-import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { Badge } from "@/components/ui/badge";
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
+import { useDashboardStats } from "@/hooks/useDashboardStats";
 
 const greetings = [
   "おかえりなさい",
@@ -28,9 +26,7 @@ const greetings = [
 ];
 
 export default function Dashboard() {
-  const { agents, isLoading: isLoadingAgents } = useAgents();
-  const { conversations, isLoading: isLoadingConversations } = useConversations();
-  const { outboundCalls, isLoading: isLoadingOutboundCalls } = useOutboundCalls();
+  const { stats, recentAgents, hasAgents, isLoading, isLoadingAgents } = useDashboardStats();
   
   const [greeting, setGreeting] = useState(() => 
     greetings[Math.floor(Math.random() * greetings.length)]
@@ -40,45 +36,7 @@ export default function Dashboard() {
     setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
   }, []);
 
-  const publishedAgents = agents?.filter(a => a.status === "published") || [];
-  const recentAgents = agents?.slice(0, 4) || [];
-  const hasAgents = agents && agents.length > 0;
-
-  const stats = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-    // Count incoming calls today
-    const todayConversations = conversations?.filter(c => 
-      new Date(c.started_at) >= today
-    ) || [];
-
-    // Count outbound calls today
-    const todayOutboundCalls = outboundCalls?.filter(c => 
-      new Date(c.created_at) >= today
-    ) || [];
-
-    // Total calls today (both incoming and outbound)
-    const todayTotalCalls = todayConversations.length + todayOutboundCalls.length;
-
-    const totalDuration = conversations?.reduce((sum, c) => 
-      sum + (c.duration_seconds || 0), 0
-    ) || 0;
-
-    // Success rate includes both incoming and outbound calls
-    const incomingCompleted = conversations?.filter(c => c.status === 'completed').length || 0;
-    const outboundCompleted = outboundCalls?.filter(c => c.status === 'completed').length || 0;
-    const totalCalls = (conversations?.length || 0) + (outboundCalls?.length || 0);
-    const successRate = totalCalls 
-      ? Math.round(((incomingCompleted + outboundCompleted) / totalCalls) * 100) 
-      : 0;
-
-    return {
-      todayCount: todayTotalCalls,
-      successRate,
-      totalDuration,
-    };
-  }, [conversations, outboundCalls]);
+  // Stats are now provided by useDashboardStats hook
 
   return (
     <AppLayout>
@@ -148,8 +106,8 @@ export default function Dashboard() {
           <>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
               {[
-                { label: "エージェント", value: agents?.length || 0, icon: Bot },
-                { label: "公開中", value: publishedAgents.length, icon: Phone },
+                { label: "エージェント", value: stats.totalAgents, icon: Bot },
+                { label: "公開中", value: stats.publishedAgents, icon: Phone },
                 { label: "今日の通話", value: stats.todayCount, icon: MessageSquare },
                 { label: "成功率", value: `${stats.successRate}%`, icon: ArrowRight },
               ].map((stat, i) => (
@@ -158,7 +116,7 @@ export default function Dashboard() {
                   className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-muted/30 border border-border"
                 >
                   <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-2 sm:mb-3" />
-                  {isLoadingAgents || isLoadingConversations || isLoadingOutboundCalls ? (
+                  {isLoading ? (
                     <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                   ) : (
                     <>

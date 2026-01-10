@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import musaLogo from "@/assets/musa-logo.png";
-import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone } from "lucide-react";
+import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone, HelpCircle } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 const navigation = [{
@@ -50,6 +50,10 @@ const navigation = [{
   name: "設定",
   href: "/settings",
   icon: Settings
+}, {
+  name: "使い方",
+  href: "/guide",
+  icon: HelpCircle
 }];
 interface AppSidebarProps {
   onNavigate?: () => void;
