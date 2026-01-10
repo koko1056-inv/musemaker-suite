@@ -640,9 +640,9 @@ export default function AgentEditor() {
         iconBg="bg-purple-500/10 text-purple-500"
         badge={selectedVoiceData?.name}
       >
-        <div className="pt-4 space-y-5">
+        <div className="pt-4 space-y-4 sm:space-y-5">
           {/* Voice Selection */}
-          <div className="space-y-3">
+          <div className="space-y-2 sm:space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">音声を選択</Label>
               <Button
@@ -655,9 +655,10 @@ export default function AgentEditor() {
                   setIsLoadingVoices(false);
                 }}
                 disabled={isLoadingVoices}
-                className="h-7 px-2 text-xs"
+                className="h-7 px-2 text-xs gap-1"
               >
                 {isLoadingVoices ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
+                <span className="hidden sm:inline">更新</span>
               </Button>
             </div>
             
@@ -666,34 +667,46 @@ export default function AgentEditor() {
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : (
-              <div className="grid gap-2 max-h-60 overflow-auto">
+              <div className="space-y-1.5 max-h-[280px] sm:max-h-60 overflow-auto rounded-lg border bg-muted/30 p-2">
                 {availableVoices.slice(0, 12).map((voice) => (
                   <button
                     key={voice.id}
                     onClick={() => setSelectedVoice(voice.id)}
-                    className={`flex items-center gap-3 p-3 rounded-lg border text-left transition-all ${
+                    className={`w-full flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg text-left transition-all ${
                       selectedVoice === voice.id
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "border-border hover:border-primary/50"
+                        ? "bg-primary/10 border border-primary shadow-sm"
+                        : "bg-background border border-transparent hover:border-border hover:bg-muted/50"
                     }`}
                   >
                     <Button
-                      variant="ghost"
+                      variant={selectedVoice === voice.id ? "default" : "outline"}
                       size="sm"
-                      className="h-8 w-8 p-0 shrink-0 rounded-full"
+                      className="h-8 w-8 sm:h-9 sm:w-9 p-0 shrink-0 rounded-full"
                       onClick={(e) => handleVoicePreview(e, voice)}
                     >
-                      {playingPreviewId === voice.id ? <Square className="h-3 w-3" /> : <Play className="h-3 w-3" />}
+                      {playingPreviewId === voice.id ? (
+                        <Square className="h-3 w-3" />
+                      ) : (
+                        <Play className="h-3 w-3 ml-0.5" />
+                      )}
                     </Button>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{voice.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {voice.labels?.gender === "female" ? "女性" : voice.labels?.gender === "male" ? "男性" : ""}
-                        {voice.isCloned && " • カスタム"}
-                      </p>
+                      <p className="font-medium text-xs sm:text-sm truncate">{voice.name}</p>
+                      <div className="flex items-center gap-1 flex-wrap">
+                        {voice.labels?.gender && (
+                          <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {voice.labels.gender === "female" ? "女性" : "男性"}
+                          </span>
+                        )}
+                        {voice.isCloned && (
+                          <span className="text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full bg-purple-500/10 text-purple-600">
+                            カスタム
+                          </span>
+                        )}
+                      </div>
                     </div>
                     {selectedVoice === voice.id && (
-                      <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-primary shrink-0" />
                     )}
                   </button>
                 ))}
@@ -701,33 +714,53 @@ export default function AgentEditor() {
             )}
           </div>
 
-          {/* Speed & Duration */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3">
+          {/* Speed & Duration - Stack on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t">
+            <div className="space-y-2 sm:space-y-3">
               <Label className="text-sm font-medium flex items-center justify-between">
-                話す速度
-                <span className="text-primary font-normal">{voiceSpeed.toFixed(1)}x</span>
+                <span className="flex items-center gap-1.5">
+                  <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  話す速度
+                </span>
+                <span className="text-primary font-medium text-xs sm:text-sm bg-primary/10 px-2 py-0.5 rounded">
+                  {voiceSpeed.toFixed(1)}x
+                </span>
               </Label>
-              <Slider
-                value={[voiceSpeed]}
-                onValueChange={([val]) => setVoiceSpeed(val)}
-                min={0.7}
-                max={1.3}
-                step={0.1}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">遅</span>
+                <Slider
+                  value={[voiceSpeed]}
+                  onValueChange={([val]) => setVoiceSpeed(val)}
+                  min={0.7}
+                  max={1.3}
+                  step={0.1}
+                  className="flex-1"
+                />
+                <span className="text-[10px] text-muted-foreground">速</span>
+              </div>
             </div>
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               <Label className="text-sm font-medium flex items-center justify-between">
-                最大通話時間
-                <span className="text-primary font-normal">{maxCallDuration}分</span>
+                <span className="flex items-center gap-1.5">
+                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                  最大通話時間
+                </span>
+                <span className="text-primary font-medium text-xs sm:text-sm bg-primary/10 px-2 py-0.5 rounded">
+                  {maxCallDuration}分
+                </span>
               </Label>
-              <Slider
-                value={[maxCallDuration]}
-                onValueChange={([val]) => setMaxCallDuration(val)}
-                min={1}
-                max={30}
-                step={1}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-muted-foreground">1分</span>
+                <Slider
+                  value={[maxCallDuration]}
+                  onValueChange={([val]) => setMaxCallDuration(val)}
+                  min={1}
+                  max={30}
+                  step={1}
+                  className="flex-1"
+                />
+                <span className="text-[10px] text-muted-foreground">30分</span>
+              </div>
             </div>
           </div>
         </div>
