@@ -3,6 +3,7 @@ import { useSpreadsheetIntegrations, SpreadsheetIntegration } from "@/hooks/useS
 import { useAgents } from "@/hooks/useAgents";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import { AgentSelector } from "./AgentSelector";
+import { ColumnMappingEditor } from "./ColumnMappingEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,6 +33,7 @@ import {
   CheckCircle2,
   XCircle,
   Database,
+  Columns,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -582,6 +584,32 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
                               updateIntegration.mutate({
                                 id: integration.id,
                                 include_extracted_data: checked,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      {/* カラムマッピング設定 */}
+                      <div className="space-y-2 pt-2 border-t">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <Label className="text-sm font-medium flex items-center gap-2">
+                              <Columns className="h-4 w-4" />
+                              出力カラム設定
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              抽出データを個別の列として出力できます
+                            </p>
+                          </div>
+                          <ColumnMappingEditor
+                            integrationId={integration.id}
+                            agentIds={integration.agent_ids}
+                            currentMapping={integration.column_mapping}
+                            onSave={(mapping) =>
+                              updateIntegration.mutate({
+                                id: integration.id,
+                                column_mapping: mapping,
                               })
                             }
                           />
