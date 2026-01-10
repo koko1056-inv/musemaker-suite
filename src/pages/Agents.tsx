@@ -190,15 +190,6 @@ export default function Agents() {
           {/* Agent Content - Show on desktop always, mobile only when agents tab is active */}
           <div className={`${mobileTab === "knowledge" ? "hidden lg:block" : ""}`}>
             
-            {/* Overview Stats */}
-            {agents.length > 0 && (
-              <AgentOverviewStats
-                totalAgents={agents.length}
-                activeAgents={activeAgents}
-                agentsWithPhone={agentsWithPhone}
-                totalFolders={folders.length}
-              />
-            )}
 
             {/* Search and Filters */}
             <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row gap-3">
