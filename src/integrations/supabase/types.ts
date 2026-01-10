@@ -261,6 +261,69 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_integrations: {
+        Row: {
+          agent_id: string | null
+          calendar_id: string | null
+          create_on_call_end: boolean
+          create_on_call_failed: boolean
+          created_at: string
+          event_description_template: string
+          event_duration_minutes: number
+          event_title_template: string
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          agent_id?: string | null
+          calendar_id?: string | null
+          create_on_call_end?: boolean
+          create_on_call_failed?: boolean
+          created_at?: string
+          event_description_template?: string
+          event_duration_minutes?: number
+          event_title_template?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          agent_id?: string | null
+          calendar_id?: string | null
+          create_on_call_end?: boolean
+          create_on_call_failed?: boolean
+          created_at?: string
+          event_description_template?: string
+          event_duration_minutes?: number
+          event_title_template?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calendar_integrations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calendar_integrations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_extracted_data: {
         Row: {
           conversation_id: string
