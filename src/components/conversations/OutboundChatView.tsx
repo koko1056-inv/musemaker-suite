@@ -1,21 +1,22 @@
 import React, { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, ChevronDown, Share2, Copy, Check, MessageSquare, Mail } from "lucide-react";
+import { ArrowLeft, ChevronDown, Share2, Copy, Check, MessageSquare, Mail, Phone, PhoneOff, Clock, CheckCircle2, XCircle, Loader2, Calendar, X, ChevronRight } from "lucide-react";
 import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 import { format, isToday, isYesterday } from "date-fns";
 import { ja } from "date-fns/locale";
-import { OutboundCallCard } from "./OutboundCallCard";
 import { OutboundCallDetail } from "./OutboundCallDetail";
 import { ShareCallDialog } from "./ShareCallDialog";
 import { useToast } from "@/hooks/use-toast";
 import type { OutboundAgentInfo, TranscriptMessage } from "./types";
+import { Badge } from "@/components/ui/badge";
 
 interface OutboundChatViewProps {
   agent: OutboundAgentInfo;
@@ -135,10 +136,88 @@ const OutboundChatViewComponent = ({
     }
   }, [generateShareText, agent.agentName, toast]);
 
+  const getStatusBadge = (status: string, result?: string | null) => {
+    switch (status) {
+      case 'scheduled':
+        return (
+          <Badge className="bg-slate-500/20 text-slate-500 border-slate-500/30 hover:bg-slate-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <Calendar className="h-3 w-3" />
+            予約済み
+          </Badge>
+        );
+      case 'initiating':
+      case 'ringing':
+        return (
+          <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <Loader2 className="h-3 w-3 animate-spin" />
+            発信中
+          </Badge>
+        );
+      case 'in_progress':
+        return (
+          <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <Phone className="h-3 w-3" />
+            通話中
+          </Badge>
+        );
+      case 'completed':
+        if (result === 'answered') {
+          return (
+            <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1 px-2 py-0.5 text-[10px]">
+              <CheckCircle2 className="h-3 w-3" />
+              完了
+            </Badge>
+          );
+        } else if (result === 'busy') {
+          return (
+            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1 px-2 py-0.5 text-[10px]">
+              <PhoneOff className="h-3 w-3" />
+              話し中
+            </Badge>
+          );
+        } else if (result === 'no_answer') {
+          return (
+            <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1 px-2 py-0.5 text-[10px]">
+              <Clock className="h-3 w-3" />
+              応答なし
+            </Badge>
+          );
+        }
+        return (
+          <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <CheckCircle2 className="h-3 w-3" />
+            完了
+          </Badge>
+        );
+      case 'failed':
+        return (
+          <Badge className="bg-red-500/20 text-red-500 border-red-500/30 hover:bg-red-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <XCircle className="h-3 w-3" />
+            失敗
+          </Badge>
+        );
+      case 'canceled':
+        return (
+          <Badge className="bg-slate-500/20 text-slate-500 border-slate-500/30 hover:bg-slate-500/30 gap-1 px-2 py-0.5 text-[10px]">
+            <X className="h-3 w-3" />
+            キャンセル
+          </Badge>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const formatDuration = (seconds?: number | null) => {
+    if (!seconds) return null;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
     <div className="flex flex-col h-full w-full bg-background">
-      {/* Header - LINE style sticky header */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 bg-background border-b border-border sticky top-0 z-10">
         <Button
           variant="ghost"
@@ -167,9 +246,8 @@ const OutboundChatViewComponent = ({
       {/* Call List or Detail View */}
       <ScrollArea className="flex-1">
         {selectedCall ? (
-          /* Expanded Detail View - Full screen like LINE chat */
+          /* Expanded Detail View */
           <div className="flex flex-col">
-            {/* Back to list header */}
             <button
               onClick={() => setSelectedCallId(null)}
               className="flex items-center gap-2 px-4 py-3 text-sm text-primary hover:bg-accent/50 transition-colors border-b border-border"
@@ -178,7 +256,6 @@ const OutboundChatViewComponent = ({
               <span>通話一覧に戻る</span>
             </button>
 
-            {/* Call info header */}
             <div className="px-4 py-3 bg-muted/30 border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
@@ -186,12 +263,11 @@ const OutboundChatViewComponent = ({
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {format(new Date(selectedCall.created_at), 'M月d日 HH:mm', { locale: ja })}
                     {selectedCall.duration_seconds && (
-                      <span> · {Math.floor(selectedCall.duration_seconds / 60)}:{(selectedCall.duration_seconds % 60).toString().padStart(2, '0')}</span>
+                      <span> · {formatDuration(selectedCall.duration_seconds)}</span>
                     )}
                   </p>
                 </div>
                 
-                {/* Share Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -224,7 +300,6 @@ const OutboundChatViewComponent = ({
               </div>
             </div>
 
-            {/* Conversation Detail */}
             {selectedCall.conversation && (
               <div className="p-4 pb-24">
                 <OutboundCallDetail
@@ -243,41 +318,101 @@ const OutboundChatViewComponent = ({
             )}
           </div>
         ) : (
-          /* Call List View */
-          <div className="p-3 pb-24 space-y-2">
+          /* Call List View - Matching inbound history style */
+          <div className="divide-y divide-border/30">
             {agent.calls.map((call, index) => {
               const callDate = new Date(call.created_at);
               const showDateSeparator = index === 0 || 
                 format(callDate, 'yyyy-MM-dd') !== format(new Date(agent.calls[index - 1].created_at), 'yyyy-MM-dd');
+              
+              const hasConversation = call.conversation && (
+                (call.conversation.transcript && call.conversation.transcript.length > 0) ||
+                call.conversation.summary
+              );
 
               return (
                 <React.Fragment key={call.id}>
-                  {/* Date Separator - LINE style */}
+                  {/* Date Separator */}
                   {showDateSeparator && (
-                    <div className="flex items-center justify-center py-2">
-                      <div className="bg-muted text-muted-foreground text-[11px] px-3 py-1 rounded-full font-medium">
+                    <div className="flex items-center justify-center py-3 bg-muted/20">
+                      <span className="text-[11px] text-muted-foreground font-medium px-3 py-1 bg-muted rounded-full">
                         {isToday(callDate) ? '今日' : 
                          isYesterday(callDate) ? '昨日' : 
                          format(callDate, 'M月d日（E）', { locale: ja })}
-                      </div>
+                      </span>
                     </div>
                   )}
 
-                  <OutboundCallCard
-                    call={{
-                      id: call.id,
-                      to_number: call.to_number,
-                      status: call.status,
-                      result: call.result,
-                      duration_seconds: call.duration_seconds,
-                      is_read: call.is_read,
-                      created_at: call.created_at,
-                      conversation: call.conversation,
-                    }}
-                    isExpanded={false}
-                    onSelect={() => handleSelectCall(call.id, call.is_read)}
-                    onCancel={cancelCall}
-                  />
+                  {/* Call Card - Matching inbound style */}
+                  <div 
+                    className={`bg-card rounded-xl mx-3 my-2 border border-border transition-all duration-200 overflow-hidden ${
+                      hasConversation ? 'hover:bg-accent/50 cursor-pointer active:scale-[0.99]' : ''
+                    } ${!call.is_read ? 'border-l-4 border-l-primary' : ''}`}
+                    onClick={() => hasConversation && handleSelectCall(call.id, call.is_read)}
+                  >
+                    <div className="flex items-center gap-3 p-4">
+                      {/* Phone Icon */}
+                      <Avatar className="h-11 w-11 border-2 border-background shadow-sm shrink-0">
+                        <AvatarFallback className={`${
+                          call.status === 'completed' ? 'bg-gradient-to-br from-slate-600 to-slate-700' : 
+                          call.status === 'failed' ? 'bg-gradient-to-br from-red-600 to-red-700' : 
+                          'bg-gradient-to-br from-blue-600 to-blue-700'
+                        } text-white`}>
+                          <Phone className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm text-foreground">
+                            {call.to_number}
+                          </span>
+                          {getStatusBadge(call.status, call.result)}
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                          <span>{format(callDate, 'HH:mm')}</span>
+                          {formatDuration(call.duration_seconds) && (
+                            <>
+                              <span>·</span>
+                              <span className="flex items-center gap-0.5">
+                                <Clock className="h-3 w-3" />
+                                {formatDuration(call.duration_seconds)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Summary Preview */}
+                        {hasConversation && call.conversation?.summary && (
+                          <p className="text-xs text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+                            {call.conversation.summary}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center gap-1 shrink-0">
+                        {call.status === 'scheduled' && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              cancelCall(call.id);
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {hasConversation && (
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </React.Fragment>
               );
             })}
