@@ -26,7 +26,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   formatDuration,
   AgentListItem,
-  ChatView,
+  ConversationHistoryTable,
   OutboundAgentListItem,
   OutboundChatView,
   type ConversationDisplay,
@@ -394,7 +394,7 @@ export default function Conversations() {
           }`}
         >
           {activeTab === "conversations" && selectedAgent ? (
-            <ChatView 
+            <ConversationHistoryTable 
               agent={selectedAgent}
               onBack={() => setSelectedAgentId(null)}
               dateFilter={dateFilter}

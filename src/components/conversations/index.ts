@@ -10,3 +10,4 @@ export { ChatView } from './ChatView';
 export { OutboundStatusBadge } from './OutboundStatusBadge';
 export { OutboundAgentListItem } from './OutboundAgentListItem';
 export { OutboundChatView } from './OutboundChatView';
+export { ConversationHistoryTable } from './ConversationHistoryTable';
