@@ -133,6 +133,7 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          custom_icon_url: string | null
           description: string | null
           elevenlabs_agent_id: string | null
           fallback_behavior: string | null
@@ -158,6 +159,7 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          custom_icon_url?: string | null
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
@@ -183,6 +185,7 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          custom_icon_url?: string | null
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
