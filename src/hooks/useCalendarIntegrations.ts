@@ -199,6 +199,25 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
     }
   }, [toast]);
 
+  const listCalendars = useCallback(async (integrationId: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("google-calendar-oauth", {
+        body: { action: "list_calendars", integration_id: integrationId },
+      });
+
+      if (error) throw error;
+      return data?.calendars || [];
+    } catch (error) {
+      console.error("List calendars error:", error);
+      toast({
+        title: "エラー",
+        description: "カレンダー一覧の取得に失敗しました",
+        variant: "destructive",
+      });
+      return [];
+    }
+  }, [toast]);
+
   const revokeAuthorization = useMutation({
     mutationFn: async (integrationId: string) => {
       const { error } = await supabase.functions.invoke("google-calendar-oauth", {
@@ -231,6 +250,7 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
     deleteIntegration,
     toggleIntegration,
     startOAuthFlow,
+    listCalendars,
     revokeAuthorization,
   };
 };

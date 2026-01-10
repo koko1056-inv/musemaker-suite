@@ -8,7 +8,7 @@ const corsHeaders = {
 
 const GOOGLE_OAUTH_SCOPES = [
   "https://www.googleapis.com/auth/spreadsheets",
-  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive.readonly",
 ].join(" ");
 
 serve(async (req) => {
@@ -205,6 +205,89 @@ serve(async (req) => {
         .eq("id", integration_id);
 
       return new Response(JSON.stringify({ success: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (action === "list_spreadsheets") {
+      // Get integration with access token
+      const { data: integration, error: intError } = await supabase
+        .from("spreadsheet_integrations")
+        .select("workspace_id, google_access_token, google_refresh_token, token_expires_at")
+        .eq("id", integration_id)
+        .single();
+
+      if (intError || !integration) {
+        return new Response(JSON.stringify({ error: "Integration not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!integration.google_access_token) {
+        return new Response(JSON.stringify({ error: "Not authorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let accessToken = integration.google_access_token;
+
+      // Check if token is expired and refresh if needed
+      if (integration.token_expires_at && new Date(integration.token_expires_at) < new Date()) {
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("google_client_id, google_client_secret")
+          .eq("id", integration.workspace_id)
+          .single();
+
+        if (workspace?.google_client_id && workspace?.google_client_secret && integration.google_refresh_token) {
+          const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: workspace.google_client_id,
+              client_secret: workspace.google_client_secret,
+              refresh_token: integration.google_refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const tokens = await tokenResponse.json();
+          if (!tokens.error) {
+            accessToken = tokens.access_token;
+            await supabase
+              .from("spreadsheet_integrations")
+              .update({
+                google_access_token: tokens.access_token,
+                token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+              })
+              .eq("id", integration_id);
+          }
+        }
+      }
+
+      // Fetch spreadsheets from Google Drive API
+      const driveResponse = await fetch(
+        "https://www.googleapis.com/drive/v3/files?q=mimeType='application/vnd.google-apps.spreadsheet'&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc&pageSize=50",
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const driveData = await driveResponse.json();
+
+      if (driveData.error) {
+        console.error("Drive API error:", driveData.error);
+        return new Response(JSON.stringify({ error: driveData.error.message || "Failed to fetch spreadsheets" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ spreadsheets: driveData.files || [] }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

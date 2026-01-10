@@ -13,6 +13,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Plus,
   Trash2,
   ChevronDown,
@@ -34,6 +41,8 @@ import {
   XCircle,
   Database,
   Columns,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -51,6 +60,7 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
     deleteIntegration,
     toggleIntegration,
     startOAuthFlow,
+    listSpreadsheets,
     refetch,
   } = useSpreadsheetIntegrations(workspaceId);
 
@@ -62,6 +72,8 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingSpreadsheetId, setEditingSpreadsheetId] = useState<string | null>(null);
   const [editingSpreadsheetUrl, setEditingSpreadsheetUrl] = useState("");
+  const [spreadsheetOptions, setSpreadsheetOptions] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [loadingSpreadsheets, setLoadingSpreadsheets] = useState<Record<string, boolean>>({});
   const [newIntegration, setNewIntegration] = useState({
     name: "",
     spreadsheet_id: "",
@@ -163,6 +175,24 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
       return;
     }
     await startOAuthFlow(integrationId);
+  };
+
+  const handleLoadSpreadsheets = async (integrationId: string) => {
+    setLoadingSpreadsheets(prev => ({ ...prev, [integrationId]: true }));
+    try {
+      const spreadsheets = await listSpreadsheets(integrationId);
+      setSpreadsheetOptions(prev => ({ ...prev, [integrationId]: spreadsheets }));
+    } finally {
+      setLoadingSpreadsheets(prev => ({ ...prev, [integrationId]: false }));
+    }
+  };
+
+  const handleSelectSpreadsheet = async (integrationId: string, spreadsheetId: string) => {
+    await updateIntegration.mutateAsync({
+      id: integrationId,
+      spreadsheet_id: spreadsheetId,
+    });
+    setEditingSpreadsheetId(null);
   };
 
   if (isLoading) {
@@ -454,11 +484,54 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
 
                   <CollapsibleContent>
                     <div className="border-t px-4 sm:px-5 py-4 space-y-4 bg-muted/30">
+                      {/* スプレッドシート選択（認証済みの場合） */}
+                      {integration.is_authorized && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium flex items-center gap-2">
+                              <Table className="h-4 w-4" />
+                              スプレッドシートを選択
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 h-8"
+                              onClick={() => handleLoadSpreadsheets(integration.id)}
+                              disabled={loadingSpreadsheets[integration.id]}
+                            >
+                              {loadingSpreadsheets[integration.id] ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              )}
+                              候補を読み込む
+                            </Button>
+                          </div>
+                          {spreadsheetOptions[integration.id] && spreadsheetOptions[integration.id].length > 0 && (
+                            <Select
+                              value={integration.spreadsheet_id || ""}
+                              onValueChange={(value) => handleSelectSpreadsheet(integration.id, value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="スプレッドシートを選択..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {spreadsheetOptions[integration.id].map((sheet) => (
+                                  <SelectItem key={sheet.id} value={sheet.id}>
+                                    {sheet.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+
                       {/* スプレッドシートID編集 */}
                       <div className="space-y-2">
                         <Label className="text-sm font-medium flex items-center gap-2">
                           <Link2 className="h-4 w-4" />
-                          スプレッドシートID
+                          スプレッドシートID（手動入力）
                         </Label>
                         {editingSpreadsheetId === integration.id ? (
                           <div className="flex gap-2">

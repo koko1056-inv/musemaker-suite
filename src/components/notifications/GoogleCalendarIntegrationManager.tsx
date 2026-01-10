@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -13,6 +13,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Plus,
   Trash2,
@@ -37,6 +44,7 @@ import {
   LogOut,
   CheckCircle,
   XCircle,
+  RefreshCw,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
@@ -87,9 +95,13 @@ export function GoogleCalendarIntegrationManager({
     deleteIntegration,
     toggleIntegration,
     startOAuthFlow,
+    listCalendars,
     revokeAuthorization,
     refetch,
   } = useCalendarIntegrations(workspaceId);
+
+  const [calendarOptions, setCalendarOptions] = useState<Record<string, { id: string; name: string; primary?: boolean }[]>>({});
+  const [loadingCalendars, setLoadingCalendars] = useState<Record<string, boolean>>({});
 
   // OAuth成功メッセージを受信
   React.useEffect(() => {
@@ -214,6 +226,20 @@ export function GoogleCalendarIntegrationManager({
   const handleAgentChange = (integrationId: string, selectedAgentIds: string[]) => {
     const agentId = selectedAgentIds.length > 0 ? selectedAgentIds[0] : null;
     updateIntegration.mutate({ id: integrationId, agent_id: agentId });
+  };
+
+  const handleLoadCalendars = async (integrationId: string) => {
+    setLoadingCalendars(prev => ({ ...prev, [integrationId]: true }));
+    try {
+      const calendars = await listCalendars(integrationId);
+      setCalendarOptions(prev => ({ ...prev, [integrationId]: calendars }));
+    } finally {
+      setLoadingCalendars(prev => ({ ...prev, [integrationId]: false }));
+    }
+  };
+
+  const handleSelectCalendar = (integrationId: string, calendarId: string) => {
+    updateIntegration.mutate({ id: integrationId, calendar_id: calendarId });
   };
 
   // Google Cloud未接続の場合
@@ -577,10 +603,53 @@ export function GoogleCalendarIntegrationManager({
                 <CollapsibleContent>
                   <div className="px-4 pb-4 pt-0 space-y-4 border-t">
                     <div className="pt-4 space-y-4">
+                      {/* カレンダー選択（認証済みの場合） */}
+                      {integration.is_authorized && (
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm font-medium flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              カレンダーを選択
+                            </Label>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 h-8"
+                              onClick={() => handleLoadCalendars(integration.id)}
+                              disabled={loadingCalendars[integration.id]}
+                            >
+                              {loadingCalendars[integration.id] ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              )}
+                              候補を読み込む
+                            </Button>
+                          </div>
+                          {calendarOptions[integration.id] && calendarOptions[integration.id].length > 0 && (
+                            <Select
+                              value={integration.calendar_id || "primary"}
+                              onValueChange={(value) => handleSelectCalendar(integration.id, value)}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="カレンダーを選択..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {calendarOptions[integration.id].map((cal) => (
+                                  <SelectItem key={cal.id} value={cal.id}>
+                                    {cal.name} {cal.primary && "(メイン)"}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+                      )}
+
                       {/* 基本設定 */}
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
-                          <Label className="text-sm">カレンダーID</Label>
+                          <Label className="text-sm">カレンダーID（手動入力）</Label>
                           <Input
                             value={integration.calendar_id || "primary"}
                             onChange={(e) => handleUpdateField(integration.id, "calendar_id", e.target.value)}
