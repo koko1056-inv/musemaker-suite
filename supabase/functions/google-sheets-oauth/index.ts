@@ -292,6 +292,96 @@ serve(async (req) => {
       });
     }
 
+    if (action === "list_sheets") {
+      const { spreadsheet_id } = await req.json().catch(() => ({})) || {};
+      
+      // Get integration with access token
+      const { data: integration, error: intError } = await supabase
+        .from("spreadsheet_integrations")
+        .select("workspace_id, google_access_token, google_refresh_token, token_expires_at")
+        .eq("id", integration_id)
+        .single();
+
+      if (intError || !integration) {
+        return new Response(JSON.stringify({ error: "Integration not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      if (!integration.google_access_token) {
+        return new Response(JSON.stringify({ error: "Not authorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      let accessToken = integration.google_access_token;
+
+      // Check if token is expired and refresh if needed
+      if (integration.token_expires_at && new Date(integration.token_expires_at) < new Date()) {
+        const { data: workspace } = await supabase
+          .from("workspaces")
+          .select("google_client_id, google_client_secret")
+          .eq("id", integration.workspace_id)
+          .single();
+
+        if (workspace?.google_client_id && workspace?.google_client_secret && integration.google_refresh_token) {
+          const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: workspace.google_client_id,
+              client_secret: workspace.google_client_secret,
+              refresh_token: integration.google_refresh_token,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          const tokens = await tokenResponse.json();
+          if (!tokens.error) {
+            accessToken = tokens.access_token;
+            await supabase
+              .from("spreadsheet_integrations")
+              .update({
+                google_access_token: tokens.access_token,
+                token_expires_at: new Date(Date.now() + tokens.expires_in * 1000).toISOString(),
+              })
+              .eq("id", integration_id);
+          }
+        }
+      }
+
+      // Fetch sheets from the spreadsheet
+      const sheetsResponse = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheet_id}?fields=sheets.properties`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      const sheetsData = await sheetsResponse.json();
+
+      if (sheetsData.error) {
+        console.error("Sheets API error:", sheetsData.error);
+        return new Response(JSON.stringify({ error: sheetsData.error.message || "Failed to fetch sheets" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      const sheets = (sheetsData.sheets || []).map((s: { properties: { sheetId: number; title: string } }) => ({
+        id: s.properties.sheetId,
+        name: s.properties.title,
+      }));
+
+      return new Response(JSON.stringify({ sheets }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

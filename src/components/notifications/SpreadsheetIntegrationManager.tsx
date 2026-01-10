@@ -61,6 +61,7 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
     toggleIntegration,
     startOAuthFlow,
     listSpreadsheets,
+    listSheets,
     refetch,
   } = useSpreadsheetIntegrations(workspaceId);
 
@@ -73,7 +74,9 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
   const [editingSpreadsheetId, setEditingSpreadsheetId] = useState<string | null>(null);
   const [editingSpreadsheetUrl, setEditingSpreadsheetUrl] = useState("");
   const [spreadsheetOptions, setSpreadsheetOptions] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [sheetOptions, setSheetOptions] = useState<Record<string, { id: number; name: string }[]>>({});
   const [loadingSpreadsheets, setLoadingSpreadsheets] = useState<Record<string, boolean>>({});
+  const [loadingSheets, setLoadingSheets] = useState<Record<string, boolean>>({});
   const [newIntegration, setNewIntegration] = useState({
     name: "",
     spreadsheet_id: "",
@@ -193,6 +196,26 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
       spreadsheet_id: spreadsheetId,
     });
     setEditingSpreadsheetId(null);
+    // Load sheets for the selected spreadsheet
+    handleLoadSheets(integrationId, spreadsheetId);
+  };
+
+  const handleLoadSheets = async (integrationId: string, spreadsheetId: string) => {
+    if (!spreadsheetId) return;
+    setLoadingSheets(prev => ({ ...prev, [integrationId]: true }));
+    try {
+      const sheets = await listSheets(integrationId, spreadsheetId);
+      setSheetOptions(prev => ({ ...prev, [integrationId]: sheets }));
+    } finally {
+      setLoadingSheets(prev => ({ ...prev, [integrationId]: false }));
+    }
+  };
+
+  const handleSelectSheet = async (integrationId: string, sheetName: string) => {
+    await updateIntegration.mutateAsync({
+      id: integrationId,
+      sheet_name: sheetName,
+    });
   };
 
   if (isLoading) {
@@ -583,20 +606,56 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
                         )}
                       </div>
 
-                      {/* シート名 */}
+                      {/* シート名選択 */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">シート名</Label>
-                        <Input
-                          value={integration.sheet_name || "Sheet1"}
-                          onChange={(e) =>
-                            updateIntegration.mutate({
-                              id: integration.id,
-                              sheet_name: e.target.value,
-                            })
-                          }
-                          placeholder="Sheet1"
-                          className="max-w-xs"
-                        />
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium">シート名</Label>
+                          {integration.spreadsheet_id && integration.is_authorized && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1.5 h-8"
+                              onClick={() => handleLoadSheets(integration.id, integration.spreadsheet_id!)}
+                              disabled={loadingSheets[integration.id]}
+                            >
+                              {loadingSheets[integration.id] ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-3.5 w-3.5" />
+                              )}
+                              候補を読み込む
+                            </Button>
+                          )}
+                        </div>
+                        {sheetOptions[integration.id] && sheetOptions[integration.id].length > 0 ? (
+                          <Select
+                            value={integration.sheet_name || ""}
+                            onValueChange={(value) => handleSelectSheet(integration.id, value)}
+                          >
+                            <SelectTrigger className="max-w-xs">
+                              <SelectValue placeholder="シートを選択..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {sheetOptions[integration.id].map((sheet) => (
+                                <SelectItem key={sheet.id} value={sheet.name}>
+                                  {sheet.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        ) : (
+                          <Input
+                            value={integration.sheet_name || "Sheet1"}
+                            onChange={(e) =>
+                              updateIntegration.mutate({
+                                id: integration.id,
+                                sheet_name: e.target.value,
+                              })
+                            }
+                            placeholder="Sheet1"
+                            className="max-w-xs"
+                          />
+                        )}
                       </div>
 
                       {/* 設定トグル */}
