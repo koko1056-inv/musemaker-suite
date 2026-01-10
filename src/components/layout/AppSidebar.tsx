@@ -87,9 +87,7 @@ export function AppSidebar({
       </div>
 
       {/* Workspace Selector */}
-      {workspace && <div className="px-4 py-2">
-          
-        </div>}
+      {workspace}
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto">
