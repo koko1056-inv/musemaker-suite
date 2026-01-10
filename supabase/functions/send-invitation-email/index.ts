@@ -35,14 +35,18 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    // Use service role for admin operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Verify user is authenticated using anon key
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
 
-    // Verify user is authenticated
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
     if (authError || !user) {
       throw new Error("認証に失敗しました");
     }
@@ -55,8 +59,8 @@ const handler = async (req: Request): Promise<Response> => {
       role 
     }: InvitationEmailRequest = await req.json();
 
-    // Get invitation token
-    const { data: invitation, error: invError } = await supabase
+    // Get invitation token using admin client
+    const { data: invitation, error: invError } = await supabaseAdmin
       .from("workspace_invitations")
       .select("token")
       .eq("id", invitationId)
