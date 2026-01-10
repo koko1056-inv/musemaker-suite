@@ -503,9 +503,9 @@ export default function AgentEditor() {
         iconBg="bg-blue-500/10 text-blue-500"
         defaultOpen={true}
       >
-        <div className="pt-4 space-y-5">
+        <div className="pt-4 space-y-4 sm:space-y-5">
           {/* Name Input */}
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="name" className="text-sm font-medium">
               エージェント名 <span className="text-destructive">*</span>
             </Label>
@@ -514,13 +514,13 @@ export default function AgentEditor() {
               value={agentName}
               onChange={(e) => setAgentName(e.target.value)}
               placeholder="例: 受付担当アシスタント"
-              className="h-11"
+              className="h-10 sm:h-11"
             />
           </div>
 
-          {/* Icon & Folder Row */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
+          {/* Icon & Folder Row - Stack on mobile */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2">
               <Label className="text-sm font-medium">アイコン</Label>
               <AgentIconPicker
                 iconName={iconName}
@@ -530,13 +530,13 @@ export default function AgentEditor() {
               />
             </div>
             {folders.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <Label className="text-sm font-medium">フォルダ</Label>
                 <Select
                   value={selectedFolderId || "none"}
                   onValueChange={(value) => setSelectedFolderId(value === "none" ? null : value)}
                 >
-                  <SelectTrigger className="h-11 bg-popover">
+                  <SelectTrigger className="h-10 sm:h-11 bg-popover">
                     <SelectValue placeholder="選択" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover">
@@ -556,7 +556,7 @@ export default function AgentEditor() {
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
+          <div className="space-y-1.5 sm:space-y-2">
             <Label htmlFor="description" className="text-sm font-medium">
               役割・説明
             </Label>
@@ -566,35 +566,69 @@ export default function AgentEditor() {
               onChange={(e) => setDescription(e.target.value)}
               placeholder="このエージェントは何をしますか？"
               rows={3}
-              className="resize-none"
+              className="resize-none text-sm sm:text-base"
             />
           </div>
 
           {/* Advanced: System Prompt */}
-          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-            <CollapsibleTrigger asChild>
-              <button className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                <Settings2 className="h-4 w-4" />
-                詳細設定（上級者向け）
-                {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="pt-3">
-              <div className="space-y-2">
-                <Label htmlFor="prompt" className="text-sm font-medium">
-                  システムプロンプト
-                </Label>
-                <Textarea
-                  id="prompt"
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                  placeholder="詳細な動作指示を入力..."
-                  rows={6}
-                  className="resize-none font-mono text-sm"
-                />
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
+          <div className="pt-2 border-t">
+            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+              <CollapsibleTrigger asChild>
+                <button className="w-full flex items-center justify-between gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
+                  <div className="flex items-center gap-2">
+                    <Settings2 className="h-4 w-4" />
+                    <span>システムプロンプト</span>
+                  </div>
+                  {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-2 space-y-3">
+                {/* Explanation Card */}
+                <div className="p-3 rounded-lg bg-muted/50 border text-xs sm:text-sm space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <Wand2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-foreground">AIの応答をカスタマイズ</p>
+                      <p className="text-muted-foreground">
+                        システムプロンプトを編集すると、エージェントの話し方・対応方法・回答スタイルを細かく制御できます。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="prompt" className="text-sm font-medium">
+                      プロンプト内容
+                    </Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleGeneratePrompt}
+                      disabled={isGeneratingPrompt || !description.trim()}
+                      className="h-7 gap-1.5 text-xs"
+                    >
+                      {isGeneratingPrompt ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Wand2 className="h-3 w-3" />
+                      )}
+                      AIで生成
+                    </Button>
+                  </div>
+                  <Textarea
+                    id="prompt"
+                    value={systemPrompt}
+                    onChange={(e) => setSystemPrompt(e.target.value)}
+                    placeholder="詳細な動作指示を入力...&#10;&#10;例：&#10;あなたは丁寧なカスタマーサポート担当です。&#10;お客様の質問に対して、親切で分かりやすい回答を心がけてください。"
+                    rows={8}
+                    className="resize-none font-mono text-xs sm:text-sm"
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
       </EditorSection>
 
