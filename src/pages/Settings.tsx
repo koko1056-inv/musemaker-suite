@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -35,12 +36,14 @@ const TAB_OPTIONS = [
   { value: "webhooks", label: "Webhook", icon: Webhook },
   { value: "notifications", label: "連携", icon: Bell },
   { value: "billing", label: "請求", icon: CreditCard },
+  { value: "guide", label: "使い方", icon: HelpCircle, isLink: true, href: "/guide" },
 ] as const;
 
 // Demo workspace ID for testing when not authenticated
 const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function Settings() {
+  const navigate = useNavigate();
   const {
     workspace,
     isLoading,
@@ -193,16 +196,26 @@ export default function Settings() {
               <DropdownMenuContent className="w-[calc(100vw-2rem)] bg-background border-border">
                 {TAB_OPTIONS.map((tab) => {
                   const Icon = tab.icon;
+                  const isLinkTab = 'isLink' in tab && tab.isLink;
                   return (
                     <DropdownMenuItem
                       key={tab.value}
-                      onClick={() => setActiveTab(tab.value)}
+                      onClick={() => {
+                        if (isLinkTab && 'href' in tab) {
+                          navigate(tab.href as string);
+                        } else {
+                          setActiveTab(tab.value);
+                        }
+                      }}
                       className={`flex items-center gap-2 ${activeTab === tab.value ? 'bg-muted' : ''}`}
                     >
                       <Icon className="h-4 w-4" />
                       {tab.label}
                       {tab.value === "integrations" && (hasApiKey || hasTwilioCredentials) && (
                         <span className="h-2 w-2 rounded-full bg-success animate-pulse ml-auto" />
+                      )}
+                      {isLinkTab && (
+                        <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
                       )}
                     </DropdownMenuItem>
                   );
