@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -14,8 +14,12 @@ import { EmailNotificationManager } from "@/components/notifications/EmailNotifi
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
+import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slack } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
@@ -52,6 +56,23 @@ export default function Settings() {
   const [apiKey, setApiKey] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+
+  const { user } = useAuth();
+  const {
+    members,
+    invitations,
+    isLoading: isMembersLoading,
+    invite,
+    isInviting,
+    updateRole,
+    isUpdatingRole,
+    removeMember,
+    isRemovingMember,
+    cancelInvitation,
+    isCancellingInvitation,
+    isAdmin: isMemberAdmin,
+  } = useWorkspaceMembers();
 
   // Twilio credentials state
   const [twilioAccountSid, setTwilioAccountSid] = useState("");
@@ -243,6 +264,7 @@ export default function Settings() {
 
           {/* Workspace Tab */}
           <TabsContent value="workspace" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+            {/* ワークスペース情報 */}
             <div className="glass rounded-xl card-shadow overflow-hidden">
               {/* カードヘッダー */}
               <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
@@ -304,6 +326,147 @@ export default function Settings() {
                         </>
                       )}
                     </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* メンバー管理セクション */}
+            <div className="glass rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                      <Users className="h-4 w-4 text-blue-500" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground text-sm sm:text-base">チームメンバー</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {members.length}人のメンバー
+                        {invitations.length > 0 && ` • ${invitations.length}件の保留中の招待`}
+                      </p>
+                    </div>
+                  </div>
+                  {isMemberAdmin && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => setInviteDialogOpen(true)}
+                      className="h-8 text-xs"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      招待
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                {isMembersLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-14 w-full rounded-xl" />
+                    ))}
+                  </div>
+                ) : members.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground text-sm">
+                    メンバーがいません
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {members.slice(0, 5).map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center justify-between p-3 rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9">
+                            <AvatarFallback className="bg-foreground/5 text-foreground text-xs">
+                              {member.initials}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm text-foreground truncate">
+                              {member.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {member.email}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant="outline" 
+                            className="text-xs px-2 py-0.5 shrink-0"
+                          >
+                            {member.role === "owner" ? "オーナー" : member.role === "admin" ? "管理者" : "メンバー"}
+                          </Badge>
+                          {isMemberAdmin && member.role !== "owner" && member.user_id !== user?.id && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-7 w-7">
+                                  <MoreVertical className="h-3 w-3" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => updateRole({ 
+                                    memberId: member.id, 
+                                    newRole: member.role === "admin" ? "member" : "admin" 
+                                  })}
+                                  disabled={isUpdatingRole}
+                                >
+                                  <Shield className="mr-2 h-3 w-3" />
+                                  {member.role === "admin" ? "メンバーに変更" : "管理者に昇格"}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => removeMember(member.id)}
+                                  disabled={isRemovingMember}
+                                >
+                                  <UserX className="mr-2 h-3 w-3" />
+                                  削除
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {members.length > 5 && (
+                      <Button 
+                        variant="ghost" 
+                        className="w-full text-sm text-muted-foreground"
+                        onClick={() => window.location.href = "/team"}
+                      >
+                        他{members.length - 5}人のメンバーを表示
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* 保留中の招待 */}
+                {isMemberAdmin && invitations.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground mb-2">保留中の招待</p>
+                    <div className="space-y-2">
+                      {invitations.slice(0, 3).map((inv) => (
+                        <div
+                          key={inv.id}
+                          className="flex items-center justify-between p-2 rounded-lg bg-muted/20 text-sm"
+                        >
+                          <span className="text-muted-foreground truncate">{inv.email}</span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                            onClick={() => cancelInvitation(inv.id)}
+                            disabled={isCancellingInvitation}
+                          >
+                            <UserX className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -629,6 +792,14 @@ export default function Settings() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Invite Dialog */}
+        <InviteMemberDialog
+          open={inviteDialogOpen}
+          onOpenChange={setInviteDialogOpen}
+          onInvite={invite}
+          isInviting={isInviting}
+        />
       </div>
     </AppLayout>
   );
