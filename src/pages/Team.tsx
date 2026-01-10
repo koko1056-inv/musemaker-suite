@@ -2,36 +2,16 @@ import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
-import { Plus, MoreVertical, Mail, Shield, UserX, Search, Users } from "lucide-react";
-import { useWorkspace } from "@/hooks/useWorkspace";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { Plus, Search, Users } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useWorkspaceMembers } from "@/hooks/useWorkspaceMembers";
+import {
+  InviteMemberDialog,
+  MemberCard,
+  PendingInvitationsList,
+} from "@/components/team";
 
 const roleColors: Record<string, string> = {
   owner: "bg-foreground/10 text-foreground",
@@ -39,49 +19,25 @@ const roleColors: Record<string, string> = {
   member: "bg-muted text-muted-foreground",
 };
 
-const roleLabels: Record<string, string> = {
-  owner: "オーナー",
-  admin: "管理者",
-  member: "メンバー",
-};
-
 export default function Team() {
   const [searchQuery, setSearchQuery] = useState("");
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
-  const { workspace } = useWorkspace();
   const { user } = useAuth();
 
-  const { data: members = [], isLoading } = useQuery({
-    queryKey: ["workspace-members", workspace?.id],
-    queryFn: async () => {
-      if (!workspace?.id) return [];
-      
-      const { data: workspaceMembers, error } = await supabase
-        .from("workspace_members")
-        .select("*")
-        .eq("workspace_id", workspace.id);
-
-      if (error) throw error;
-
-      // Fetch profiles for each member
-      const memberIds = workspaceMembers.map(m => m.user_id);
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("*")
-        .in("id", memberIds);
-
-      return workspaceMembers.map(member => {
-        const profile = profiles?.find(p => p.id === member.user_id);
-        return {
-          ...member,
-          name: profile?.full_name || profile?.email?.split("@")[0] || "Unknown",
-          email: profile?.email || "",
-          initials: (profile?.full_name || profile?.email || "U").slice(0, 2).toUpperCase(),
-        };
-      });
-    },
-    enabled: !!workspace?.id,
-  });
+  const {
+    members,
+    invitations,
+    isLoading,
+    invite,
+    isInviting,
+    updateRole,
+    isUpdatingRole,
+    removeMember,
+    isRemovingMember,
+    cancelInvitation,
+    isCancellingInvitation,
+    isAdmin,
+  } = useWorkspaceMembers();
 
   const filteredMembers = members.filter(
     (member) =>
@@ -96,50 +52,22 @@ export default function Team() {
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-12">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">チーム</h1>
-              <p className="text-sm text-muted-foreground">ワークスペースのメンバーと権限を管理</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight mb-3">
+                チーム
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                ワークスペースのメンバーと権限を管理
+              </p>
             </div>
-            <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="shrink-0">
-                  <Plus className="h-4 w-4 mr-2" />
-                  メンバーを招待
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>チームメンバーを招待</DialogTitle>
-                  <DialogDescription>
-                    ワークスペースへの招待を送信
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">メールアドレス</Label>
-                    <Input id="email" type="email" placeholder="colleague@company.com" className="rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>役割</Label>
-                    <Select defaultValue="member">
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="admin">管理者</SelectItem>
-                        <SelectItem value="member">メンバー</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-muted-foreground">
-                      管理者はチームメンバーと設定を管理できます
-                    </p>
-                  </div>
-                  <Button className="w-full" onClick={() => setInviteDialogOpen(false)}>
-                    <Mail className="mr-2 h-4 w-4" />
-                    招待を送信
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {isAdmin && (
+              <Button
+                className="shrink-0"
+                onClick={() => setInviteDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                メンバーを招待
+              </Button>
+            )}
           </div>
 
           {/* Search */}
@@ -154,6 +82,15 @@ export default function Team() {
               />
             </div>
           </div>
+
+          {/* Pending Invitations */}
+          {isAdmin && (
+            <PendingInvitationsList
+              invitations={invitations}
+              onCancel={cancelInvitation}
+              isCancelling={isCancellingInvitation}
+            />
+          )}
 
           {/* Members List */}
           {isLoading ? (
@@ -171,58 +108,26 @@ export default function Team() {
               <p className="text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
                 チームメンバーを招待して、一緒にワークスペースを管理しましょう。
               </p>
-              <Button onClick={() => setInviteDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                メンバーを招待
-              </Button>
+              {isAdmin && (
+                <Button onClick={() => setInviteDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  メンバーを招待
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-3">
               {filteredMembers.map((member) => (
-                <div
+                <MemberCard
                   key={member.id}
-                  className="group rounded-2xl border border-border/50 bg-card/50 hover:bg-card hover:border-border transition-all duration-300 p-5"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-12 w-12">
-                        <AvatarFallback className="bg-foreground/5 text-foreground">
-                          {member.initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">{member.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.email}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <Badge className={`${roleColors[member.role]} rounded-full px-3 py-1 text-xs font-normal border-0`}>
-                        {roleLabels[member.role]}
-                      </Badge>
-                      
-                      {member.role !== "owner" && member.user_id !== user?.id && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-9 w-9 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Shield className="mr-2 h-4 w-4" />
-                              役割を変更
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">
-                              <UserX className="mr-2 h-4 w-4" />
-                              削除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                  member={member}
+                  currentUserId={user?.id}
+                  isAdmin={isAdmin}
+                  onUpdateRole={updateRole}
+                  onRemove={removeMember}
+                  isUpdating={isUpdatingRole}
+                  isRemoving={isRemovingMember}
+                />
               ))}
             </div>
           )}
@@ -232,21 +137,43 @@ export default function Team() {
             <div className="mt-8 pt-8 border-t border-border/50">
               <div className="flex flex-wrap gap-8 text-sm text-muted-foreground">
                 <div>
-                  <span className="text-foreground font-medium">{members.length}</span> 人のメンバー
+                  <span className="text-foreground font-medium">
+                    {members.length}
+                  </span>{" "}
+                  人のメンバー
                 </div>
                 <div>
-                  <span className="text-foreground font-medium">{members.filter(m => m.role === "admin" || m.role === "owner").length}</span> 人の管理者
+                  <span className="text-foreground font-medium">
+                    {
+                      members.filter(
+                        (m) => m.role === "admin" || m.role === "owner"
+                      ).length
+                    }
+                  </span>{" "}
+                  人の管理者
                 </div>
+                {invitations.length > 0 && (
+                  <div>
+                    <span className="text-foreground font-medium">
+                      {invitations.length}
+                    </span>{" "}
+                    件の保留中の招待
+                  </div>
+                )}
               </div>
             </div>
           )}
 
           {/* Permissions Info */}
           <div className="mt-12 rounded-2xl border border-border/50 bg-card/30 p-8">
-            <h3 className="font-medium text-lg text-foreground mb-6">役割の権限</h3>
+            <h3 className="font-medium text-lg text-foreground mb-6">
+              役割の権限
+            </h3>
             <div className="grid gap-6 md:grid-cols-3">
               <div className="space-y-3">
-                <Badge className={`${roleColors.owner} rounded-full px-3 py-1 text-xs font-normal border-0`}>
+                <Badge
+                  className={`${roleColors.owner} rounded-full px-3 py-1 text-xs font-normal border-0`}
+                >
                   オーナー
                 </Badge>
                 <ul className="text-sm text-muted-foreground space-y-1.5">
@@ -256,7 +183,9 @@ export default function Team() {
                 </ul>
               </div>
               <div className="space-y-3">
-                <Badge className={`${roleColors.admin} rounded-full px-3 py-1 text-xs font-normal border-0`}>
+                <Badge
+                  className={`${roleColors.admin} rounded-full px-3 py-1 text-xs font-normal border-0`}
+                >
                   管理者
                 </Badge>
                 <ul className="text-sm text-muted-foreground space-y-1.5">
@@ -266,7 +195,9 @@ export default function Team() {
                 </ul>
               </div>
               <div className="space-y-3">
-                <Badge className={`${roleColors.member} rounded-full px-3 py-1 text-xs font-normal border-0`}>
+                <Badge
+                  className={`${roleColors.member} rounded-full px-3 py-1 text-xs font-normal border-0`}
+                >
                   メンバー
                 </Badge>
                 <ul className="text-sm text-muted-foreground space-y-1.5">
@@ -279,6 +210,14 @@ export default function Team() {
           </div>
         </div>
       </div>
+
+      {/* Invite Dialog */}
+      <InviteMemberDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        onInvite={invite}
+        isInviting={isInviting}
+      />
     </AppLayout>
   );
 }

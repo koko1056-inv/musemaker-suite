@@ -1007,6 +1007,50 @@ export type Database = {
           },
         ]
       }
+      workspace_invitations: {
+        Row: {
+          accepted_at: string | null
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          role: Database["public"]["Enums"]["member_role"]
+          token: string
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          role?: Database["public"]["Enums"]["member_role"]
+          token?: string
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          role?: Database["public"]["Enums"]["member_role"]
+          token?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_invitations_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_members: {
         Row: {
           created_at: string
@@ -1080,6 +1124,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_workspace_invitation: {
+        Args: { invitation_token: string }
+        Returns: Json
+      }
       ensure_demo_workspace_membership: { Args: never; Returns: string }
       is_workspace_admin: {
         Args: { _user_id: string; _workspace_id: string }
@@ -1098,7 +1146,18 @@ export type Database = {
         }
         Returns: string
       }
+      remove_workspace_member: {
+        Args: { p_member_id: string }
+        Returns: boolean
+      }
       trigger_process_scheduled_calls: { Args: never; Returns: undefined }
+      update_member_role: {
+        Args: {
+          p_member_id: string
+          p_new_role: Database["public"]["Enums"]["member_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       agent_status: "draft" | "published"
