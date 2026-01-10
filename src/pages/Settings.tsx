@@ -235,12 +235,12 @@ export default function Settings() {
               </TabsTrigger>
               <TabsTrigger 
                 value="integrations" 
-                className="gap-2 text-sm px-4 py-2.5 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
+                className="gap-2 text-sm px-5 py-3 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm transition-all"
               >
-                <Key className="h-4 w-4" />
-                API連携
+                <Key className="h-5 w-5" />
+                <span className="text-base font-medium">API連携</span>
                 {(hasApiKey || hasTwilioCredentials) && (
-                  <span className="h-2 w-2 rounded-full bg-success animate-pulse" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-success animate-pulse" />
                 )}
               </TabsTrigger>
               <TabsTrigger 
