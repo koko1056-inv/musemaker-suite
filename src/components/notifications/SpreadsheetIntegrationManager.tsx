@@ -91,19 +91,33 @@ export function SpreadsheetIntegrationManager({ workspaceId }: SpreadsheetIntegr
 
   // Listen for OAuth success message
   useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'google-oauth-success') {
+        const integrationId = event.data.integration_id;
         refetch();
         toast({
           title: "認証完了",
           description: "Googleアカウントとの連携が完了しました",
         });
+        
+        // 自動でスプレッドシート候補を読み込む
+        if (integrationId) {
+          setLoadingSpreadsheets(prev => ({ ...prev, [integrationId]: true }));
+          try {
+            const spreadsheets = await listSpreadsheets(integrationId);
+            setSpreadsheetOptions(prev => ({ ...prev, [integrationId]: spreadsheets }));
+            // 展開状態にする
+            setExpandedId(integrationId);
+          } finally {
+            setLoadingSpreadsheets(prev => ({ ...prev, [integrationId]: false }));
+          }
+        }
       }
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [refetch, toast]);
+  }, [refetch, toast, listSpreadsheets]);
 
   const hasGoogleCredentials = workspace?.google_client_id && workspace?.google_client_secret;
 
