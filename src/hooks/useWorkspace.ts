@@ -11,6 +11,9 @@ interface Workspace {
   elevenlabs_api_key: string | null;
   twilio_account_sid: string | null;
   twilio_auth_token: string | null;
+  google_client_id: string | null;
+  google_client_secret: string | null;
+  google_refresh_token: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -199,6 +202,39 @@ export const useWorkspace = () => {
     }
   };
 
+  // Update Google Calendar credentials
+  const updateGoogleCalendarCredentials = async (clientId: string, clientSecret: string) => {
+    if (!workspace) return false;
+
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from("workspaces")
+        .update({
+          google_client_id: clientId,
+          google_client_secret: clientSecret,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", workspace.id);
+
+      if (error) {
+        console.error("Error updating Google Calendar credentials:", error);
+        toast.error("Google Calendar認証情報の保存に失敗しました");
+        return false;
+      }
+
+      setWorkspace({ ...workspace, google_client_id: clientId, google_client_secret: clientSecret });
+      toast.success("Google Calendar認証情報を保存しました");
+      return true;
+    } catch (error) {
+      console.error("Error in updateGoogleCalendarCredentials:", error);
+      toast.error("エラーが発生しました");
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Check if user is admin
   const isAdmin = userRole === "admin" || userRole === "owner";
 
@@ -211,6 +247,7 @@ export const useWorkspace = () => {
     updateWorkspace,
     updateElevenLabsApiKey,
     updateTwilioCredentials,
+    updateGoogleCalendarCredentials,
     isAuthenticated,
   };
 };

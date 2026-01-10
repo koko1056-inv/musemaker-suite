@@ -1090,6 +1090,9 @@ export type Database = {
         Row: {
           created_at: string
           elevenlabs_api_key: string | null
+          google_client_id: string | null
+          google_client_secret: string | null
+          google_refresh_token: string | null
           id: string
           name: string
           plan: string
@@ -1101,6 +1104,9 @@ export type Database = {
         Insert: {
           created_at?: string
           elevenlabs_api_key?: string | null
+          google_client_id?: string | null
+          google_client_secret?: string | null
+          google_refresh_token?: string | null
           id?: string
           name: string
           plan?: string
@@ -1112,6 +1118,9 @@ export type Database = {
         Update: {
           created_at?: string
           elevenlabs_api_key?: string | null
+          google_client_id?: string | null
+          google_client_secret?: string | null
+          google_refresh_token?: string | null
           id?: string
           name?: string
           plan?: string
