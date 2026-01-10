@@ -186,6 +186,31 @@ serve(async (req) => {
         } catch (emailError) {
           console.error('Error sending email notification:', emailError);
         }
+
+        // Export to spreadsheet
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/export-to-spreadsheet`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              workspace_id: workspaceId,
+              event_type: eventType,
+              agent_id: agentId,
+              agent_name: agentName,
+              conversation_id: data.id,
+              phone_number: phoneNumber,
+              duration_seconds: durationSeconds,
+              outcome: outcome,
+              transcript: transcript,
+            }),
+          });
+          console.log('Spreadsheet export triggered');
+        } catch (spreadsheetError) {
+          console.error('Error exporting to spreadsheet:', spreadsheetError);
+        }
       }
     };
 
