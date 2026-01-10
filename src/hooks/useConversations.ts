@@ -34,6 +34,7 @@ export interface Conversation {
     name: string;
     icon_name?: string;
     icon_color?: string;
+    custom_icon_url?: string | null;
   };
   extracted_data?: Array<{
     field_key: string;
@@ -53,7 +54,7 @@ export function useConversations() {
         .from('conversations')
         .select(`
           *,
-          agent:agents(name, icon_name, icon_color),
+          agent:agents(name, icon_name, icon_color, custom_icon_url),
           extracted_data:conversation_extracted_data(field_key, field_value)
         `)
         .order('started_at', { ascending: false });

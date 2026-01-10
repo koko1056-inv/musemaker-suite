@@ -53,10 +53,18 @@ const OutboundAgentListItemComponent = ({
         {/* Agent Avatar */}
         <div className="relative shrink-0">
           <div 
-            className="h-12 w-12 rounded-full flex items-center justify-center shadow-md ring-2 ring-background"
-            style={{ backgroundColor: agent.iconColor }}
+            className="h-12 w-12 rounded-full flex items-center justify-center shadow-md ring-2 ring-background overflow-hidden"
+            style={{ backgroundColor: agent.customIconUrl ? 'transparent' : agent.iconColor }}
           >
-            <IconComponent className="h-6 w-6 text-white" />
+            {agent.customIconUrl ? (
+              <img 
+                src={agent.customIconUrl} 
+                alt={agent.agentName} 
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <IconComponent className="h-6 w-6 text-white" />
+            )}
           </div>
         </div>
 
