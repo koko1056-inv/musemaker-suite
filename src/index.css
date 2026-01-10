@@ -196,7 +196,14 @@
   
   /* Animate */
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  /* Pixel art rendering */
+  .pixel-render {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
   }
 }
 
