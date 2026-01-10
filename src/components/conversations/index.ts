@@ -4,6 +4,8 @@ export { AudioPlayer } from './AudioPlayer';
 export { ChatBubble } from './ChatBubble';
 export { ConversationDetail } from './ConversationDetail';
 export { AgentListItem } from './AgentListItem';
+export { OutboundCallCard } from './OutboundCallCard';
+export { OutboundCallDetail } from './OutboundCallDetail';
 export { ChatView } from './ChatView';
 export { OutboundStatusBadge } from './OutboundStatusBadge';
 export { OutboundAgentListItem } from './OutboundAgentListItem';
