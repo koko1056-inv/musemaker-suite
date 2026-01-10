@@ -21,7 +21,7 @@ import { Mail, Loader2 } from "lucide-react";
 interface InviteMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onInvite: (params: { email: string; role: "admin" | "member" }) => Promise<void>;
+  onInvite: (params: { email: string; role: "admin" | "member" }) => Promise<unknown>;
   isInviting: boolean;
 }
 
