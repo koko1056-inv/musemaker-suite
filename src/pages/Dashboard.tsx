@@ -4,6 +4,7 @@ import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Setting
 import { Link } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { useConversations } from "@/hooks/useConversations";
+import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { Badge } from "@/components/ui/badge";
 import { useMemo } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
@@ -11,6 +12,7 @@ import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 export default function Dashboard() {
   const { agents, isLoading: isLoadingAgents } = useAgents();
   const { conversations, isLoading: isLoadingConversations } = useConversations();
+  const { outboundCalls, isLoading: isLoadingOutboundCalls } = useOutboundCalls();
 
   const publishedAgents = agents?.filter(a => a.status === "published") || [];
   const recentAgents = agents?.slice(0, 4) || [];
@@ -20,25 +22,37 @@ export default function Dashboard() {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // Count incoming calls today
     const todayConversations = conversations?.filter(c => 
       new Date(c.started_at) >= today
     ) || [];
+
+    // Count outbound calls today
+    const todayOutboundCalls = outboundCalls?.filter(c => 
+      new Date(c.created_at) >= today
+    ) || [];
+
+    // Total calls today (both incoming and outbound)
+    const todayTotalCalls = todayConversations.length + todayOutboundCalls.length;
 
     const totalDuration = conversations?.reduce((sum, c) => 
       sum + (c.duration_seconds || 0), 0
     ) || 0;
 
-    const completedCount = conversations?.filter(c => c.status === 'completed').length || 0;
-    const successRate = conversations?.length 
-      ? Math.round((completedCount / conversations.length) * 100) 
+    // Success rate includes both incoming and outbound calls
+    const incomingCompleted = conversations?.filter(c => c.status === 'completed').length || 0;
+    const outboundCompleted = outboundCalls?.filter(c => c.status === 'completed').length || 0;
+    const totalCalls = (conversations?.length || 0) + (outboundCalls?.length || 0);
+    const successRate = totalCalls 
+      ? Math.round(((incomingCompleted + outboundCompleted) / totalCalls) * 100) 
       : 0;
 
     return {
-      todayCount: todayConversations.length,
+      todayCount: todayTotalCalls,
       successRate,
       totalDuration,
     };
-  }, [conversations]);
+  }, [conversations, outboundCalls]);
 
   return (
     <AppLayout>
@@ -118,7 +132,7 @@ export default function Dashboard() {
                   className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-muted/30 border border-border"
                 >
                   <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-2 sm:mb-3" />
-                  {isLoadingAgents || isLoadingConversations ? (
+                  {isLoadingAgents || isLoadingConversations || isLoadingOutboundCalls ? (
                     <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                   ) : (
                     <>
