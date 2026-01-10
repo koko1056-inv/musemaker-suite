@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
 import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
+import { useCalendarIntegrations, type CalendarIntegration } from "@/hooks/useCalendarIntegrations";
 import { AgentSelector } from "./AgentSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +33,6 @@ import {
   Bot,
   Clock,
   FileText,
-  ExternalLink,
   Cloud,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -55,23 +55,6 @@ interface GoogleCalendarIntegrationManagerProps {
   onNavigateToIntegrations: () => void;
 }
 
-interface CalendarIntegration {
-  id: string;
-  name: string;
-  calendar_id: string;
-  is_active: boolean;
-  create_on_call_end: boolean;
-  create_on_call_failed: boolean;
-  include_summary: boolean;
-  include_transcript: boolean;
-  event_title_template: string;
-  event_description_template: string;
-  event_duration_minutes: number;
-  agent_ids: string[] | null;
-  created_at: string;
-  updated_at: string;
-}
-
 // 利用可能な変数一覧
 const AVAILABLE_VARIABLES = [
   { key: "{{agent_name}}", label: "エージェント名", description: "通話を担当したエージェントの名前" },
@@ -92,7 +75,15 @@ export function GoogleCalendarIntegrationManager({
 }: GoogleCalendarIntegrationManagerProps) {
   const { agents } = useAgents();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  
+  const {
+    integrations,
+    isLoading,
+    createIntegration,
+    updateIntegration,
+    deleteIntegration,
+    toggleIntegration,
+  } = useCalendarIntegrations(workspaceId);
 
   // 全エージェントの抽出フィールドを取得
   const { data: allExtractionFields = [] } = useQuery({
@@ -119,9 +110,6 @@ export function GoogleCalendarIntegrationManager({
     enabled: !!agents && agents.length > 0,
   });
 
-  // カレンダー連携の取得（ローカルストレージで仮実装 - 実際はDBテーブルを使用）
-  const [integrations, setIntegrations] = useState<CalendarIntegration[]>([]);
-  
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
@@ -129,18 +117,17 @@ export function GoogleCalendarIntegrationManager({
   const [editingDescriptionId, setEditingDescriptionId] = useState<string | null>(null);
   const [editingDescription, setEditingDescription] = useState("");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [newIntegration, setNewIntegration] = useState({
     name: "",
     calendar_id: "primary",
     create_on_call_end: true,
     create_on_call_failed: false,
-    include_summary: true,
-    include_transcript: false,
     event_title_template: "【通話】{{agent_name}} - {{phone_number}}",
     event_description_template: "📅 日時: {{datetime}}\n📞 電話番号: {{phone_number}}\n⏱️ 通話時間: {{duration}}\n📊 結果: {{outcome}}\n\n{{summary}}",
     event_duration_minutes: 30,
-    agent_ids: null as string[] | null,
+    agent_id: null as string | null,
   });
 
   const handleCopyVariable = (variable: string) => {
@@ -160,52 +147,52 @@ export function GoogleCalendarIntegrationManager({
       return;
     }
 
-    const newItem: CalendarIntegration = {
-      id: crypto.randomUUID(),
-      ...newIntegration,
-      is_active: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
+    setIsCreating(true);
+    try {
+      await createIntegration.mutateAsync({
+        workspace_id: workspaceId,
+        name: newIntegration.name,
+        calendar_id: newIntegration.calendar_id || null,
+        agent_id: newIntegration.agent_id,
+        event_duration_minutes: newIntegration.event_duration_minutes,
+        create_on_call_end: newIntegration.create_on_call_end,
+        create_on_call_failed: newIntegration.create_on_call_failed,
+        event_title_template: newIntegration.event_title_template,
+        event_description_template: newIntegration.event_description_template,
+        is_active: true,
+      });
 
-    setIntegrations(prev => [...prev, newItem]);
-    
-    setNewIntegration({
-      name: "",
-      calendar_id: "primary",
-      create_on_call_end: true,
-      create_on_call_failed: false,
-      include_summary: true,
-      include_transcript: false,
-      event_title_template: "【通話】{{agent_name}} - {{phone_number}}",
-      event_description_template: "📅 日時: {{datetime}}\n📞 電話番号: {{phone_number}}\n⏱️ 通話時間: {{duration}}\n📊 結果: {{outcome}}\n\n{{summary}}",
-      event_duration_minutes: 30,
-      agent_ids: null,
-    });
-    setIsCreateOpen(false);
-    
-    toast({ title: "カレンダー連携を作成しました" });
+      setNewIntegration({
+        name: "",
+        calendar_id: "primary",
+        create_on_call_end: true,
+        create_on_call_failed: false,
+        event_title_template: "【通話】{{agent_name}} - {{phone_number}}",
+        event_description_template: "📅 日時: {{datetime}}\n📞 電話番号: {{phone_number}}\n⏱️ 通話時間: {{duration}}\n📊 結果: {{outcome}}\n\n{{summary}}",
+        event_duration_minutes: 30,
+        agent_id: null,
+      });
+      setIsCreateOpen(false);
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleToggle = (id: string) => {
-    setIntegrations(prev => 
-      prev.map(item => 
-        item.id === id ? { ...item, is_active: !item.is_active } : item
-      )
-    );
+  const handleToggle = (id: string, currentStatus: boolean) => {
+    toggleIntegration.mutate({ id, isActive: !currentStatus });
   };
 
   const handleDelete = (id: string) => {
-    setIntegrations(prev => prev.filter(item => item.id !== id));
-    toast({ title: "カレンダー連携を削除しました" });
+    deleteIntegration.mutate(id);
   };
 
-  const handleUpdateIntegration = (id: string, updates: Partial<CalendarIntegration>) => {
-    setIntegrations(prev =>
-      prev.map(item =>
-        item.id === id ? { ...item, ...updates, updated_at: new Date().toISOString() } : item
-      )
-    );
+  const handleUpdateField = (id: string, field: keyof CalendarIntegration, value: unknown) => {
+    updateIntegration.mutate({ id, [field]: value });
+  };
+
+  const handleAgentChange = (integrationId: string, selectedAgentIds: string[]) => {
+    const agentId = selectedAgentIds.length > 0 ? selectedAgentIds[0] : null;
+    updateIntegration.mutate({ id: integrationId, agent_id: agentId });
   };
 
   // Google Cloud未接続の場合
@@ -322,6 +309,14 @@ export function GoogleCalendarIntegrationManager({
                   />
                   <p className="text-xs text-muted-foreground">カレンダーに表示されるイベントの長さ</p>
                 </div>
+
+                {/* エージェント選択 */}
+                <div className="space-y-2">
+                  <AgentSelector
+                    selectedAgentIds={newIntegration.agent_id ? [newIntegration.agent_id] : null}
+                    onChange={(ids) => setNewIntegration({ ...newIntegration, agent_id: ids?.[0] || null })}
+                  />
+                </div>
               </div>
 
               {/* イベント設定 */}
@@ -432,9 +427,9 @@ export function GoogleCalendarIntegrationManager({
                                   variant="outline"
                                   size="sm"
                                   className="justify-start gap-2 h-auto py-2 px-3 font-mono text-xs"
-                                  onClick={() => handleCopyVariable(`{{extract_${field.field_key}}}`)}
+                                  onClick={() => handleCopyVariable(`{{${field.field_key}}}`)}
                                 >
-                                  {copiedKey === `{{extract_${field.field_key}}}` ? (
+                                  {copiedKey === `{{${field.field_key}}}` ? (
                                     <Check className="h-3 w-3 text-green-500" />
                                   ) : (
                                     <Copy className="h-3 w-3" />
@@ -443,7 +438,7 @@ export function GoogleCalendarIntegrationManager({
                                 </Button>
                               </TooltipTrigger>
                               <TooltipContent>
-                                <p className="font-mono text-xs">{`{{extract_${field.field_key}}}`}</p>
+                                <p className="font-mono text-xs">{`{{${field.field_key}}}`}</p>
                               </TooltipContent>
                             </Tooltip>
                           </TooltipProvider>
@@ -454,180 +449,279 @@ export function GoogleCalendarIntegrationManager({
                 </div>
               </div>
 
-              {/* 含める内容 */}
-              <div className="space-y-3 pt-2 border-t">
-                <h4 className="font-medium">含める内容</h4>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm">サマリーを含める</span>
-                    <Switch
-                      checked={newIntegration.include_summary}
-                      onCheckedChange={(checked) =>
-                        setNewIntegration({ ...newIntegration, include_summary: checked })
-                      }
-                    />
-                  </div>
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm">トランスクリプトを含める</span>
-                    <Switch
-                      checked={newIntegration.include_transcript}
-                      onCheckedChange={(checked) =>
-                        setNewIntegration({ ...newIntegration, include_transcript: checked })
-                      }
-                    />
-                  </div>
-                </div>
+              <div className="flex justify-end gap-2 pt-4 border-t">
+                <Button variant="outline" onClick={() => setIsCreateOpen(false)}>
+                  キャンセル
+                </Button>
+                <Button onClick={handleCreate} disabled={isCreating} className="gap-2">
+                  {isCreating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                  作成
+                </Button>
               </div>
-
-              {/* エージェント選択 */}
-              <div className="pt-2 border-t">
-                <AgentSelector
-                  selectedAgentIds={newIntegration.agent_ids}
-                  onChange={(agentIds) => setNewIntegration({ ...newIntegration, agent_ids: agentIds })}
-                />
-              </div>
-
-              <Button
-                onClick={handleCreate}
-                disabled={!newIntegration.name}
-                className="w-full h-11"
-              >
-                カレンダー連携を作成
-              </Button>
             </div>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* 連携リスト */}
-      {integrations.length === 0 ? (
+      {/* 連携一覧 */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : integrations.length === 0 ? (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <div className="p-4 bg-muted rounded-full mb-4">
               <Calendar className="h-10 w-10 text-muted-foreground" />
             </div>
-            <h4 className="font-semibold text-lg mb-2">カレンダー連携が未設定です</h4>
+            <h4 className="font-semibold text-lg mb-2">カレンダー連携がありません</h4>
             <p className="text-muted-foreground text-center max-w-sm mb-4">
-              「追加」ボタンから、<br />
-              通話をカレンダーに記録する設定を追加しましょう
+              通話終了時に自動でカレンダーにイベントを作成できます
             </p>
+            <Button onClick={() => setIsCreateOpen(true)} className="gap-2">
+              <Plus className="h-4 w-4" />
+              最初の連携を追加
+            </Button>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {integrations.map((integration) => (
             <Card key={integration.id} className="overflow-hidden">
               <Collapsible
                 open={expandedId === integration.id}
-                onOpenChange={() => setExpandedId(expandedId === integration.id ? null : integration.id)}
+                onOpenChange={(open) => setExpandedId(open ? integration.id : null)}
               >
-                <CardContent className="p-0">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 sm:p-5 gap-4">
-                    {/* 左側: アイコンと情報 */}
-                    <div className="flex items-start gap-4 flex-1 min-w-0">
-                      <div className="p-2.5 bg-gradient-to-br from-green-500 to-blue-600 rounded-lg shrink-0">
-                        <Calendar className="h-5 w-5 text-white" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h4 className="font-semibold text-base">{integration.name}</h4>
-                          <Badge
-                            variant={integration.is_active ? "default" : "secondary"}
-                            className="text-xs"
-                          >
-                            {integration.is_active ? "✓ 有効" : "無効"}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
-                          <Clock className="h-3.5 w-3.5" />
-                          {integration.event_duration_minutes}分のイベント
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 mt-2">
-                          {integration.create_on_call_end && (
-                            <Badge variant="outline" className="text-xs gap-1">
-                              <PhoneOff className="h-3 w-3" />
-                              通話終了時
-                            </Badge>
-                          )}
-                          {integration.create_on_call_failed && (
-                            <Badge variant="outline" className="text-xs gap-1">
-                              <AlertTriangle className="h-3 w-3" />
-                              失敗時
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
+                <div className="p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`p-2 rounded-lg ${integration.is_active ? 'bg-green-100 dark:bg-green-900/30' : 'bg-muted'}`}>
+                      <Calendar className={`h-4 w-4 ${integration.is_active ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`} />
                     </div>
-
-                    {/* 右側: アクション */}
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                      <Switch
-                        checked={integration.is_active}
-                        onCheckedChange={() => handleToggle(integration.id)}
-                      />
-                      <CollapsibleTrigger asChild>
-                        <Button variant="ghost" size="icon" className="shrink-0">
-                          {expandedId === integration.id ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </CollapsibleTrigger>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium truncate">{integration.name}</h4>
+                        <Badge variant={integration.is_active ? "default" : "secondary"} className="shrink-0">
+                          {integration.is_active ? "有効" : "無効"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+                        {integration.agent_id ? (
+                          <span className="flex items-center gap-1">
+                            <Bot className="h-3 w-3" />
+                            {agents?.find(a => a.id === integration.agent_id)?.name || "エージェント"}
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            <Bot className="h-3 w-3" />
+                            すべてのエージェント
+                          </span>
+                        )}
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {integration.event_duration_minutes}分
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={integration.is_active}
+                      onCheckedChange={() => handleToggle(integration.id, integration.is_active)}
+                    />
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="icon">
+                        {expandedId === integration.id ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                </div>
 
-                  <CollapsibleContent>
-                    <div className="px-4 sm:px-5 pb-5 pt-2 border-t space-y-4">
-                      {/* イベントプレビュー */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">イベントタイトル</Label>
-                        <div className="p-3 bg-muted/50 rounded-lg font-mono text-sm">
-                          {integration.event_title_template}
+                <CollapsibleContent>
+                  <div className="px-4 pb-4 pt-0 space-y-4 border-t">
+                    <div className="pt-4 space-y-4">
+                      {/* 基本設定 */}
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label className="text-sm">カレンダーID</Label>
+                          <Input
+                            value={integration.calendar_id || "primary"}
+                            onChange={(e) => handleUpdateField(integration.id, "calendar_id", e.target.value)}
+                            className="font-mono text-sm"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm">イベントの長さ（分）</Label>
+                          <Input
+                            type="number"
+                            min={5}
+                            max={480}
+                            value={integration.event_duration_minutes}
+                            onChange={(e) => handleUpdateField(integration.id, "event_duration_minutes", parseInt(e.target.value) || 30)}
+                          />
                         </div>
                       </div>
 
+                      {/* エージェント選択 */}
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium">イベント説明</Label>
-                        <div className="p-3 bg-muted/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
-                          {integration.event_description_template}
+                        <AgentSelector
+                          selectedAgentIds={integration.agent_id ? [integration.agent_id] : null}
+                          onChange={(ids) => handleAgentChange(integration.id, ids || [])}
+                        />
+                      </div>
+
+                      {/* 作成タイミング */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">作成タイミング</Label>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          <div className="flex items-center justify-between p-3 rounded-lg border">
+                            <span className="text-sm flex items-center gap-2">
+                              <PhoneOff className="h-4 w-4 text-muted-foreground" />
+                              通話終了時
+                            </span>
+                            <Switch
+                              checked={integration.create_on_call_end}
+                              onCheckedChange={(checked) => handleUpdateField(integration.id, "create_on_call_end", checked)}
+                            />
+                          </div>
+                          <div className="flex items-center justify-between p-3 rounded-lg border">
+                            <span className="text-sm flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+                              通話失敗時
+                            </span>
+                            <Switch
+                              checked={integration.create_on_call_failed}
+                              onCheckedChange={(checked) => handleUpdateField(integration.id, "create_on_call_failed", checked)}
+                            />
+                          </div>
                         </div>
                       </div>
 
-                      {/* 対象エージェント */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium flex items-center gap-2">
-                          <Bot className="h-4 w-4" />
-                          対象エージェント
-                        </Label>
-                        <div className="flex flex-wrap gap-1.5">
-                          {integration.agent_ids === null ? (
-                            <Badge variant="secondary">すべてのエージェント</Badge>
+                      {/* テンプレート */}
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">タイトルテンプレート</Label>
+                            {editingTitleId === integration.id ? (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    handleUpdateField(integration.id, "event_title_template", editingTitle);
+                                    setEditingTitleId(null);
+                                  }}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => setEditingTitleId(null)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setEditingTitleId(integration.id);
+                                  setEditingTitle(integration.event_title_template);
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          {editingTitleId === integration.id ? (
+                            <Input
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              className="font-mono text-sm"
+                            />
                           ) : (
-                            integration.agent_ids.map(id => {
-                              const agent = agents?.find(a => a.id === id);
-                              return agent ? (
-                                <Badge key={id} variant="outline">{agent.name}</Badge>
-                              ) : null;
-                            })
+                            <div className="p-3 bg-muted/50 rounded-lg font-mono text-sm">
+                              {integration.event_title_template}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-sm">説明テンプレート</Label>
+                            {editingDescriptionId === integration.id ? (
+                              <div className="flex gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => {
+                                    handleUpdateField(integration.id, "event_description_template", editingDescription);
+                                    setEditingDescriptionId(null);
+                                  }}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => setEditingDescriptionId(null)}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setEditingDescriptionId(integration.id);
+                                  setEditingDescription(integration.event_description_template);
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                          {editingDescriptionId === integration.id ? (
+                            <Textarea
+                              value={editingDescription}
+                              onChange={(e) => setEditingDescription(e.target.value)}
+                              className="font-mono text-sm min-h-[120px]"
+                            />
+                          ) : (
+                            <div className="p-3 bg-muted/50 rounded-lg font-mono text-sm whitespace-pre-wrap">
+                              {integration.event_description_template}
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {/* 削除ボタン */}
-                      <div className="flex justify-end pt-2">
+                      <div className="pt-4 border-t">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="sm" className="gap-2">
                               <Trash2 className="h-4 w-4" />
-                              削除
+                              この連携を削除
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
-                              <AlertDialogTitle>カレンダー連携を削除しますか？</AlertDialogTitle>
+                              <AlertDialogTitle>連携を削除しますか？</AlertDialogTitle>
                               <AlertDialogDescription>
-                                「{integration.name}」を削除します。この操作は取り消せません。
+                                「{integration.name}」を削除すると、この設定は復元できません。
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
@@ -643,8 +737,8 @@ export function GoogleCalendarIntegrationManager({
                         </AlertDialog>
                       </div>
                     </div>
-                  </CollapsibleContent>
-                </CardContent>
+                  </div>
+                </CollapsibleContent>
               </Collapsible>
             </Card>
           ))}
