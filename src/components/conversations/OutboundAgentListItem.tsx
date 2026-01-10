@@ -58,12 +58,6 @@ const OutboundAgentListItemComponent = ({
           >
             <IconComponent className="h-6 w-6 text-white" />
           </div>
-          {/* Small indicator badge */}
-          {hasActiveCall && (
-            <div className="absolute -bottom-0.5 -right-0.5 h-4 w-4 bg-emerald-500 rounded-full flex items-center justify-center ring-2 ring-background">
-              <Phone className="h-2.5 w-2.5 text-white" />
-            </div>
-          )}
         </div>
 
         {/* Content */}
@@ -83,7 +77,7 @@ const OutboundAgentListItemComponent = ({
         <Button
           variant="outline"
           size="sm"
-          className={`shrink-0 gap-1.5 rounded-full h-9 px-4 border ${getActionButtonStyle()}`}
+          className={`shrink-0 gap-1 sm:gap-1.5 rounded-full h-9 px-3 sm:px-4 border ${getActionButtonStyle()}`}
           onClick={(e) => {
             e.stopPropagation();
             onCall();
