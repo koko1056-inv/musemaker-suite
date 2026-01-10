@@ -8,11 +8,13 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
-  ChevronDown,
+  ChevronRight,
   Plus,
-  Users,
+  Bot,
   Zap,
   Phone,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import { PixelAgentCard } from "./PixelAgentCard";
 
@@ -52,41 +54,6 @@ interface FolderSectionProps {
   getAgentPhoneNumber: (agentId: string) => PhoneNumber | undefined;
 }
 
-// Pixel art folder icon
-const PixelFolderIcon = ({ color, isOpen }: { color: string; isOpen: boolean }) => (
-  <div className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center" style={{ imageRendering: 'pixelated' as const }}>
-    <svg viewBox="0 0 16 16" className="w-full h-full">
-      {isOpen ? (
-        <>
-          {/* Open folder */}
-          <rect x="1" y="4" width="14" height="2" fill={color} />
-          <rect x="2" y="6" width="12" height="8" fill={color} opacity="0.8" />
-          <rect x="3" y="3" width="5" height="2" fill={color} />
-          {/* Folder content preview */}
-          <rect x="4" y="8" width="3" height="2" fill="white" opacity="0.3" />
-          <rect x="8" y="8" width="3" height="2" fill="white" opacity="0.3" />
-        </>
-      ) : (
-        <>
-          {/* Closed folder */}
-          <rect x="1" y="5" width="14" height="9" fill={color} />
-          <rect x="2" y="4" width="5" height="2" fill={color} />
-          <rect x="2" y="6" width="12" height="1" fill="white" opacity="0.2" />
-        </>
-      )}
-    </svg>
-  </div>
-);
-
-// Stats badge component
-const StatBadge = ({ icon: Icon, value, label, active }: { icon: any; value: number; label: string; active?: boolean }) => (
-  <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs ${active ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'}`}>
-    <Icon className="h-3 w-3" />
-    <span className="font-medium">{value}</span>
-    <span className="hidden sm:inline">{label}</span>
-  </div>
-);
-
 export function FolderSection({
   folder,
   agents,
@@ -107,45 +74,83 @@ export function FolderSection({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <CollapsibleTrigger asChild>
-        <button className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-xl bg-card/50 hover:bg-card border border-border/50 hover:border-border transition-all group">
-          <PixelFolderIcon color={folder.color} isOpen={isOpen} />
+        <button className="w-full flex items-center gap-3 p-3 sm:p-4 rounded-2xl bg-card hover:bg-accent/50 border border-border transition-all group">
+          {/* Folder Icon */}
+          <div 
+            className="h-12 w-12 sm:h-14 sm:w-14 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105"
+            style={{ backgroundColor: `${folder.color}20` }}
+          >
+            {isOpen ? (
+              <FolderOpen className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: folder.color }} />
+            ) : (
+              <Folder className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: folder.color }} />
+            )}
+          </div>
           
           <div className="flex-1 text-left min-w-0">
-            <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-foreground truncate text-sm sm:text-base">
+            {/* Folder Name */}
+            <div className="flex items-center gap-2 mb-2">
+              <h3 className="font-semibold text-foreground truncate text-base sm:text-lg">
                 {folder.name}
               </h3>
-              <Badge variant="outline" className="text-[10px] shrink-0">
-                {agents.length}件
-              </Badge>
             </div>
             
-            {/* Folder stats */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <StatBadge icon={Users} value={agents.length} label="エージェント" />
-              <StatBadge icon={Zap} value={activeAgents.length} label="稼働中" active={activeAgents.length > 0} />
-              <StatBadge icon={Phone} value={agentsWithPhone.length} label="電話番号" active={agentsWithPhone.length > 0} />
+            {/* Stats Row */}
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              {/* Agent Count */}
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
+                <Bot className="h-3 w-3" />
+                <span className="font-medium">{agents.length}</span>
+              </div>
+              
+              {/* Active Status */}
+              {activeAgents.length > 0 && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs">
+                  <Zap className="h-3 w-3" />
+                  <span className="font-medium">{activeAgents.length}</span>
+                  <span className="hidden sm:inline">稼働中</span>
+                </div>
+              )}
+              
+              {/* Phone Count */}
+              {agentsWithPhone.length > 0 && (
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs">
+                  <Phone className="h-3 w-3" />
+                  <span className="font-medium">{agentsWithPhone.length}</span>
+                </div>
+              )}
             </div>
           </div>
           
-          <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+          {/* Arrow Indicator */}
+          <div className="flex items-center gap-2 shrink-0">
+            <Badge 
+              variant="secondary" 
+              className="hidden sm:flex text-xs font-normal"
+            >
+              {agents.length}件のエージェント
+            </Badge>
+            <div className={`h-8 w-8 rounded-full bg-muted/50 flex items-center justify-center transition-all ${isOpen ? 'rotate-90 bg-primary/10' : ''}`}>
+              <ChevronRight className={`h-4 w-4 transition-colors ${isOpen ? 'text-primary' : 'text-muted-foreground'}`} />
+            </div>
+          </div>
         </button>
       </CollapsibleTrigger>
       
       <CollapsibleContent>
-        <div className="mt-3 pl-0 sm:pl-4">
+        <div className="mt-3 ml-0 sm:ml-6 pl-0 sm:pl-4 sm:border-l-2 border-border/50">
           {agents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center border border-dashed border-border rounded-xl bg-muted/20">
-              <div className="w-12 h-12 mb-3 opacity-50">
-                <svg viewBox="0 0 16 16" style={{ imageRendering: 'pixelated' as const }}>
-                  <rect x="1" y="5" width="14" height="9" fill="currentColor" opacity="0.3" />
-                  <rect x="2" y="4" width="5" height="2" fill="currentColor" opacity="0.3" />
-                </svg>
+            <div className="flex flex-col items-center justify-center py-10 text-center border border-dashed border-border rounded-xl bg-muted/10">
+              <div 
+                className="h-16 w-16 rounded-2xl flex items-center justify-center mb-4"
+                style={{ backgroundColor: `${folder.color}10` }}
+              >
+                <Folder className="h-8 w-8 opacity-30" style={{ color: folder.color }} />
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
+              <p className="text-sm text-muted-foreground mb-4">
                 このフォルダにはエージェントがありません
               </p>
-              <Button asChild variant="outline" size="sm" className="gap-2">
+              <Button asChild variant="outline" size="sm" className="gap-2 rounded-full">
                 <Link to="/agents/new">
                   <Plus className="h-4 w-4" />
                   エージェントを作成
