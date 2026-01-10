@@ -6,13 +6,39 @@ import { useAgents } from "@/hooks/useAgents";
 import { useConversations } from "@/hooks/useConversations";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { Badge } from "@/components/ui/badge";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
+
+const greetings = [
+  "おかえりなさい",
+  "今日も一歩、前へ",
+  "小さな進歩が大きな変化を生む",
+  "継続は力なり",
+  "挑戦なくして成長なし",
+  "一期一会を大切に",
+  "今日という日は二度とこない",
+  "失敗は成功のもと",
+  "千里の道も一歩から",
+  "為せば成る",
+  "笑う門には福来る",
+  "七転び八起き",
+  "石の上にも三年",
+  "習うより慣れろ",
+  "塵も積もれば山となる",
+];
 
 export default function Dashboard() {
   const { agents, isLoading: isLoadingAgents } = useAgents();
   const { conversations, isLoading: isLoadingConversations } = useConversations();
   const { outboundCalls, isLoading: isLoadingOutboundCalls } = useOutboundCalls();
+  
+  const [greeting, setGreeting] = useState(() => 
+    greetings[Math.floor(Math.random() * greetings.length)]
+  );
+
+  useEffect(() => {
+    setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
+  }, []);
 
   const publishedAgents = agents?.filter(a => a.status === "published") || [];
   const recentAgents = agents?.slice(0, 4) || [];
@@ -61,7 +87,7 @@ export default function Dashboard() {
         {/* Welcome Header */}
         <div className="mb-8 sm:mb-12">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-tight text-foreground mb-1 sm:mb-2">
-            おかえりなさい
+            {greeting}
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
             {hasAgents 
