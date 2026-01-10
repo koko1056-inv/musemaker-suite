@@ -164,25 +164,27 @@ export default function Dashboard() {
                       to={`/agents/${agent.id}`}
                       className="flex items-start sm:items-center gap-3 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-border bg-card hover:bg-muted/30 transition-all duration-200 group"
                     >
-                      <div className={`flex h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-lg sm:rounded-xl transition-colors shrink-0 overflow-hidden ${
-                        agent.icon_name === 'custom' && agent.custom_icon_url
-                          ? ''
-                          : agent.status === "published" 
-                            ? "bg-foreground text-background" 
-                            : "bg-muted text-muted-foreground group-hover:bg-foreground/10"
-                      }`} style={agent.icon_name !== 'custom' && agent.icon_color ? { backgroundColor: agent.icon_color } : undefined}>
-                        {agent.icon_name === 'custom' && agent.custom_icon_url ? (
+                      {agent.icon_name === 'custom' && agent.custom_icon_url ? (
+                        <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-full overflow-hidden border-2 border-background shadow-sm shrink-0">
                           <img 
                             src={agent.custom_icon_url} 
                             alt={agent.name}
                             className="h-full w-full object-cover"
                           />
-                        ) : (() => {
-                          const iconName = agent.icon_name || 'Bot';
-                          const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
-                          return <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />;
-                        })()}
-                      </div>
+                        </div>
+                      ) : (() => {
+                        const iconName = agent.icon_name || 'Bot';
+                        const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
+                        const agentColor = agent.icon_color || (agent.status === "published" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))");
+                        return (
+                          <div 
+                            className="h-10 w-10 sm:h-11 sm:w-11 rounded-full flex items-center justify-center border-2 border-background shadow-sm shrink-0 transition-transform group-hover:scale-105"
+                            style={{ backgroundColor: `${agent.icon_color || 'hsl(var(--muted))'}20`, borderColor: agentColor }}
+                          >
+                            <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: agentColor }} />
+                          </div>
+                        );
+                      })()}
                       <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <p className="font-medium text-sm sm:text-base truncate max-w-[140px] sm:max-w-none">{agent.name}</p>
