@@ -546,7 +546,7 @@ export default function Settings() {
                   ) : (
                     <div className="h-4 w-4 rounded-full border-2 border-muted-foreground/30" />
                   )}
-                  <span className="text-sm font-medium">Google Calendar</span>
+                  <span className="text-sm font-medium">Google Cloud</span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {hasGoogleCalendarCredentials ? '接続済み' : '未接続'}
@@ -724,7 +724,33 @@ export default function Settings() {
               </div>
             </div>
 
-            {/* Google Calendar Integration */}
+          </TabsContent>
+
+          {/* Voice Tools Tab */}
+          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              <SpeechToText />
+              <VoiceClone />
+            </div>
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
+            <WebhookManager workspaceId={workspaceId} />
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
+            {/* Slack連携 */}
+            <SlackIntegrationManager workspaceId={workspaceId} />
+            
+            {/* スプレッドシート連携 */}
+            <SpreadsheetIntegrationManager workspaceId={workspaceId} />
+            
+            {/* メール通知 */}
+            <EmailNotificationManager workspaceId={workspaceId} />
+
+            {/* Google Calendar連携 */}
             <div className="glass rounded-xl card-shadow overflow-hidden">
               <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -830,31 +856,6 @@ export default function Settings() {
                 </div>
               </div>
             </div>
-          </TabsContent>
-
-          {/* Voice Tools Tab */}
-          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
-            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-              <SpeechToText />
-              <VoiceClone />
-            </div>
-          </TabsContent>
-
-          {/* Webhooks Tab */}
-          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
-            <WebhookManager workspaceId={workspaceId} />
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
-            {/* Slack連携 */}
-            <SlackIntegrationManager workspaceId={workspaceId} />
-            
-            {/* スプレッドシート連携 */}
-            <SpreadsheetIntegrationManager workspaceId={workspaceId} />
-            
-            {/* メール通知 */}
-            <EmailNotificationManager workspaceId={workspaceId} />
           </TabsContent>
 
           {/* Billing Tab */}
