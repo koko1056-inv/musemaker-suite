@@ -1,5 +1,6 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { GlassIcon } from "@/components/ui/glass-icon";
 import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings } from "lucide-react";
 import * as LucideIcons from "lucide-react";
 import { Link } from "react-router-dom";
@@ -59,8 +60,8 @@ export default function Dashboard() {
         {!isLoadingAgents && !hasAgents && (
           <div className="mb-12">
             <div className="rounded-3xl border border-dashed border-border/60 bg-muted/20 p-12 text-center">
-              <div className="mx-auto mb-6 h-16 w-16 rounded-2xl bg-foreground/5 flex items-center justify-center">
-                <Bot className="h-8 w-8 text-foreground/60" />
+              <div className="mx-auto mb-6">
+                <GlassIcon icon={Bot} size="2xl" iconSize="xl" variant="muted" className="mx-auto" />
               </div>
               <h2 className="text-xl font-semibold mb-2">
                 エージェントがありません
@@ -82,9 +83,9 @@ export default function Dashboard() {
         {!isLoadingAgents && !hasAgents && (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-12">
             {[
-              { to: "/agents/new", icon: Bot, title: "エージェント作成", primary: true },
-              { to: "/knowledge", icon: BookOpen, title: "ナレッジ登録" },
-              { to: "/settings", icon: Settings, title: "設定" },
+              { to: "/agents/new", icon: Bot, title: "エージェント作成", primary: true, variant: "primary" as const },
+              { to: "/knowledge", icon: BookOpen, title: "ナレッジ登録", variant: "info" as const },
+              { to: "/settings", icon: Settings, title: "設定", variant: "muted" as const },
             ].map((item) => (
               <Link
                 key={item.to}
@@ -95,7 +96,12 @@ export default function Dashboard() {
                     : "bg-card border-border hover:border-foreground/20"
                 }`}
               >
-                <item.icon className="h-5 w-5" />
+                <GlassIcon 
+                  icon={item.icon} 
+                  size="md" 
+                  variant={item.primary ? "default" : item.variant}
+                  className={item.primary ? "bg-background/10 border-background/20 text-background" : ""}
+                />
                 <span className="font-medium">{item.title}</span>
               </Link>
             ))}
@@ -107,16 +113,16 @@ export default function Dashboard() {
           <>
             <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8 sm:mb-12">
               {[
-                { label: "エージェント", value: stats.totalAgents, icon: Bot },
-                { label: "公開中", value: stats.publishedAgents, icon: Phone },
-                { label: "今日の通話", value: stats.todayCount, icon: MessageSquare },
-                { label: "成功率", value: `${stats.successRate}%`, icon: ArrowRight },
+                { label: "エージェント", value: stats.totalAgents, icon: Bot, variant: "primary" as const },
+                { label: "公開中", value: stats.publishedAgents, icon: Phone, variant: "success" as const },
+                { label: "今日の通話", value: stats.todayCount, icon: MessageSquare, variant: "info" as const },
+                { label: "成功率", value: `${stats.successRate}%`, icon: ArrowRight, variant: "purple" as const },
               ].map((stat, i) => (
                 <div
                   key={i}
                   className="p-4 sm:p-5 rounded-xl sm:rounded-2xl bg-muted/30 border border-border"
                 >
-                  <stat.icon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground mb-2 sm:mb-3" />
+                  <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-2 sm:mb-3" />
                   {isLoading ? (
                     <Loader2 className="h-5 w-5 sm:h-6 sm:w-6 animate-spin" />
                   ) : (

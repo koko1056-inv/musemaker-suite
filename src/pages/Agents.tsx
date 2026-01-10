@@ -44,6 +44,7 @@ import { PixelAgentCard } from "@/components/agents/PixelAgentCard";
 import { AgentListView } from "@/components/agents/AgentListView";
 import { FolderSection } from "@/components/agents/FolderSection";
 import { AgentOverviewStats } from "@/components/agents/AgentOverviewStats";
+import { GlassIcon } from "@/components/ui/glass-icon";
 import { toast } from "sonner";
 
 export default function Agents() {
@@ -327,27 +328,21 @@ export default function Agents() {
                 {/* Feature highlights */}
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                      <Mic className="h-7 w-7 text-primary" />
-                    </div>
+                    <GlassIcon icon={Mic} size="xl" variant="primary" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">自然な音声</h3>
                     <p className="text-sm text-muted-foreground">
                       人間のような自然な声で会話します
                     </p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                      <MessageSquare className="h-7 w-7 text-primary" />
-                    </div>
+                    <GlassIcon icon={MessageSquare} size="xl" variant="info" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">スマートな応答</h3>
                     <p className="text-sm text-muted-foreground">
                       AIがお客様の質問に適切に回答
                     </p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-                      <Clock className="h-7 w-7 text-primary" />
-                    </div>
+                    <GlassIcon icon={Clock} size="xl" variant="success" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">24時間対応</h3>
                     <p className="text-sm text-muted-foreground">
                       深夜や休日も自動で応対します

@@ -10,6 +10,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { usePhoneNumbers } from "@/hooks/usePhoneNumbers";
 import { useAgents } from "@/hooks/useAgents";
 import { useWorkspace } from "@/hooks/useWorkspace";
+import { GlassIcon } from "@/components/ui/glass-icon";
 
 export default function PhoneNumbers() {
   const { workspace, isLoading: isWorkspaceLoading } = useWorkspace();
@@ -71,9 +72,7 @@ export default function PhoneNumbers() {
 
             {/* Empty State Card */}
             <div className="rounded-3xl border border-border/50 bg-gradient-to-b from-card to-card/50 p-12 lg:p-16 text-center">
-              <div className="w-20 h-20 rounded-3xl bg-muted/30 flex items-center justify-center mx-auto mb-8">
-                <Phone className="h-10 w-10 text-muted-foreground/60" />
-              </div>
+              <GlassIcon icon={Phone} size="2xl" variant="muted" className="mx-auto mb-8" />
               <h2 className="text-2xl font-medium mb-3">Twilio連携が必要です</h2>
               <p className="text-muted-foreground max-w-md mx-auto mb-10 leading-relaxed">
                 電話番号を管理するには、設定画面でTwilioの認証情報を設定してください。

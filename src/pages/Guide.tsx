@@ -21,6 +21,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { GlassIcon } from "@/components/ui/glass-icon";
 
 // Import preview images
 import dashboardPreview from "@/assets/guide-dashboard-preview.png";
@@ -223,9 +224,7 @@ export default function Guide() {
               {steps.map((step, index) => (
                 <Card key={step.number} className="relative overflow-hidden group hover:shadow-lg transition-all duration-300">
                   <div className="flex items-start gap-4 p-4 sm:p-5">
-                    <div className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg">
-                      {step.number}
-                    </div>
+                    <GlassIcon icon={step.icon} size="md" variant="primary" className="shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <step.icon className="h-4 w-4 text-muted-foreground" />

@@ -22,6 +22,7 @@ import { Slack } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { InviteMemberDialog } from "@/components/team/InviteMemberDialog";
 import { Progress } from "@/components/ui/progress";
+import { GlassIcon } from "@/components/ui/glass-icon";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -148,9 +149,7 @@ export default function Settings() {
         {/* Header */}
         <div className="mb-6 sm:mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-              <Settings2 className="h-5 w-5 text-foreground" />
-            </div>
+            <GlassIcon icon={Settings2} size="md" variant="muted" />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground">設定</h1>
               <p className="text-sm text-muted-foreground">
@@ -283,9 +282,7 @@ export default function Settings() {
               <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building className="h-4 w-4 text-primary" />
-                    </div>
+                    <GlassIcon icon={Building} size="sm" variant="primary" />
                     <div>
                       <h3 className="font-semibold text-foreground text-sm sm:text-base">ワークスペース情報</h3>
                       <p className="text-xs text-muted-foreground">基本情報を設定</p>
@@ -349,9 +346,7 @@ export default function Settings() {
               <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                      <Users className="h-4 w-4 text-blue-500" />
-                    </div>
+                    <GlassIcon icon={Users} size="sm" variant="info" />
                     <div>
                       <h3 className="font-semibold text-foreground text-sm sm:text-base">チームメンバー</h3>
                       <p className="text-xs text-muted-foreground">
