@@ -42,24 +42,14 @@ const OutboundAgentListItemComponent = ({
   
   return (
     <div
-      className={`px-4 py-4 cursor-pointer transition-colors ${
+      className={`px-3 sm:px-4 py-4 cursor-pointer transition-colors ${
         isSelected 
           ? 'bg-primary/8' 
           : 'hover:bg-muted/30'
       }`}
       onClick={onClick}
     >
-      <div className="flex items-center gap-4">
-        {/* Status Indicator */}
-        <div className="shrink-0 w-3 flex justify-center">
-          <div className={`h-2.5 w-2.5 rounded-full ${
-            hasActiveCall ? 'bg-emerald-400 animate-pulse' :
-            hasScheduled ? 'bg-amber-400' :
-            hasUnread ? 'bg-blue-500' :
-            'bg-muted-foreground/30'
-          }`} />
-        </div>
-
+      <div className="flex items-center gap-3 sm:gap-4">
         {/* Agent Avatar */}
         <div className="relative shrink-0">
           <div 
