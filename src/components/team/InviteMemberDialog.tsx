@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Mail, Loader2, Copy, Check, Link } from "lucide-react";
+import { Mail, Loader2, Copy, Check, Link, MessageCircle, Hash, Share2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface InviteResult {
@@ -81,6 +81,38 @@ export function InviteMemberDialog({
     }
   };
 
+  const handleShareLine = () => {
+    if (!inviteLink) return;
+    const message = encodeURIComponent(`ワークスペースへの招待\n${inviteLink}`);
+    window.open(`https://line.me/R/share?text=${message}`, "_blank");
+  };
+
+  const handleShareSlack = () => {
+    if (!inviteLink) return;
+    // Slack doesn't have a direct share URL, but we can copy a formatted message
+    const message = `ワークスペースへの招待リンク: ${inviteLink}`;
+    navigator.clipboard.writeText(message).then(() => {
+      toast.success("Slack用メッセージをコピーしました");
+    });
+  };
+
+  const handleNativeShare = async () => {
+    if (!inviteLink) return;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: "ワークスペースへの招待",
+          text: "ワークスペースに参加してください",
+          url: inviteLink,
+        });
+      } catch (e) {
+        // User cancelled or share failed
+        console.log("Share cancelled");
+      }
+    }
+  };
+
   const handleClose = (open: boolean) => {
     if (!open) {
       setEmail("");
@@ -142,6 +174,41 @@ export function InviteMemberDialog({
               <p className="text-xs text-muted-foreground">
                 このリンクは7日間有効です
               </p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>共有する</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={handleShareLine}
+                >
+                  <MessageCircle className="h-4 w-4 text-green-500" />
+                  LINE
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={handleShareSlack}
+                >
+                  <Hash className="h-4 w-4 text-purple-500" />
+                  Slack
+                </Button>
+                {typeof navigator !== "undefined" && navigator.share && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleNativeShare}
+                    className="shrink-0"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             </div>
             
             <Button
