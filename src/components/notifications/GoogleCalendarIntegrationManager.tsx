@@ -105,18 +105,32 @@ export function GoogleCalendarIntegrationManager({
 
   // OAuth成功メッセージを受信
   React.useEffect(() => {
-    const handleMessage = (event: MessageEvent) => {
+    const handleMessage = async (event: MessageEvent) => {
       if (event.data?.type === 'google-calendar-oauth-success') {
+        const integrationId = event.data.integration_id;
         refetch();
         toast({ 
           title: "認証完了", 
           description: "Google Calendarとの連携が完了しました。" 
         });
+        
+        // 自動でカレンダー候補を読み込む
+        if (integrationId) {
+          setLoadingCalendars(prev => ({ ...prev, [integrationId]: true }));
+          try {
+            const calendars = await listCalendars(integrationId);
+            setCalendarOptions(prev => ({ ...prev, [integrationId]: calendars }));
+            // 展開状態にする
+            setExpandedId(integrationId);
+          } finally {
+            setLoadingCalendars(prev => ({ ...prev, [integrationId]: false }));
+          }
+        }
       }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [refetch, toast]);
+  }, [refetch, toast, listCalendars]);
 
   // 全エージェントの抽出フィールドを取得
   const { data: allExtractionFields = [] } = useQuery({
