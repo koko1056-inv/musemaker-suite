@@ -820,9 +820,6 @@ export default function AgentEditor() {
         </div>
       </EditorSection>
 
-      {/* Knowledge Base Section */}
-      <AgentKnowledgeSection agentId={id} isNew={Boolean(isNew)} />
-
       {/* Extraction Fields */}
       {id && (
         <EditorSection
@@ -837,6 +834,9 @@ export default function AgentEditor() {
           </div>
         </EditorSection>
       )}
+
+      {/* Knowledge Base Section */}
+      <AgentKnowledgeSection agentId={id} isNew={Boolean(isNew)} />
     </div>
   );
 
