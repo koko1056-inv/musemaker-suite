@@ -93,7 +93,7 @@ export const useWorkspaceMembers = () => {
     }: {
       email: string;
       role: "admin" | "member";
-    }) => {
+    }): Promise<{ id: string; token: string; emailSent: boolean }> => {
       if (!workspace?.id) throw new Error("ワークスペースが見つかりません");
 
       const {
@@ -111,7 +111,7 @@ export const useWorkspaceMembers = () => {
 
       const inviterName = profile?.full_name || profile?.email?.split("@")[0] || "チームメンバー";
 
-      // Insert invitation
+      // Insert invitation and get the token
       const { data: invitation, error } = await supabase
         .from("workspace_invitations")
         .insert({
@@ -120,7 +120,7 @@ export const useWorkspaceMembers = () => {
           role,
           invited_by: user.id,
         })
-        .select("id")
+        .select("id, token")
         .single();
 
       if (error) {
@@ -130,29 +130,36 @@ export const useWorkspaceMembers = () => {
         throw error;
       }
 
-      // Send invitation email
-      const { error: emailError } = await supabase.functions.invoke(
-        "send-invitation-email",
-        {
-          body: {
-            invitationId: invitation.id,
-            inviteeEmail: email.toLowerCase().trim(),
-            inviterName,
-            workspaceName: workspace.name,
-            role,
-          },
+      // Try to send invitation email (may fail due to Resend domain restrictions)
+      let emailSent = false;
+      try {
+        const { error: emailError } = await supabase.functions.invoke(
+          "send-invitation-email",
+          {
+            body: {
+              invitationId: invitation.id,
+              inviteeEmail: email.toLowerCase().trim(),
+              inviterName,
+              workspaceName: workspace.name,
+              role,
+            },
+          }
+        );
+        emailSent = !emailError;
+        if (emailError) {
+          console.error("Failed to send invitation email:", emailError);
         }
-      );
-
-      if (emailError) {
-        console.error("Failed to send invitation email:", emailError);
-        // Don't throw - invitation is still created, just email failed
+      } catch (e) {
+        console.error("Email sending error:", e);
       }
 
-      return invitation;
+      return { id: invitation.id, token: invitation.token, emailSent };
     },
-    onSuccess: () => {
-      toast.success("招待メールを送信しました");
+    onSuccess: (data) => {
+      if (data.emailSent) {
+        toast.success("招待メールを送信しました");
+      }
+      // Don't show toast here if email wasn't sent - dialog will handle showing the link
       queryClient.invalidateQueries({
         queryKey: ["workspace-invitations", workspace?.id],
       });
