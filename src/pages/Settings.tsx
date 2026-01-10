@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle, Calendar } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle, Calendar, Cloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -724,44 +724,18 @@ export default function Settings() {
               </div>
             </div>
 
-          </TabsContent>
-
-          {/* Voice Tools Tab */}
-          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
-            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
-              <SpeechToText />
-              <VoiceClone />
-            </div>
-          </TabsContent>
-
-          {/* Webhooks Tab */}
-          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
-            <WebhookManager workspaceId={workspaceId} />
-          </TabsContent>
-
-          {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
-            {/* Slack連携 */}
-            <SlackIntegrationManager workspaceId={workspaceId} />
-            
-            {/* スプレッドシート連携 */}
-            <SpreadsheetIntegrationManager workspaceId={workspaceId} />
-            
-            {/* メール通知 */}
-            <EmailNotificationManager workspaceId={workspaceId} />
-
-            {/* Google Calendar連携 */}
+            {/* Google Cloud Integration */}
             <div className="glass rounded-xl card-shadow overflow-hidden">
               <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg">
-                      <Calendar className="h-5 w-5 text-white" />
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shrink-0 shadow-lg">
+                      <Cloud className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">Google Calendar</h3>
+                      <h3 className="font-semibold text-foreground">Google Cloud</h3>
                       <p className="text-xs text-muted-foreground">
-                        通話情報をカレンダーに連携
+                        Google Calendar、Sheets等のAPI連携
                       </p>
                     </div>
                   </div>
@@ -849,11 +823,109 @@ export default function Settings() {
                   <p className="font-medium text-foreground">設定手順：</p>
                   <ol className="list-decimal list-inside space-y-0.5">
                     <li>Google Cloud Consoleで新しいプロジェクトを作成</li>
-                    <li>Google Calendar APIを有効化</li>
+                    <li>必要なAPI（Calendar, Sheets等）を有効化</li>
                     <li>OAuth 2.0クライアントIDを作成</li>
                     <li>Client IDとClient Secretをここに入力</li>
                   </ol>
                 </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Calendar</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
+                    <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/>
+                    </svg>
+                    <span className="text-xs text-muted-foreground">Sheets</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
+                    <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                    </svg>
+                    <span className="text-xs text-muted-foreground">Drive</span>
+                  </div>
+                  <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border">
+                    <svg className="h-4 w-4 text-muted-foreground" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                    </svg>
+                    <span className="text-xs text-muted-foreground">Gmail</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </TabsContent>
+
+          {/* Voice Tools Tab */}
+          <TabsContent value="voice-tools" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
+              <SpeechToText />
+              <VoiceClone />
+            </div>
+          </TabsContent>
+
+          {/* Webhooks Tab */}
+          <TabsContent value="webhooks" className="pb-24 sm:pb-6">
+            <WebhookManager workspaceId={workspaceId} />
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications" className="space-y-6 sm:space-y-8 pb-24 sm:pb-6">
+            {/* Slack連携 */}
+            <SlackIntegrationManager workspaceId={workspaceId} />
+            
+            {/* スプレッドシート連携 */}
+            <SpreadsheetIntegrationManager workspaceId={workspaceId} />
+            
+            {/* メール通知 */}
+            <EmailNotificationManager workspaceId={workspaceId} />
+
+            {/* Google Calendar連携 */}
+            <div className="glass rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">Google Calendar</h3>
+                      <p className="text-xs text-muted-foreground">
+                        通話情報をカレンダーに連携
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {hasGoogleCalendarCredentials ? (
+                      <Badge className="bg-success/10 text-success gap-1 text-xs border border-success/20">
+                        <Check className="h-3 w-3" />
+                        接続済み
+                      </Badge>
+                    ) : (
+                      <>
+                        <Badge variant="outline" className="text-xs">未接続</Badge>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="gap-2"
+                          onClick={() => setActiveTab("integrations")}
+                        >
+                          <Cloud className="h-4 w-4" />
+                          Google Cloudを設定
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {hasGoogleCalendarCredentials && (
+                  <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      Google Cloudが接続されています。通話終了時にカレンダーへの予定追加が利用可能です。
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
