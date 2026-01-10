@@ -57,15 +57,6 @@ const AgentListItemComponent = ({
       onClick={onClick}
     >
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Status Indicator */}
-        <div className="shrink-0 w-3 flex justify-center">
-          <div className={`h-2.5 w-2.5 rounded-full ${
-            hasInProgress ? 'bg-emerald-400 animate-pulse' :
-            hasUnread ? 'bg-blue-500' :
-            'bg-muted-foreground/30'
-          }`} />
-        </div>
-
         {/* Agent Avatar */}
         <div className="relative shrink-0">
           <div 
