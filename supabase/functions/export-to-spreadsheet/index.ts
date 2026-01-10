@@ -64,13 +64,72 @@ async function refreshAccessToken(
   }
 }
 
+async function getSheetRowCount(
+  accessToken: string,
+  spreadsheetId: string,
+  sheetName: string
+): Promise<number> {
+  try {
+    const range = `${sheetName}!A1:A1`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}`;
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      // If sheet is empty or doesn't exist, return 0
+      return 0;
+    }
+
+    const data = await response.json();
+    return data.values ? data.values.length : 0;
+  } catch (error) {
+    console.error("Error getting sheet row count:", error);
+    return 0;
+  }
+}
+
 async function appendToSheet(
   accessToken: string,
   spreadsheetId: string,
   sheetName: string,
-  values: string[][]
+  values: string[][],
+  headers: string[]
 ): Promise<boolean> {
   try {
+    // Check if header row exists
+    const rowCount = await getSheetRowCount(accessToken, spreadsheetId, sheetName);
+    
+    // If sheet is empty, add header row first
+    if (rowCount === 0) {
+      console.log("Sheet is empty, adding header row first");
+      const headerRange = `${sheetName}!A1`;
+      const headerUrl = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(headerRange)}?valueInputOption=USER_ENTERED`;
+
+      const headerResponse = await fetch(headerUrl, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          values: [headers],
+        }),
+      });
+
+      if (!headerResponse.ok) {
+        const errorText = await headerResponse.text();
+        console.error("Error adding header row:", headerResponse.status, errorText);
+      } else {
+        console.log("Header row added successfully");
+      }
+    }
+
+    // Append data row
     const range = `${sheetName}!A:Z`;
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
 
@@ -222,7 +281,8 @@ serve(async (req) => {
         continue;
       }
 
-      // Build row data
+      // Build headers and row data
+      const headers: string[] = ["日時", "エージェント名", "電話番号", "通話時間", "結果", "ステータス"];
       const now = new Date().toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" });
       const row: string[] = [
         now,                                          // 日時
@@ -235,14 +295,17 @@ serve(async (req) => {
 
       // Add optional fields
       if (integration.include_summary) {
+        headers.push("要約");
         row.push(summary || "-");
       }
 
       if (integration.include_transcript) {
+        headers.push("トランスクリプト");
         row.push(formatTranscript(transcript));
       }
 
       if (integration.include_extracted_data && extracted_data) {
+        headers.push("抽出データ");
         // Add extracted data as JSON or individual columns
         const extractedStr = Object.entries(extracted_data)
           .map(([key, value]) => `${key}: ${value}`)
@@ -250,9 +313,9 @@ serve(async (req) => {
         row.push(extractedStr || "-");
       }
 
-      // Append to spreadsheet
+      // Append to spreadsheet (with auto header)
       const sheetName = integration.sheet_name || "Sheet1";
-      const success = await appendToSheet(accessToken, integration.spreadsheet_id, sheetName, [row]);
+      const success = await appendToSheet(accessToken, integration.spreadsheet_id, sheetName, [row], headers);
 
       results.push({ integration_id: integration.id, success });
 
