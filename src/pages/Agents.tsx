@@ -422,60 +422,6 @@ export default function Agents() {
 
           {/* Agent Content - Show on desktop always, mobile only when agents tab is active */}
           <div className={`${mobileTab === "knowledge" ? "hidden lg:block" : ""}`}>
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-5 sm:mb-6 md:mb-8">
-              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                    <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">{agents.length}</p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">総数</p>
-                  </div>
-                </div>
-              </div>
-              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                    <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">
-                      {agents.filter(a => a.status === 'published').length}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">公開中</p>
-                  </div>
-                </div>
-              </div>
-              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                    <FileEdit className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">
-                      {agents.filter(a => a.status === 'draft').length}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">下書き</p>
-                  </div>
-                </div>
-              </div>
-              <div className="glass rounded-xl p-3 sm:p-4 card-shadow">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-muted shrink-0">
-                    <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-foreground" />
-                  </div>
-                  <div>
-                    <p className="text-xl sm:text-2xl font-bold text-foreground">
-                      {agents.filter(a => a.elevenlabs_agent_id).length}
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground">通話可能</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
           {/* Search and Filters */}
           <div className="mb-4 sm:mb-5 md:mb-6 flex flex-col gap-3">
             <div className="relative w-full sm:max-w-md">
