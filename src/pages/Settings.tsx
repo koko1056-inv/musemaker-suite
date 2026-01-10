@@ -13,6 +13,7 @@ import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
 import { SpreadsheetIntegrationManager } from "@/components/notifications/SpreadsheetIntegrationManager";
 import { EmailNotificationManager } from "@/components/notifications/EmailNotificationManager";
+import { GoogleCalendarIntegrationManager } from "@/components/notifications/GoogleCalendarIntegrationManager";
 import { SpeechToText } from "@/components/voice-tools/SpeechToText";
 import { VoiceClone } from "@/components/voice-tools/VoiceClone";
 import { useWorkspace } from "@/hooks/useWorkspace";
@@ -883,112 +884,11 @@ export default function Settings() {
             <EmailNotificationManager workspaceId={workspaceId} />
 
             {/* Google Calendar連携 */}
-            <div className="glass rounded-xl card-shadow overflow-hidden">
-              <div className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-green-500 to-blue-600 flex items-center justify-center shrink-0 shadow-lg">
-                      <Calendar className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground">Google Calendar</h3>
-                      <p className="text-xs text-muted-foreground">
-                        通話情報をカレンダーに連携
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    {hasGoogleCalendarCredentials ? (
-                      <Badge className="bg-success/10 text-success gap-1 text-xs border border-success/20">
-                        <Check className="h-3 w-3" />
-                        接続済み
-                      </Badge>
-                    ) : (
-                      <>
-                        <Badge variant="outline" className="text-xs">未接続</Badge>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="gap-2"
-                          onClick={() => setActiveTab("integrations")}
-                        >
-                          <Cloud className="h-4 w-4" />
-                          Google Cloudを設定
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-                {hasGoogleCalendarCredentials && (
-                  <div className="mt-4 p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground">
-                      Google Cloudが接続されています。通話終了時にカレンダーへの予定追加が利用可能です。
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </TabsContent>
-
-          {/* Billing Tab */}
-          <TabsContent value="billing" className="space-y-4 sm:space-y-6 pb-24 sm:pb-6">
-            {/* プラン情報 */}
-            <div className="glass rounded-xl card-shadow overflow-hidden">
-              <div className="p-4 sm:p-6 border-b border-border bg-gradient-to-r from-primary/5 to-transparent">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                      <Zap className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground text-lg">現在のプラン</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {workspace?.plan === "pro" ? "Pro" : workspace?.plan === "enterprise" ? "Enterprise" : "Free"}プランをご利用中
-                      </p>
-                    </div>
-                  </div>
-                  <Badge className="bg-primary text-primary-foreground text-base px-4 py-1.5 self-start sm:self-auto capitalize font-semibold">
-                    {workspace?.plan || "Free"}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="p-4 sm:p-6">
-                <div className="grid gap-3 grid-cols-1 xs:grid-cols-3 mb-6">
-                  <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">API呼び出し / 月</p>
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">10,000</p>
-                  </div>
-                  <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">チームメンバー</p>
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">5</p>
-                  </div>
-                  <div className="bg-muted/30 rounded-xl p-4 border border-border">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Bot className="h-4 w-4 text-muted-foreground" />
-                      <p className="text-xs text-muted-foreground">エージェント</p>
-                    </div>
-                    <p className="text-2xl font-bold text-foreground">無制限</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button className="h-10 text-sm gap-2">
-                    <Zap className="h-4 w-4" />
-                    プランをアップグレード
-                  </Button>
-                  <Button variant="outline" className="h-10 text-sm">
-                    請求を管理
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <GoogleCalendarIntegrationManager 
+              workspaceId={workspaceId}
+              hasGoogleCloudCredentials={!!hasGoogleCalendarCredentials}
+              onNavigateToIntegrations={() => setActiveTab("integrations")}
+            />
 
             {/* 使用量 */}
             <div className="glass rounded-xl card-shadow overflow-hidden">
