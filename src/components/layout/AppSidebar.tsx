@@ -3,9 +3,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import musaLogo from "@/assets/musa-logo.png";
-import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone, HelpCircle } from "lucide-react";
+import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone, HelpCircle, User } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useProfile } from "@/hooks/useProfile";
 const navigation = [{
   name: "ホーム",
   href: "/",
@@ -71,11 +72,12 @@ export function AppSidebar({
     workspace,
     isLoading: isWorkspaceLoading
   } = useWorkspace();
+  const { profile } = useProfile();
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
-  const userInitials = user?.email?.slice(0, 2).toUpperCase() || "U";
+  const userInitials = profile?.full_name?.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2) || user?.email?.slice(0, 2).toUpperCase() || "U";
   const workspaceInitial = workspace?.name?.charAt(0).toUpperCase() || "W";
   const handleNavClick = () => {
     onNavigate?.();
@@ -104,20 +106,22 @@ export function AppSidebar({
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">
+              <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.full_name || "User"} />
               <AvatarFallback className="bg-foreground/10 text-foreground text-xs font-serif font-medium">
                 {userInitials}
               </AvatarFallback>
             </Avatar>
             <div className="flex-1 min-w-0 text-left">
               <p className="text-sm font-serif font-medium text-sidebar-foreground truncate">
-                {user?.user_metadata?.full_name || user?.email?.split("@")[0] || "ユーザー"}
+                {profile?.full_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "ユーザー"}
               </p>
               <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
             </div>
             <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem onClick={() => navigate("/settings")} className="font-serif">
+            <DropdownMenuItem onClick={() => navigate("/profile")} className="font-serif">
+              <User className="mr-2 h-4 w-4" />
               プロフィール
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/usage")} className="font-serif">
