@@ -98,7 +98,7 @@ const OutboundChatViewComponent = ({
 
             {/* Conversation Detail */}
             {selectedCall.conversation && (
-              <div className="p-4">
+              <div className="p-4 pb-24">
                 <OutboundCallDetail
                   conversation={{
                     summary: selectedCall.conversation.summary,
@@ -116,7 +116,7 @@ const OutboundChatViewComponent = ({
           </div>
         ) : (
           /* Call List View */
-          <div className="p-3 space-y-2">
+          <div className="p-3 pb-24 space-y-2">
             {agent.calls.map((call, index) => {
               const callDate = new Date(call.created_at);
               const showDateSeparator = index === 0 || 
