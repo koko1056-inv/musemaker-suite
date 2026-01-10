@@ -139,10 +139,11 @@ const Auth = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/`,
+          skipBrowserRedirect: true,
         },
       });
 
@@ -152,8 +153,25 @@ const Auth = () => {
           title: "Googleログインエラー",
           description: error.message,
         });
+        return;
       }
-    } catch (error) {
+
+      if (data?.url) {
+        const opened = window.open(data.url, "_blank", "noopener,noreferrer");
+        if (!opened) {
+          toast({
+            variant: "destructive",
+            title: "ポップアップがブロックされました",
+            description: "ブラウザでポップアップを許可して、もう一度お試しください。",
+          });
+        } else {
+          toast({
+            title: "Google認証を開きました",
+            description: "別タブでログインを完了してください。",
+          });
+        }
+      }
+    } catch {
       toast({
         variant: "destructive",
         title: "エラー",
