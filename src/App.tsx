@@ -18,6 +18,7 @@ import Settings from "./pages/Settings";
 import OutboundCalls from "./pages/OutboundCalls";
 import PhoneNumbers from "./pages/PhoneNumbers";
 import Guide from "./pages/Guide";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/guide" element={<ProtectedRoute><Guide /></ProtectedRoute>} />
           <Route path="/outbound-calls" element={<ProtectedRoute><OutboundCalls /></ProtectedRoute>} />
           <Route path="/phone-numbers" element={<ProtectedRoute><PhoneNumbers /></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
