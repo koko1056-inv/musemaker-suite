@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { MessageSquare, Mic, ArrowRight, Sparkles, Phone } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import musaLogo from "@/assets/musa-logo.png";
 const STORAGE_KEY = "callcenter_ex_welcome_shown";
 
@@ -39,9 +39,9 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
       title: "ようこそ！コールセンターEXへ",
       description: "プログラミング不要で、あなただけのAI音声アシスタントを作成できます。",
       features: [
-        { icon: Mic, text: "自然な音声で会話" },
-        { icon: MessageSquare, text: "24時間自動応答" },
-        { icon: Sparkles, text: "AIが質問に回答" },
+        { text: "自然な音声で会話" },
+        { text: "24時間自動応答" },
+        { text: "AIが質問に回答" },
       ],
     },
     {
@@ -86,8 +86,8 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
                   className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 animate-fade-in"
                   style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <feature.icon className="h-5 w-5 text-primary" />
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center p-2">
+                    <img src={musaLogo} alt="MUSA" className="h-full w-auto" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground">
                     {feature.text}
