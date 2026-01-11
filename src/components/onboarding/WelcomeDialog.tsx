@@ -7,8 +7,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Bot, MessageSquare, Mic, ArrowRight, Sparkles, Phone } from "lucide-react";
-
+import { MessageSquare, Mic, ArrowRight, Sparkles, Phone } from "lucide-react";
+import musaLogo from "@/assets/musa-logo.png";
 const STORAGE_KEY = "callcenter_ex_welcome_shown";
 
 interface WelcomeDialogProps {
@@ -36,7 +36,6 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
 
   const steps = [
     {
-      icon: Bot,
       title: "ようこそ！コールセンターEXへ",
       description: "プログラミング不要で、あなただけのAI音声アシスタントを作成できます。",
       features: [
@@ -46,7 +45,6 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
       ],
     },
     {
-      icon: Sparkles,
       title: "3ステップで完成",
       description: "たった3つのステップでAIアシスタントが作れます。",
       steps: [
@@ -56,7 +54,6 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
       ],
     },
     {
-      icon: Phone,
       title: "さあ、始めましょう！",
       description: "最初のAIアシスタントを作成する準備ができました。",
       cta: true,
@@ -69,8 +66,8 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-lg">
         <div className="flex flex-col items-center text-center py-4">
-          <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mb-6 animate-fade-in">
-            <currentStep.icon className="h-8 w-8 text-primary" />
+          <div className="mb-6 animate-fade-in">
+            <img src={musaLogo} alt="MUSA" className="h-16 w-auto" />
           </div>
 
           <DialogHeader className="space-y-3">
@@ -125,7 +122,7 @@ export function WelcomeDialog({ onComplete }: WelcomeDialogProps) {
           {step === 2 && currentStep.cta && (
             <div className="w-full mt-6 animate-fade-in">
               <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 to-purple-500/10 border border-primary/20">
-                <Bot className="h-12 w-12 text-primary mx-auto mb-4" />
+                <img src={musaLogo} alt="MUSA" className="h-12 w-auto mx-auto mb-4" />
                 <p className="text-muted-foreground mb-4">
                   「新しいエージェントを作成」ボタンを押して、AIアシスタントの作成を始めましょう
                 </p>
