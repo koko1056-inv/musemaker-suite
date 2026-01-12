@@ -31,6 +31,7 @@ import {
   MapPin,
   Info,
   FileText,
+  Variable,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -804,6 +805,51 @@ export function EasySetupWizard({ onComplete, onBack }: EasySetupWizardProps) {
                   ))}
                 </div>
               </div>
+
+              {/* 抽出フィールドプレビュー */}
+              {(() => {
+                const extractionFields: string[] = [];
+                selectedUseCases.forEach((useCaseId) => {
+                  const useCase = USE_CASES.find((u) => u.id === useCaseId);
+                  if (useCase?.extractFields) {
+                    extractionFields.push(...useCase.extractFields);
+                  }
+                });
+                const uniqueFields = [...new Set(extractionFields)];
+                
+                if (uniqueFields.length > 0) {
+                  return (
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Variable className="h-4 w-4 text-primary" />
+                        <Label className="text-xs text-primary font-medium">自動追加される抽出フィールド</Label>
+                        <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
+                          {uniqueFields.length}件
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        通話から以下の情報を自動で抽出・記録します
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {uniqueFields.map((field, index) => (
+                          <Badge 
+                            key={field} 
+                            variant="secondary" 
+                            className="text-xs bg-background border"
+                          >
+                            <span className="text-primary mr-1">●</span>
+                            {field}
+                            {index < 2 && (
+                              <span className="ml-1 text-[9px] text-orange-500">必須</span>
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
 
               {businessInfo.weekdayHours && (
                 <div className="p-4 rounded-lg bg-muted/50">
