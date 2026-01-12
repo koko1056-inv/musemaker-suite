@@ -13,6 +13,7 @@ interface ElevenLabsAgentConfig {
   description?: string;
   voice_id: string;
   system_prompt?: string;
+  first_message?: string;
   vad_mode?: string;
   vad_threshold?: number;
   vad_silence_duration_ms?: number;
@@ -85,6 +86,7 @@ export function useAgents() {
         description: agent.description || undefined,
         voice_id: agent.voice_id || 'EXAVITQu4vr4xnSDxMaL',
         system_prompt: (agent as any).system_prompt || undefined,
+        first_message: (agent as any).first_message || undefined,
         vad_mode: (agent as any).vad_mode || 'server_vad',
         vad_threshold: (agent as any).vad_threshold ?? 0.5,
         vad_silence_duration_ms: (agent as any).vad_silence_duration_ms ?? 500,
@@ -147,6 +149,7 @@ export function useAgents() {
           description: updates.description || currentAgent.description || undefined,
           voice_id: updates.voice_id || currentAgent.voice_id,
           system_prompt: (updates as any).system_prompt || (currentAgent as any).system_prompt || undefined,
+          first_message: (updates as any).first_message ?? (currentAgent as any).first_message ?? undefined,
           vad_mode: (updates as any).vad_mode || (currentAgent as any).vad_mode || 'server_vad',
           vad_threshold: (updates as any).vad_threshold ?? (currentAgent as any).vad_threshold ?? 0.5,
           vad_silence_duration_ms: (updates as any).vad_silence_duration_ms ?? (currentAgent as any).vad_silence_duration_ms ?? 500,

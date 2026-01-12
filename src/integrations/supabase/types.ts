@@ -137,6 +137,7 @@ export type Database = {
           description: string | null
           elevenlabs_agent_id: string | null
           fallback_behavior: string | null
+          first_message: string | null
           folder_id: string | null
           icon_color: string | null
           icon_name: string | null
@@ -163,6 +164,7 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          first_message?: string | null
           folder_id?: string | null
           icon_color?: string | null
           icon_name?: string | null
@@ -189,6 +191,7 @@ export type Database = {
           description?: string | null
           elevenlabs_agent_id?: string | null
           fallback_behavior?: string | null
+          first_message?: string | null
           folder_id?: string | null
           icon_color?: string | null
           icon_name?: string | null

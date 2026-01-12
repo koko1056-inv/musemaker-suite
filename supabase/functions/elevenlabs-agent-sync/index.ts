@@ -11,6 +11,7 @@ interface AgentConfig {
   description?: string;
   voice_id: string;
   system_prompt?: string;
+  first_message?: string;
   max_call_duration?: number;
   // VAD settings
   vad_mode?: string;
@@ -162,7 +163,7 @@ serve(async (req) => {
               prompt: {
                 prompt: fullPrompt,
               },
-              first_message: 'こんにちは！本日はどのようなご用件でしょうか？',
+              first_message: agentConfig.first_message || 'こんにちは！本日はどのようなご用件でしょうか？',
               language: 'ja',
             },
             tts: {
@@ -220,6 +221,7 @@ serve(async (req) => {
               prompt: {
                 prompt: fullPrompt,
               },
+              first_message: agentConfig.first_message || undefined,
               language: 'ja',
             },
             tts: {
