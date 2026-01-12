@@ -688,150 +688,144 @@ export default function AgentEditor() {
             />
           </div>
 
-          {/* Advanced: System Prompt */}
-          <div className="pt-2 border-t">
-            <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
-              <CollapsibleTrigger asChild>
-                <button className="w-full flex items-center justify-between gap-2 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-                  <div className="flex items-center gap-2">
-                    <Settings2 className="h-4 w-4" />
-                    <span>システムプロンプト</span>
-                  </div>
-                  {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="pt-2 space-y-3">
-                {/* Explanation Card */}
-                <div className="p-3 rounded-lg bg-muted/50 border text-xs sm:text-sm space-y-1.5">
-                  <div className="flex items-start gap-2">
-                    <Wand2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-medium text-foreground">AIの応答をカスタマイズ</p>
-                      <p className="text-muted-foreground">
-                        システムプロンプトを編集すると、エージェントの話し方・対応方法・回答スタイルを細かく制御できます。
-                      </p>
-                    </div>
-                  </div>
+          {/* System Prompt - Always visible */}
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex items-center gap-2">
+              <Settings2 className="h-4 w-4 text-primary" />
+              <Label className="text-sm font-medium">システムプロンプト</Label>
+            </div>
+            
+            {/* Explanation Card */}
+            <div className="p-4 rounded-xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Wand2 className="h-5 w-5 text-primary" />
                 </div>
-                
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <Label htmlFor="prompt" className="text-sm font-medium">
-                      プロンプト内容
-                    </Label>
-                    <div className="flex items-center gap-1">
+                <div className="space-y-1">
+                  <p className="font-semibold text-foreground text-sm">AIの応答をカスタマイズ</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    ここを編集すると、エージェントの<span className="text-primary font-medium">話し方</span>・<span className="text-primary font-medium">対応方法</span>・<span className="text-primary font-medium">回答スタイル</span>を自由に調整できます。例えば「敬語を使う」「質問には簡潔に答える」などの指示を追加してみましょう。
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <Label htmlFor="prompt" className="text-sm font-medium">
+                  プロンプト内容
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGeneratePrompt}
+                    disabled={isGeneratingPrompt || !description.trim()}
+                    className="h-7 gap-1.5 text-xs"
+                  >
+                    {isGeneratingPrompt ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Wand2 className="h-3 w-3" />
+                    )}
+                    AIで生成
+                  </Button>
+                  <Dialog open={showEditPromptDialog} onOpenChange={setShowEditPromptDialog}>
+                    <DialogTrigger asChild>
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={handleGeneratePrompt}
-                        disabled={isGeneratingPrompt || !description.trim()}
+                        disabled={!systemPrompt.trim()}
                         className="h-7 gap-1.5 text-xs"
                       >
-                        {isGeneratingPrompt ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Wand2 className="h-3 w-3" />
-                        )}
-                        AIで生成
+                        <Sparkles className="h-3 w-3" />
+                        AIで編集
                       </Button>
-                      <Dialog open={showEditPromptDialog} onOpenChange={setShowEditPromptDialog}>
-                        <DialogTrigger asChild>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            disabled={!systemPrompt.trim()}
-                            className="h-7 gap-1.5 text-xs"
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            AIで編集
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle className="flex items-center gap-2">
-                              <Sparkles className="h-5 w-5 text-primary" />
-                              AIでプロンプトを編集
-                            </DialogTitle>
-                            <DialogDescription>
-                              現在のプロンプトをAIで編集・改善します。どのように変更したいか指示してください。
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="p-3 rounded-lg bg-muted/50 border text-xs max-h-32 overflow-auto">
-                              <p className="text-muted-foreground font-mono whitespace-pre-wrap">
-                                {systemPrompt.length > 200 ? systemPrompt.substring(0, 200) + "..." : systemPrompt}
-                              </p>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="editInstruction" className="text-sm font-medium">
-                                編集指示
-                              </Label>
-                              <Textarea
-                                id="editInstruction"
-                                value={editInstruction}
-                                onChange={(e) => setEditInstruction(e.target.value)}
-                                placeholder="例：&#10;・もっと丁寧な言葉遣いにして&#10;・クレーム対応の方法を追加して&#10;・回答できない場合の対応を追加して"
-                                rows={4}
-                                className="resize-none text-sm"
-                              />
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {["より丁寧に", "より簡潔に", "詳細を追加", "クレーム対応追加"].map((suggestion) => (
-                                <Button
-                                  key={suggestion}
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-xs"
-                                  onClick={() => setEditInstruction(prev => prev ? `${prev}\n・${suggestion}` : suggestion)}
-                                >
-                                  {suggestion}
-                                </Button>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                          <Sparkles className="h-5 w-5 text-primary" />
+                          AIでプロンプトを編集
+                        </DialogTitle>
+                        <DialogDescription>
+                          現在のプロンプトをAIで編集・改善します。どのように変更したいか指示してください。
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="p-3 rounded-lg bg-muted/50 border text-xs max-h-32 overflow-auto">
+                          <p className="text-muted-foreground font-mono whitespace-pre-wrap">
+                            {systemPrompt.length > 200 ? systemPrompt.substring(0, 200) + "..." : systemPrompt}
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="editInstruction" className="text-sm font-medium">
+                            編集指示
+                          </Label>
+                          <Textarea
+                            id="editInstruction"
+                            value={editInstruction}
+                            onChange={(e) => setEditInstruction(e.target.value)}
+                            placeholder="例：&#10;・もっと丁寧な言葉遣いにして&#10;・クレーム対応の方法を追加して&#10;・回答できない場合の対応を追加して"
+                            rows={4}
+                            className="resize-none text-sm"
+                          />
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {["より丁寧に", "より簡潔に", "詳細を追加", "クレーム対応追加"].map((suggestion) => (
                             <Button
+                              key={suggestion}
                               type="button"
                               variant="outline"
-                              onClick={() => {
-                                setShowEditPromptDialog(false);
-                                setEditInstruction("");
-                              }}
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setEditInstruction(prev => prev ? `${prev}\n・${suggestion}` : suggestion)}
                             >
-                              キャンセル
+                              {suggestion}
                             </Button>
-                            <Button
-                              type="button"
-                              onClick={handleEditPromptWithAI}
-                              disabled={isEditingPrompt || !editInstruction.trim()}
-                              className="gap-2"
-                            >
-                              {isEditingPrompt ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Sparkles className="h-4 w-4" />
-                              )}
-                              編集を適用
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-                  <Textarea
-                    id="prompt"
-                    value={systemPrompt}
-                    onChange={(e) => setSystemPrompt(e.target.value)}
-                    placeholder="詳細な動作指示を入力...&#10;&#10;例：&#10;あなたは丁寧なカスタマーサポート担当です。&#10;お客様の質問に対して、親切で分かりやすい回答を心がけてください。"
-                    rows={8}
-                    className="resize-none font-mono text-xs sm:text-sm"
-                  />
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowEditPromptDialog(false);
+                            setEditInstruction("");
+                          }}
+                        >
+                          キャンセル
+                        </Button>
+                        <Button
+                          type="button"
+                          onClick={handleEditPromptWithAI}
+                          disabled={isEditingPrompt || !editInstruction.trim()}
+                          className="gap-2"
+                        >
+                          {isEditingPrompt ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="h-4 w-4" />
+                          )}
+                          編集を適用
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
-              </CollapsibleContent>
-            </Collapsible>
+              </div>
+              <Textarea
+                id="prompt"
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                placeholder="詳細な動作指示を入力...&#10;&#10;例：&#10;あなたは丁寧なカスタマーサポート担当です。&#10;お客様の質問に対して、親切で分かりやすい回答を心がけてください。"
+                rows={8}
+                className="resize-none font-mono text-xs sm:text-sm"
+              />
+            </div>
           </div>
         </div>
       </EditorSection>
