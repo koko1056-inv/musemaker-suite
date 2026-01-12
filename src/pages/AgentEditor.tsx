@@ -319,6 +319,33 @@ export default function AgentEditor() {
         const newAgent = await createAgent(agentData as any);
         setElevenLabsAgentId(newAgent.elevenlabs_agent_id || null);
         setNewlyCreatedAgentId(newAgent.id);
+        
+        // かんたんセットアップで設定された抽出フィールドを自動追加
+        if (extractionFieldsToAdd.length > 0) {
+          const fieldsToInsert = extractionFieldsToAdd.map((fieldName, index) => ({
+            agent_id: newAgent.id,
+            field_name: fieldName,
+            field_key: fieldName.toLowerCase().replace(/[\/\s]/g, "_").replace(/[^a-z0-9_]/g, ""),
+            field_type: "text",
+            description: `${fieldName}を抽出します`,
+            is_required: index < 2, // 最初の2つは必須に設定
+          }));
+
+          const { error: fieldsError } = await supabase
+            .from("agent_extraction_fields")
+            .insert(fieldsToInsert);
+
+          if (fieldsError) {
+            console.error("Error adding extraction fields:", fieldsError);
+            toast.error("抽出フィールドの追加に失敗しました");
+          } else {
+            toast.success(`${extractionFieldsToAdd.length}件の抽出フィールドを追加しました`);
+          }
+          
+          // 追加後はクリア
+          setExtractionFieldsToAdd([]);
+        }
+        
         setShowOnboardingDialog(true);
       } else if (id) {
         const updatedAgent = await updateAgent(id, agentData as any);
@@ -332,7 +359,7 @@ export default function AgentEditor() {
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
     status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
-    iconName, iconColor, customIconUrl, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId, firstMessage
+    iconName, iconColor, customIconUrl, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId, firstMessage, extractionFieldsToAdd
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
