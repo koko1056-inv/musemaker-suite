@@ -11,22 +11,55 @@ serve(async (req) => {
   }
 
   try {
-    const { agentName, description, language = "ja" } = await req.json();
-
-    if (!description || description.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ error: "説明文を入力してください" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const { agentName, description, language = "ja", action = "generate", currentPrompt, editInstruction } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPromptTemplate = language === "ja" 
-      ? `あなたは、AIエージェントのシステムプロンプトを作成する専門家です。
+    let systemPromptTemplate: string;
+    let userMessage: string;
+
+    if (action === "edit" && currentPrompt && editInstruction) {
+      // Edit existing prompt
+      systemPromptTemplate = language === "ja" 
+        ? `あなたは、AIエージェントのシステムプロンプトを編集・改善する専門家です。
+ユーザーから既存のプロンプトと編集指示が与えられます。
+指示に従って、プロンプトを適切に編集・改善してください。
+
+編集時のルール：
+1. 指示された変更のみを行い、不必要な変更は避ける
+2. プロンプトの全体的な構造と意図を維持する
+3. 日本語で自然な表現を使用する
+4. 電話応対用のAI音声エージェントとして適切な内容を維持する
+
+編集後のプロンプトのみを出力してください。説明や前置きは不要です。`
+        : `You are an expert at editing and improving AI agent system prompts.
+You will receive an existing prompt and editing instructions.
+Edit the prompt according to the instructions.
+
+Rules:
+1. Only make requested changes, avoid unnecessary modifications
+2. Maintain overall structure and intent
+3. Keep it suitable for voice AI agents
+4. Output only the edited prompt, no explanations.`;
+
+      userMessage = language === "ja"
+        ? `【現在のプロンプト】\n${currentPrompt}\n\n【編集指示】\n${editInstruction}`
+        : `【Current Prompt】\n${currentPrompt}\n\n【Edit Instructions】\n${editInstruction}`;
+
+    } else {
+      // Generate new prompt
+      if (!description || description.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ error: "説明文を入力してください" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      systemPromptTemplate = language === "ja" 
+        ? `あなたは、AIエージェントのシステムプロンプトを作成する専門家です。
 ユーザーが提供する概要説明から、電話応対用のAI音声エージェントに最適なシステムプロンプトを生成してください。
 
 以下の要素を含めてください：
@@ -38,7 +71,7 @@ serve(async (req) => {
 
 日本語で、自然な会話ができるプロンプトを生成してください。
 プロンプトのみを出力し、説明や前置きは不要です。`
-      : `You are an expert at creating system prompts for AI agents.
+        : `You are an expert at creating system prompts for AI agents.
 Generate an optimal system prompt for a voice AI agent based on the user's description.
 
 Include:
@@ -50,9 +83,10 @@ Include:
 
 Output only the prompt, no explanations.`;
 
-    const userMessage = language === "ja"
-      ? `エージェント名: ${agentName || "未定"}\n概要: ${description}`
-      : `Agent name: ${agentName || "Unnamed"}\nDescription: ${description}`;
+      userMessage = language === "ja"
+        ? `エージェント名: ${agentName || "未定"}\n概要: ${description}`
+        : `Agent name: ${agentName || "Unnamed"}\nDescription: ${description}`;
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -67,7 +101,7 @@ Output only the prompt, no explanations.`;
           { role: "user", content: userMessage },
         ],
         temperature: 0.7,
-        max_tokens: 1500,
+        max_tokens: 2000,
       }),
     });
 
