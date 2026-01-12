@@ -200,6 +200,9 @@ export default function AgentEditor() {
   const [vadSilenceDuration, setVadSilenceDuration] = useState(500);
   const [vadPrefixPadding, setVadPrefixPadding] = useState(300);
   
+  // First message
+  const [firstMessage, setFirstMessage] = useState("こんにちは！本日はどのようなご用件でしょうか？");
+  
   const [showCallDialog, setShowCallDialog] = useState(false);
   const [showOnboardingDialog, setShowOnboardingDialog] = useState(false);
   const [newlyCreatedAgentId, setNewlyCreatedAgentId] = useState<string | null>(null);
@@ -254,6 +257,7 @@ export default function AgentEditor() {
           setVadThreshold((agent as any).vad_threshold ?? 0.5);
           setVadSilenceDuration((agent as any).vad_silence_duration_ms ?? 500);
           setVadPrefixPadding((agent as any).vad_prefix_padding_ms ?? 300);
+          setFirstMessage((agent as any).first_message || "こんにちは！本日はどのようなご用件でしょうか？");
         })
         .catch(() => {
           navigate("/agents");
@@ -296,6 +300,7 @@ export default function AgentEditor() {
         vad_threshold: vadThreshold,
         vad_silence_duration_ms: vadSilenceDuration,
         vad_prefix_padding_ms: vadPrefixPadding,
+        first_message: firstMessage || undefined,
       };
 
       if (isNew) {
@@ -315,7 +320,7 @@ export default function AgentEditor() {
   }, [
     agentName, description, systemPrompt, selectedVoice, voiceSpeed,
     status, maxCallDuration, isNew, id, createAgent, updateAgent, navigate,
-    iconName, iconColor, customIconUrl, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId
+    iconName, iconColor, customIconUrl, vadThreshold, vadSilenceDuration, vadPrefixPadding, selectedFolderId, firstMessage
   ]);
 
   const handleVoicePreview = (e: React.MouseEvent, voice: any) => {
@@ -767,6 +772,46 @@ export default function AgentEditor() {
                 <span className="text-[10px] text-muted-foreground">30分</span>
               </div>
             </div>
+          </div>
+        </div>
+      </EditorSection>
+
+      {/* First Message Section */}
+      <EditorSection
+        title="最初の発話"
+        description="通話開始時にエージェントが最初に話す内容"
+        icon={MessageSquare}
+        iconBg="bg-green-500/10 text-green-500"
+        defaultOpen={true}
+      >
+        <div className="pt-4 space-y-4">
+          <div className="p-3 rounded-lg bg-muted/50 border text-xs sm:text-sm space-y-1.5">
+            <div className="flex items-start gap-2">
+              <MessageSquare className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium text-foreground">通話が開始されると...</p>
+                <p className="text-muted-foreground">
+                  エージェントはこのメッセージを最初に発話します。お客様への第一印象を決める重要なメッセージです。
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="space-y-1.5">
+            <Label htmlFor="firstMessage" className="text-sm font-medium">
+              挨拶メッセージ
+            </Label>
+            <Textarea
+              id="firstMessage"
+              value={firstMessage}
+              onChange={(e) => setFirstMessage(e.target.value)}
+              placeholder="例: こんにちは！本日はどのようなご用件でしょうか？"
+              rows={3}
+              className="resize-none text-sm sm:text-base"
+            />
+            <p className="text-xs text-muted-foreground">
+              💡 自然で親しみやすい挨拶を設定しましょう
+            </p>
           </div>
         </div>
       </EditorSection>
