@@ -31,6 +31,7 @@ import {
   ChevronUp,
   Settings2,
   Wand2,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AgentTemplates, AgentTemplate } from "@/components/agents/AgentTemplates";
@@ -38,6 +39,8 @@ import { AgentIconPicker } from "@/components/agents/AgentIconPicker";
 import { AgentKnowledgeSection } from "@/components/agents/AgentKnowledgeSection";
 import { AgentExtractionFields } from "@/components/agents/AgentExtractionFields";
 import { AIAgentBuilder } from "@/components/agents/AIAgentBuilder";
+import { EasySetupWizard } from "@/components/agents/EasySetupWizard";
+import { CreationMethodSelector } from "@/components/agents/CreationMethodSelector";
 import {
   Dialog,
   DialogContent,
@@ -172,14 +175,20 @@ export default function AgentEditor() {
   const isNew = id === "new";
   const creationMethod = searchParams.get("method");
   
-  const shouldShowTemplates = isNew && (creationMethod === "template" || !creationMethod);
+  // Show creation method selector for new agents without a specific method
+  const shouldShowMethodSelector = isNew && !creationMethod;
+  const shouldShowTemplates = isNew && creationMethod === "template";
   const shouldShowAIBuilder = isNew && creationMethod === "ai";
+  const shouldShowEasySetup = isNew && creationMethod === "easy";
   
   const [isLoadingAgent, setIsLoadingAgent] = useState(!isNew);
   const [isSaving, setIsSaving] = useState(false);
+  const [showMethodSelector, setShowMethodSelector] = useState(shouldShowMethodSelector);
   const [showTemplates, setShowTemplates] = useState(shouldShowTemplates);
   const [showAIBuilder, setShowAIBuilder] = useState(shouldShowAIBuilder);
+  const [showEasySetup, setShowEasySetup] = useState(shouldShowEasySetup);
   const [currentStep, setCurrentStep] = useState(1);
+  const [extractionFieldsToAdd, setExtractionFieldsToAdd] = useState<string[]>([]);
   
   // Form state
   const [agentName, setAgentName] = useState("");
@@ -406,12 +415,13 @@ export default function AgentEditor() {
     setMaxCallDuration(template.defaultValues.maxCallDuration);
     setVoiceSpeed(template.defaultValues.voiceSpeed);
     setShowTemplates(false);
+    setShowMethodSelector(false);
     setCurrentStep(1);
   };
 
   const handleSkipTemplates = () => {
     setShowTemplates(false);
-    setCurrentStep(1);
+    setShowMethodSelector(true);
   };
 
   const handleAIConfigReady = (template: AgentTemplate) => {
@@ -421,12 +431,47 @@ export default function AgentEditor() {
     setMaxCallDuration(template.defaultValues.maxCallDuration);
     setVoiceSpeed(template.defaultValues.voiceSpeed);
     setShowAIBuilder(false);
+    setShowMethodSelector(false);
     setCurrentStep(1);
   };
 
   const handleSkipAIBuilder = () => {
     setShowAIBuilder(false);
-    setCurrentStep(1);
+    setShowMethodSelector(true);
+  };
+
+  const handleSelectCreationMethod = (method: "easy" | "ai" | "template" | "manual") => {
+    setShowMethodSelector(false);
+    if (method === "easy") {
+      setShowEasySetup(true);
+    } else if (method === "ai") {
+      setShowAIBuilder(true);
+    } else if (method === "template") {
+      setShowTemplates(true);
+    }
+    // manual の場合は何も表示せず、直接ステップウィザードへ
+  };
+
+  const handleEasySetupComplete = (config: {
+    name: string;
+    description: string;
+    systemPrompt: string;
+    firstMessage: string;
+    extractionFields: string[];
+  }) => {
+    setAgentName(config.name);
+    setDescription(config.description);
+    setSystemPrompt(config.systemPrompt);
+    setFirstMessage(config.firstMessage);
+    setExtractionFieldsToAdd(config.extractionFields);
+    setShowEasySetup(false);
+    setShowMethodSelector(false);
+    setCurrentStep(2); // 音声選択ステップへ
+  };
+
+  const handleEasySetupBack = () => {
+    setShowEasySetup(false);
+    setShowMethodSelector(true);
   };
 
   const handleGeneratePrompt = async () => {
@@ -1357,8 +1402,8 @@ export default function AgentEditor() {
             </div>
           </header>
 
-          {/* Progress Steps (for new agents) */}
-          {isNew && !showTemplates && !showAIBuilder && (
+          {/* Progress Steps (for new agents, not during selection screens) */}
+          {isNew && !showTemplates && !showAIBuilder && !showMethodSelector && !showEasySetup && (
             <div className="bg-background border-b border-border px-4 py-3 sticky top-[65px] z-10">
               <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
                 <StepIndicator 
@@ -1390,8 +1435,21 @@ export default function AgentEditor() {
 
           {/* Main Content */}
           <div className="flex-1 overflow-auto py-6 md:py-8">
-            <div className="max-w-2xl mx-auto px-4 md:px-6">
+            <div className={`mx-auto px-4 md:px-6 ${showEasySetup ? 'max-w-5xl' : 'max-w-2xl'}`}>
               
+              {/* Creation Method Selector */}
+              {isNew && showMethodSelector && (
+                <CreationMethodSelector onSelectMethod={handleSelectCreationMethod} />
+              )}
+
+              {/* Easy Setup Wizard */}
+              {isNew && showEasySetup && (
+                <EasySetupWizard 
+                  onComplete={handleEasySetupComplete} 
+                  onBack={handleEasySetupBack} 
+                />
+              )}
+
               {/* Template Selection */}
               {isNew && showTemplates && (
                 <AgentTemplates onSelectTemplate={handleSelectTemplate} onSkip={handleSkipTemplates} />
@@ -1412,22 +1470,22 @@ export default function AgentEditor() {
               )}
 
               {/* New Agent Wizard */}
-              {isNew && !showTemplates && !showAIBuilder && renderNewAgentWizard()}
+              {isNew && !showTemplates && !showAIBuilder && !showMethodSelector && !showEasySetup && renderNewAgentWizard()}
 
               {/* Existing Agent Editor */}
               {!isNew && !showTemplates && !showAIBuilder && renderExistingAgentEditor()}
 
               {/* Navigation Buttons (for new agents) */}
-              {isNew && !showTemplates && !showAIBuilder && (
+              {isNew && !showTemplates && !showAIBuilder && !showMethodSelector && !showEasySetup && (
                 <div className="flex justify-between pt-6 border-t mt-8">
                   {currentStep > 1 ? (
                     <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
                       戻る
                     </Button>
                   ) : (
-                    <Button variant="ghost" onClick={() => setShowTemplates(true)} className="gap-2">
-                      <LayoutTemplate className="h-4 w-4" />
-                      テンプレート
+                    <Button variant="ghost" onClick={() => setShowMethodSelector(true)} className="gap-2">
+                      <Zap className="h-4 w-4" />
+                      作成方法を変更
                     </Button>
                   )}
                   
