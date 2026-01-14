@@ -240,8 +240,8 @@ const OfficeArea = ({
         <span className="text-muted-foreground">/{maxDesks}</span>
       </div>
       
-      {/* デスク配置グリッド */}
-      <div className="mt-4 grid grid-cols-3 gap-x-4 gap-y-8 justify-items-center">
+      {/* デスク配置グリッド - モバイルでは2列 */}
+      <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-x-2 sm:gap-x-4 gap-y-8 justify-items-center">
         {desks.slice(0, maxDesks).map((agent, idx) => {
         const hasAgent = agent !== null;
         const isActive = hasAgent && agent.status === 'published' && !!agent.elevenlabs_agent_id;
@@ -434,32 +434,33 @@ export function OfficeFloorView({
   const activeCount = agents.filter(a => a.status === 'published' && a.elevenlabs_agent_id).length;
   const assignedPhoneCount = agents.filter(a => phoneNumbers.some(p => p.agent_id === a.id)).length;
   return <div className="space-y-6">
-      {/* オフィス統計ヘッダー */}
-      <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30 border">
-        <div className="flex items-center gap-3">
+      {/* オフィス統計ヘッダー - モバイル対応 */}
+      <div className="p-4 rounded-xl bg-muted/30 border">
+        <div className="flex items-center gap-3 mb-3 sm:mb-0">
           <div className="p-2 rounded-lg bg-primary/10">
             <Building2 className="w-5 h-5 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <h3 className="font-semibold text-foreground">コールセンター</h3>
-            <p className="text-sm text-muted-foreground">エージェント配置マップ</p>
+            <p className="text-sm text-muted-foreground hidden sm:block">エージェント配置マップ</p>
           </div>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium">{agents.length}</span>
+        {/* 統計バッジ - モバイルでは横並びコンパクト表示 */}
+        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 text-xs sm:text-sm mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
+            <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+            <span className="font-bold">{agents.length}</span>
             <span className="text-muted-foreground">名</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-green-500/10 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-            <span className="font-medium text-green-600">{activeCount}</span>
-            <span className="text-muted-foreground">稼働中</span>
+            <span className="font-bold text-green-600">{activeCount}</span>
+            <span className="text-muted-foreground">稼働</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Phone className="w-4 h-4 text-muted-foreground" />
-            <span className="font-medium">{assignedPhoneCount}</span>
-            <span className="text-muted-foreground">番号割当</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
+            <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
+            <span className="font-bold">{assignedPhoneCount}</span>
+            <span className="text-muted-foreground">番号</span>
           </div>
         </div>
       </div>
@@ -485,21 +486,21 @@ export function OfficeFloorView({
         </div>
       </div>
       
-      {/* 凡例 */}
-      <div className="flex items-center justify-center gap-6 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500" />
+      {/* 凡例 - モバイル対応 */}
+      <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-green-500" />
           <span>稼働中</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-muted-foreground/30" />
-          <span>準備中/下書き</span>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-muted-foreground/30" />
+          <span>準備中</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 border-2 border-dashed border-muted-foreground/50 rounded flex items-center justify-center">
-            <Plus className="w-3 h-3" />
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-dashed border-muted-foreground/50 rounded flex items-center justify-center">
+            <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
           </div>
-          <span>空き席</span>
+          <span>空席</span>
         </div>
       </div>
       
