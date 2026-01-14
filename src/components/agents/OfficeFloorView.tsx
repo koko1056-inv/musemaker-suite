@@ -77,6 +77,35 @@ interface OfficeFloorViewProps {
   onMoveToFolder: (agentId: string, folderId: string | null) => void;
 }
 
+// タイピングアニメーション（モニター用）
+const TypingAnimation = () => (
+  <g className="animate-typing">
+    <rect x="15" y="-3" width="2" height="1" fill="#333" />
+    <rect x="18" y="-3" width="3" height="1" fill="#333" />
+    <rect x="22" y="-3" width="1" height="1" fill="#333" />
+    <rect x="15" y="-1.5" width="4" height="1" fill="#333" />
+    <rect x="20" y="-1.5" width="2" height="1" fill="#333" />
+  </g>
+);
+
+// 吹き出し（会話中表示）
+const SpeechBubble = ({ isActive }: { isActive: boolean }) => {
+  if (!isActive) return null;
+  return (
+    <div className="absolute -top-8 left-1/2 -translate-x-1/2 animate-float">
+      <div className="relative bg-white rounded-lg px-2 py-1 shadow-md border border-border">
+        <div className="flex gap-0.5">
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[typing_0.5s_ease-in-out_infinite]" />
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[typing_0.5s_ease-in-out_0.15s_infinite]" />
+          <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-[typing_0.5s_ease-in-out_0.3s_infinite]" />
+        </div>
+        {/* 吹き出しの尾 */}
+        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white border-r border-b border-border rotate-45" />
+      </div>
+    </div>
+  );
+};
+
 // ピクセルアート風キャラクター
 const PixelCharacter = ({ 
   agent, 
@@ -98,40 +127,75 @@ const PixelCharacter = ({
 
   const color = agent.icon_color || getAgentColor(agent.id);
   
+  // アニメーション遅延用のシード
+  const animDelay = (agent.id.charCodeAt(0) % 5) * 0.2;
+  
   return (
     <button
       onClick={onClick}
       className="relative group cursor-pointer transition-all hover:scale-110 focus:outline-none"
       title={agent.name}
     >
+      {/* 会話中吹き出し */}
+      <SpeechBubble isActive={isActive} />
+      
       {/* キャラクター本体 */}
-      <div className="relative" style={{ imageRendering: 'pixelated' as const }}>
+      <div 
+        className={`relative ${isActive ? 'animate-breathing' : ''}`} 
+        style={{ 
+          imageRendering: 'pixelated' as const,
+          animationDelay: `${animDelay}s`,
+        }}
+      >
         <svg viewBox="0 0 24 32" className="w-8 h-10 sm:w-10 sm:h-12 drop-shadow-md">
           {/* 頭 */}
           <rect x="6" y="2" width="12" height="10" fill={color} />
+          {/* 目 - 稼働中は瞬きアニメーション */}
           <rect x="8" y="4" width="3" height="3" fill="white" />
           <rect x="13" y="4" width="3" height="3" fill="white" />
-          <rect x="9" y="5" width="1" height="1" fill="black" />
-          <rect x="14" y="5" width="1" height="1" fill="black" />
-          {/* 口 - 稼働中は緑に光る */}
-          <rect x="9" y="9" width="6" height="1" fill={isActive ? "#22c55e" : "#666"} />
+          <rect 
+            x="9" y="5" width="1" height="1" fill="black" 
+            className={isActive ? "animate-[typing_2s_ease-in-out_infinite]" : ""}
+          />
+          <rect 
+            x="14" y="5" width="1" height="1" fill="black"
+            className={isActive ? "animate-[typing_2s_ease-in-out_infinite]" : ""}
+          />
+          {/* 口 - 稼働中は緑に光って会話アニメーション */}
+          <rect 
+            x="9" y="9" width="6" height="1" 
+            fill={isActive ? "#22c55e" : "#666"} 
+            className={isActive ? "animate-[typing_0.3s_ease-in-out_infinite]" : ""}
+          />
           {/* アンテナ */}
           <rect x="11" y="0" width="2" height="2" fill={color} />
-          <rect x="11.5" y="-1" width="1" height="1" fill={isActive ? "#22c55e" : "#666"} />
+          <rect 
+            x="11.5" y="-1" width="1" height="1" 
+            fill={isActive ? "#22c55e" : "#666"} 
+            className={isActive ? "animate-headset-glow" : ""}
+          />
           {/* 体 */}
           <rect x="7" y="12" width="10" height="8" fill={color} opacity="0.85" />
           <rect x="8" y="14" width="3" height="2" fill="white" opacity="0.3" />
           <rect x="13" y="14" width="3" height="2" fill="white" opacity="0.3" />
-          {/* 腕 */}
-          <rect x="4" y="13" width="3" height="6" fill={color} opacity="0.7" />
-          <rect x="17" y="13" width="3" height="6" fill={color} opacity="0.7" />
+          {/* 腕 - 稼働中はタイピングアニメーション */}
+          <g className={isActive ? "animate-arm-typing" : ""}>
+            <rect x="4" y="13" width="3" height="6" fill={color} opacity="0.7" />
+          </g>
+          <g className={isActive ? "animate-arm-typing" : ""} style={{ animationDelay: '0.15s' }}>
+            <rect x="17" y="13" width="3" height="6" fill={color} opacity="0.7" />
+          </g>
           {/* 脚 */}
           <rect x="8" y="20" width="3" height="4" fill={color} opacity="0.7" />
           <rect x="13" y="20" width="3" height="4" fill={color} opacity="0.7" />
           {/* ヘッドセット */}
           <rect x="5" y="5" width="2" height="4" fill="#333" />
           <rect x="17" y="5" width="2" height="4" fill="#333" />
-          <rect x="4" y="7" width="2" height="3" fill="#666" rx="1" />
+          <rect 
+            x="4" y="7" width="2" height="3" 
+            fill={isActive ? "#22c55e" : "#666"} 
+            className={isActive ? "animate-headset-glow" : ""}
+          />
         </svg>
         
         {/* 稼働中インジケーター */}
@@ -142,7 +206,9 @@ const PixelCharacter = ({
       
       {/* 名前タグ */}
       <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-        <span className="text-[10px] px-1.5 py-0.5 bg-background/90 rounded text-foreground font-medium shadow-sm border border-border">
+        <span className={`text-[10px] px-1.5 py-0.5 rounded text-foreground font-medium shadow-sm border ${
+          isActive ? 'bg-green-500/10 border-green-500/30 text-green-700' : 'bg-background/90 border-border'
+        }`}>
           {agent.name.length > 6 ? agent.name.slice(0, 6) + '...' : agent.name}
         </span>
       </div>
@@ -190,10 +256,32 @@ const Desk = ({
           <rect x="4" y="2" width="32" height="4" fill="#A08060" />
           {/* モニター */}
           <rect x="12" y="-6" width="16" height="10" fill="#333" />
-          <rect x="14" y="-4" width="12" height="6" fill={hasAgent && isActive ? "#a8e6cf" : "#555"} />
+          <rect 
+            x="14" y="-4" width="12" height="6" 
+            fill={hasAgent && isActive ? "#a8e6cf" : "#555"} 
+            className={hasAgent && isActive ? "animate-screen-flicker" : ""}
+          />
+          {/* モニター内のテキスト/タイピングアニメーション */}
+          {hasAgent && isActive && (
+            <g className="animate-typing">
+              <rect x="15" y="-3" width="2" height="0.8" fill="#333" />
+              <rect x="18" y="-3" width="3" height="0.8" fill="#333" />
+              <rect x="22" y="-3" width="1" height="0.8" fill="#333" />
+              <rect x="15" y="-1.5" width="4" height="0.8" fill="#333" />
+              <rect x="20" y="-1.5" width="2" height="0.8" fill="#333" />
+            </g>
+          )}
           <rect x="17" y="4" width="6" height="2" fill="#333" />
-          {/* キーボード */}
+          {/* キーボード - 稼働中はキーが光る */}
           <rect x="14" y="3" width="12" height="3" fill="#444" />
+          {hasAgent && isActive && (
+            <g>
+              <rect x="15" y="3.5" width="1.5" height="1" fill="#666" className="animate-[typing_0.2s_ease-in-out_infinite]" />
+              <rect x="17.5" y="3.5" width="1.5" height="1" fill="#666" className="animate-[typing_0.2s_ease-in-out_0.1s_infinite]" />
+              <rect x="20" y="3.5" width="1.5" height="1" fill="#666" className="animate-[typing_0.2s_ease-in-out_0.2s_infinite]" />
+              <rect x="22.5" y="3.5" width="1.5" height="1" fill="#666" className="animate-[typing_0.2s_ease-in-out_0.15s_infinite]" />
+            </g>
+          )}
           {/* デスク脚 */}
           <rect x="4" y="8" width="4" height="10" fill="#6B5344" />
           <rect x="32" y="8" width="4" height="10" fill="#6B5344" />
