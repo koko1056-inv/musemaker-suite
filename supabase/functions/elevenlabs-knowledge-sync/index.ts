@@ -39,7 +39,7 @@ serve(async (req) => {
       // If updating, first delete the old document
       if (action === 'update' && documentId) {
         console.log('Deleting old document:', documentId);
-        await fetch(`https://api.elevenlabs.io/v1/knowledge-base/${documentId}`, {
+        await fetch(`https://api.elevenlabs.io/v1/convai/knowledge-base/${documentId}`, {
           method: 'DELETE',
           headers: {
             'xi-api-key': ELEVENLABS_API_KEY,
@@ -47,8 +47,8 @@ serve(async (req) => {
         });
       }
 
-      // Create document from text content using new API endpoint
-      const createResponse = await fetch('https://api.elevenlabs.io/v1/knowledge-base/text', {
+      // Create document from text content using the correct convai API endpoint
+      const createResponse = await fetch('https://api.elevenlabs.io/v1/convai/knowledge-base/text', {
         method: 'POST',
         headers: {
           'xi-api-key': ELEVENLABS_API_KEY,
@@ -98,8 +98,8 @@ serve(async (req) => {
         });
       }
 
-      // Delete document from ElevenLabs
-      const deleteResponse = await fetch(`https://api.elevenlabs.io/v1/knowledge-base/${documentId}`, {
+      // Delete document from ElevenLabs using the correct convai API endpoint
+      const deleteResponse = await fetch(`https://api.elevenlabs.io/v1/convai/knowledge-base/${documentId}`, {
         method: 'DELETE',
         headers: {
           'xi-api-key': ELEVENLABS_API_KEY,
