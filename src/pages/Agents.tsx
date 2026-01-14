@@ -33,6 +33,7 @@ import {
   FileEdit,
   LayoutGrid,
   LayoutList,
+  Building2,
 } from "lucide-react";
 import { useAgents } from "@/hooks/useAgents";
 import { useAgentFolders } from "@/hooks/useAgentFolders";
@@ -44,6 +45,7 @@ import { PixelAgentCard } from "@/components/agents/PixelAgentCard";
 import { AgentListView } from "@/components/agents/AgentListView";
 import { FolderSection } from "@/components/agents/FolderSection";
 import { AgentOverviewStats } from "@/components/agents/AgentOverviewStats";
+import { OfficeFloorView } from "@/components/agents/OfficeFloorView";
 import { GlassIcon } from "@/components/ui/glass-icon";
 import { toast } from "sonner";
 
@@ -53,7 +55,7 @@ export default function Agents() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"agents" | "knowledge">("agents");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("list");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "office">("list");
   
   const { workspace } = useWorkspace();
   const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
@@ -245,6 +247,7 @@ export default function Agents() {
                     size="sm"
                     onClick={() => setViewMode("list")}
                     className="h-7 w-7 p-0"
+                    title="リスト表示"
                   >
                     <LayoutList className="h-4 w-4" />
                   </Button>
@@ -253,8 +256,18 @@ export default function Agents() {
                     size="sm"
                     onClick={() => setViewMode("grid")}
                     className="h-7 w-7 p-0"
+                    title="グリッド表示"
                   >
                     <LayoutGrid className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === "office" ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode("office")}
+                    className="h-7 w-7 p-0"
+                    title="オフィス表示"
+                  >
+                    <Building2 className="h-4 w-4" />
                   </Button>
                 </div>
                 
@@ -350,6 +363,18 @@ export default function Agents() {
                   </div>
                 </div>
               </div>
+            ) : viewMode === "office" ? (
+              /* Office Floor View */
+              <OfficeFloorView
+                agents={filteredAgents}
+                folders={folders}
+                phoneNumbers={phoneNumbers}
+                getAgentPhoneNumber={getAgentPhoneNumber}
+                onPhoneAssign={handlePhoneAssign}
+                onDuplicate={handleDuplicate}
+                onDelete={setDeleteAgentId}
+                onMoveToFolder={handleMoveToFolder}
+              />
             ) : viewMode === "list" ? (
               /* List View */
               <div className="space-y-6">
