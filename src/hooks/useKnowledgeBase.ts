@@ -71,6 +71,31 @@ export function useKnowledgeBases() {
   });
 }
 
+export function useAllKnowledgeItems() {
+  return useQuery({
+    queryKey: ["all-knowledge-items"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("knowledge_items")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      
+      // Group items by knowledge_base_id
+      const grouped: Record<string, KnowledgeItem[]> = {};
+      (data as KnowledgeItem[]).forEach(item => {
+        if (!grouped[item.knowledge_base_id]) {
+          grouped[item.knowledge_base_id] = [];
+        }
+        grouped[item.knowledge_base_id].push(item);
+      });
+      
+      return grouped;
+    },
+  });
+}
+
 export function useKnowledgeItems(knowledgeBaseId: string | null) {
   return useQuery({
     queryKey: ["knowledge-items", knowledgeBaseId],
