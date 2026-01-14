@@ -104,6 +104,31 @@ export default {
           from: { backgroundPosition: "200% 0" },
           to: { backgroundPosition: "-200% 0" },
         },
+        "float": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-3px)" },
+        },
+        "typing": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "1" },
+        },
+        "headset-glow": {
+          "0%, 100%": { fill: "#22c55e", opacity: "1" },
+          "50%": { fill: "#4ade80", opacity: "0.7" },
+        },
+        "screen-flicker": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.85" },
+        },
+        "breathing": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.02)" },
+        },
+        "arm-typing": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "25%": { transform: "translateY(-1px)" },
+          "75%": { transform: "translateY(1px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -113,6 +138,12 @@ export default {
         "slide-in-right": "slide-in-right 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
         shimmer: "shimmer 2s linear infinite",
+        "float": "float 3s ease-in-out infinite",
+        "typing": "typing 0.5s ease-in-out infinite",
+        "headset-glow": "headset-glow 1.5s ease-in-out infinite",
+        "screen-flicker": "screen-flicker 2s ease-in-out infinite",
+        "breathing": "breathing 4s ease-in-out infinite",
+        "arm-typing": "arm-typing 0.3s ease-in-out infinite",
       },
     },
   },
