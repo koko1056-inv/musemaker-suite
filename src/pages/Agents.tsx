@@ -55,7 +55,7 @@ export default function Agents() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft">("all");
   const [deleteAgentId, setDeleteAgentId] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<"agents" | "knowledge">("agents");
-  const [viewMode, setViewMode] = useState<"grid" | "list" | "office">("list");
+  const [viewMode, setViewMode] = useState<"grid" | "list" | "office">("office");
   
   const { workspace } = useWorkspace();
   const { agents, isLoading, deleteAgent, createAgent, moveToFolder } = useAgents();
