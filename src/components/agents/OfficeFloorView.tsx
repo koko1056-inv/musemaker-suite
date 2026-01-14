@@ -205,11 +205,11 @@ const PixelCharacter = ({
       </div>
       
       {/* 名前タグ */}
-      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-        <span className={`text-[10px] px-1.5 py-0.5 rounded text-foreground font-medium shadow-sm border ${
+      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 max-w-[80px]">
+        <span className={`block text-[10px] px-1.5 py-0.5 rounded text-foreground font-medium shadow-sm border truncate ${
           isActive ? 'bg-green-500/10 border-green-500/30 text-green-700' : 'bg-background/90 border-border'
         }`}>
-          {agent.name.length > 6 ? agent.name.slice(0, 6) + '...' : agent.name}
+          {agent.name}
         </span>
       </div>
     </button>
@@ -335,11 +335,6 @@ const OfficeArea = ({
         </div>
       </div>
       
-      {/* 統計 */}
-      <div className="absolute -top-3 right-4 px-2 py-1 rounded-full text-xs font-medium bg-background border shadow-sm">
-        <span className="text-foreground">{agents.length}</span>
-        <span className="text-muted-foreground">/{maxDesks}</span>
-      </div>
       
       {/* デスク配置グリッド */}
       <div className="mt-4 grid grid-cols-3 gap-x-4 gap-y-8 justify-items-center">
