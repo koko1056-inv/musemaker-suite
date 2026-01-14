@@ -128,8 +128,8 @@ const PixelCharacter = ({
       </div>
       
       {/* 名前タグ */}
-      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-        <span className={`text-[10px] px-1.5 py-0.5 rounded text-foreground font-medium shadow-sm border ${isActive ? 'bg-green-500/10 border-green-500/30 text-green-700' : 'bg-background/90 border-border'}`}>
+      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap z-10">
+        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shadow-md border backdrop-blur-sm ${isActive ? 'bg-green-500/90 border-green-400 text-white' : 'bg-background border-border text-foreground'}`}>
           {agent.name.length > 6 ? agent.name.slice(0, 6) + '...' : agent.name}
         </span>
       </div>
