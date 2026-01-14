@@ -2,15 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { BookOpen, Plus, X, Loader2, RefreshCw, Check, Zap, CloudUpload } from "lucide-react";
-import { useKnowledgeBases } from "@/hooks/useKnowledgeBase";
+import { BookOpen, Plus, Loader2, RefreshCw, Check, Zap, CloudUpload } from "lucide-react";
+import { useKnowledgeBases, useAllKnowledgeItems } from "@/hooks/useKnowledgeBase";
 import {
   useAgentKnowledgeBases,
   useLinkKnowledgeBase,
@@ -25,6 +18,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { AgentKnowledgeBookshelf } from "./AgentKnowledgeBookshelf";
 
 interface AgentKnowledgeSectionProps {
   agentId: string | undefined;
@@ -42,12 +36,16 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
 
   const { data: allKnowledgeBases = [], isLoading: isLoadingKbs } = useKnowledgeBases();
   const { data: linkedKbs = [], isLoading: isLoadingLinked } = useAgentKnowledgeBases(agentId);
+  const { data: allKnowledgeItems = {} } = useAllKnowledgeItems();
   const linkKb = useLinkKnowledgeBase();
   const unlinkKb = useUnlinkKnowledgeBase();
   const { syncKnowledgeBase, syncKnowledgeBaseAPI } = useAgents();
 
   const linkedKbIds = linkedKbs.map((link) => link.knowledge_base_id);
   const availableKbs = allKnowledgeBases.filter((kb) => !linkedKbIds.includes(kb.id));
+  
+  // useAllKnowledgeItemsは既にグループ化されたデータを返す
+  const knowledgeItemsByKb = allKnowledgeItems;
 
   // Auto-sync when knowledge bases are linked/unlinked
   useEffect(() => {
@@ -155,159 +153,107 @@ export function AgentKnowledgeSection({ agentId, isNew }: AgentKnowledgeSectionP
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Linked Knowledge Bases */}
+        {/* 本棚ビュー */}
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           </div>
-        ) : linkedKbs.length > 0 ? (
-          <div className="space-y-2">
-            {linkedKbs.map((link) => (
-              <div
-                key={link.id}
-                className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
-              >
-                <div className="flex items-center gap-3">
-                  <BookOpen className="h-4 w-4 text-primary" />
-                  <div>
-                    <p className="font-medium text-sm">
-                      {link.knowledge_base?.name || "不明なナレッジベース"}
-                    </p>
-                    {link.knowledge_base?.description && (
-                      <p className="text-xs text-muted-foreground line-clamp-1">
-                        {link.knowledge_base.description}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleUnlink(link.id)}
-                  disabled={unlinkKb.isPending}
-                >
-                  <X className="h-4 w-4" />
+        ) : (
+          <>
+            <AgentKnowledgeBookshelf
+              linkedKbs={linkedKbs}
+              availableKbs={availableKbs}
+              knowledgeItemsByKb={knowledgeItemsByKb}
+              selectedKbId={selectedKbId}
+              onSelectedKbChange={setSelectedKbId}
+              onLink={handleLink}
+              onUnlink={handleUnlink}
+              isLinking={linkKb.isPending}
+              isUnlinking={unlinkKb.isPending}
+            />
+
+            {/* ナレッジベースがない場合 */}
+            {allKnowledgeBases.length === 0 && (
+              <div className="text-center py-2">
+                <p className="text-sm text-muted-foreground mb-2">
+                  ナレッジベースがありません
+                </p>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/knowledge">
+                    <Plus className="h-4 w-4 mr-2" />
+                    ナレッジベースを作成
+                  </Link>
                 </Button>
               </div>
-            ))}
+            )}
 
-            {/* Sync Buttons */}
-            <div className="pt-2 border-t space-y-2">
-              <TooltipProvider>
-                {/* ElevenLabs Knowledge Base API Sync */}
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="w-full gap-2"
-                      onClick={handleSyncKnowledgeAPI}
-                      disabled={isSyncingAPI}
-                    >
-                      {isSyncingAPI ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : lastSyncedAPI ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <CloudUpload className="h-4 w-4" />
-                      )}
-                      {isSyncingAPI ? "同期中..." : "ElevenLabs KBに同期"}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>ElevenLabsのKnowledge Base APIと連携し、RAG検索で回答精度が向上します</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              
-              {lastSyncedAPI && (
-                <p className="text-xs text-muted-foreground text-center">
-                  ElevenLabs KB同期: {lastSyncedAPI.toLocaleTimeString("ja-JP")}
-                </p>
-              )}
-
-              {/* Prompt-based Sync (legacy) */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full gap-2"
-                onClick={handleSyncKnowledge}
-                disabled={isSyncing}
-              >
-                {isSyncing ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : lastSynced ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <RefreshCw className="h-4 w-4" />
+            {/* Sync Buttons - 本がある場合のみ表示 */}
+            {linkedKbs.length > 0 && (
+              <div className="pt-2 border-t space-y-2">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={handleSyncKnowledgeAPI}
+                        disabled={isSyncingAPI}
+                      >
+                        {isSyncingAPI ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : lastSyncedAPI ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <CloudUpload className="h-4 w-4" />
+                        )}
+                        {isSyncingAPI ? "同期中..." : "ElevenLabs KBに同期"}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>ElevenLabsのKnowledge Base APIと連携し、RAG検索で回答精度が向上します</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                
+                {lastSyncedAPI && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    ElevenLabs KB同期: {lastSyncedAPI.toLocaleTimeString("ja-JP")}
+                  </p>
                 )}
-                {isSyncing ? "同期中..." : "プロンプトに同期"}
-              </Button>
-              {lastSynced && (
-                <p className="text-xs text-muted-foreground text-center">
-                  プロンプト同期: {lastSynced.toLocaleTimeString("ja-JP")}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-center gap-2 mt-2">
-                <Zap className={`h-3 w-3 ${autoSyncEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
-                <span className="text-xs text-muted-foreground">
-                  {autoSyncEnabled ? '自動同期: オン' : '自動同期: オフ'}
-                </span>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="text-center py-4 text-muted-foreground text-sm">
-            紐付けられたナレッジベースがありません
-          </div>
-        )}
 
-        {/* Add Knowledge Base */}
-        {availableKbs.length > 0 ? (
-          <div className="flex items-center gap-2">
-            <Select value={selectedKbId} onValueChange={setSelectedKbId}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="ナレッジベースを選択..." />
-              </SelectTrigger>
-              <SelectContent>
-                {availableKbs.map((kb) => (
-                  <SelectItem key={kb.id} value={kb.id}>
-                    {kb.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Button
-              onClick={handleLink}
-              disabled={!selectedKbId || linkKb.isPending}
-              size="icon"
-            >
-              {linkKb.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        ) : allKnowledgeBases.length === 0 ? (
-          <div className="text-center py-2">
-            <p className="text-sm text-muted-foreground mb-2">
-              ナレッジベースがありません
-            </p>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/knowledge">
-                <Plus className="h-4 w-4 mr-2" />
-                ナレッジベースを作成
-              </Link>
-            </Button>
-          </div>
-        ) : linkedKbs.length > 0 ? (
-          <Badge variant="secondary" className="w-full justify-center py-2">
-            すべてのナレッジベースが紐付け済みです
-          </Badge>
-        ) : null}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full gap-2"
+                  onClick={handleSyncKnowledge}
+                  disabled={isSyncing}
+                >
+                  {isSyncing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : lastSynced ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                  {isSyncing ? "同期中..." : "プロンプトに同期"}
+                </Button>
+                {lastSynced && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    プロンプト同期: {lastSynced.toLocaleTimeString("ja-JP")}
+                  </p>
+                )}
+                
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Zap className={`h-3 w-3 ${autoSyncEnabled ? 'text-green-500' : 'text-muted-foreground'}`} />
+                  <span className="text-xs text-muted-foreground">
+                    {autoSyncEnabled ? '自動同期: オン' : '自動同期: オフ'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );
