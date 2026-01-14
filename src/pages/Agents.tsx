@@ -210,38 +210,40 @@ export default function Agents() {
                 />
               </div>
               
-              <div className="flex items-center gap-2 overflow-x-auto">
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Status Filter - モバイルではコンパクトに */}
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0">
                   <Button
                     variant={statusFilter === "all" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setStatusFilter("all")}
-                    className="text-xs h-7 px-3"
+                    className="text-xs h-7 px-2 sm:px-3"
                   >
-                    すべて
+                    <span className="hidden sm:inline">すべて</span>
+                    <span className="sm:hidden">全</span>
                   </Button>
                   <Button
                     variant={statusFilter === "published" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setStatusFilter("published")}
-                    className="gap-1 text-xs h-7 px-3"
+                    className="gap-1 text-xs h-7 px-2 sm:px-3"
                   >
                     <CheckCircle2 className="h-3 w-3" />
-                    公開中
+                    <span className="hidden sm:inline">公開中</span>
                   </Button>
                   <Button
                     variant={statusFilter === "draft" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setStatusFilter("draft")}
-                    className="gap-1 text-xs h-7 px-3"
+                    className="gap-1 text-xs h-7 px-2 sm:px-3"
                   >
                     <FileEdit className="h-3 w-3" />
-                    下書き
+                    <span className="hidden sm:inline">下書き</span>
                   </Button>
                 </div>
                 
                 {/* View Mode Toggle */}
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0">
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
