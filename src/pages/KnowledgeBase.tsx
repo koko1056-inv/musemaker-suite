@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,6 +32,8 @@ import {
   Edit,
   Search,
   FolderOpen,
+  Library,
+  List,
 } from "lucide-react";
 import {
   useKnowledgeBases,
@@ -42,6 +44,7 @@ import {
   useUpdateKnowledgeItem,
   useDeleteKnowledgeItem,
   useUploadKnowledgeFile,
+  useAllKnowledgeItems,
   KnowledgeItem,
 } from "@/hooks/useKnowledgeBase";
 import { useKnowledgeBaseFolders } from "@/hooks/useKnowledgeBaseFolders";
@@ -55,6 +58,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { BookshelfView } from "@/components/knowledge/BookshelfView";
 
 import { KnowledgeBaseFolder } from "@/hooks/useKnowledgeBaseFolders";
 import { MoreHorizontal } from "lucide-react";
@@ -141,6 +146,7 @@ export default function KnowledgeBase() {
   const [isEditItemOpen, setIsEditItemOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [viewMode, setViewMode] = useState<"bookshelf" | "list">("bookshelf");
 
   // Form states
   const [kbName, setKbName] = useState("");
@@ -151,6 +157,7 @@ export default function KnowledgeBase() {
 
   const { data: knowledgeBases = [], isLoading: isLoadingKbs, refetch: refetchKbs } = useKnowledgeBases();
   const { data: knowledgeItems = [], isLoading: isLoadingItems } = useKnowledgeItems(selectedKbId);
+  const { data: allKnowledgeItems = {} } = useAllKnowledgeItems();
   const { folders, createFolder, updateFolder, deleteFolder, moveToFolder } = useKnowledgeBaseFolders();
   
   const createKb = useCreateKnowledgeBase();
@@ -191,6 +198,10 @@ export default function KnowledgeBase() {
     setKbName("");
     setKbDescription("");
     setIsCreateKbOpen(false);
+  };
+
+  const handleCreateKbFromBookshelf = async (data: { name: string; description: string; files: File[] }) => {
+    await createKb.mutateAsync({ name: data.name, description: data.description });
   };
 
   const handleDeleteKb = async (id: string) => {
@@ -266,6 +277,47 @@ export default function KnowledgeBase() {
     });
   };
 
+  // 本棚ビューの場合
+  if (viewMode === "bookshelf" && !selectedKbId) {
+    return (
+      <AppLayout>
+        <div className="h-[calc(100vh-3.5rem)] lg:h-screen overflow-auto">
+          <div className="container max-w-6xl mx-auto p-4 sm:p-6">
+            {/* ビュー切り替え */}
+            <div className="flex justify-end mb-4">
+              <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as "bookshelf" | "list")}>
+                <ToggleGroupItem value="bookshelf" aria-label="本棚ビュー" className="gap-1.5">
+                  <Library className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs">本棚</span>
+                </ToggleGroupItem>
+                <ToggleGroupItem value="list" aria-label="リストビュー" className="gap-1.5">
+                  <List className="h-4 w-4" />
+                  <span className="hidden sm:inline text-xs">リスト</span>
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
+
+            <BookshelfView
+              knowledgeBases={knowledgeBases}
+              folders={folders}
+              isLoading={isLoadingKbs}
+              selectedKbId={selectedKbId}
+              onSelectKb={setSelectedKbId}
+              onDeleteKb={handleDeleteKb}
+              onCreateKb={handleCreateKbFromBookshelf}
+              onMoveToFolder={handleMoveToFolder}
+              onCreateFolder={createFolder}
+              onUpdateFolder={updateFolder}
+              onDeleteFolder={deleteFolder}
+              isCreating={createKb.isPending}
+              knowledgeItemsByKb={allKnowledgeItems}
+            />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="flex flex-col lg:flex-row h-[calc(100vh-3.5rem)] lg:h-screen">
@@ -279,50 +331,60 @@ export default function KnowledgeBase() {
                 </div>
                 ナレッジベース
               </h2>
-              <Dialog open={isCreateKbOpen} onOpenChange={setIsCreateKbOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="h-9">
-                    <Plus className="h-4 w-4 mr-1" />
-                    新規
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
-                  <DialogHeader>
-                    <DialogTitle className="text-base sm:text-lg">新規ナレッジベース</DialogTitle>
-                    <DialogDescription className="text-sm">
-                      FAQや製品情報を整理するフォルダを作成します
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label className="text-sm">名前</Label>
-                      <Input
-                        value={kbName}
-                        onChange={(e) => setKbName(e.target.value)}
-                        placeholder="例: 製品FAQ"
-                        className="h-11 sm:h-10"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-sm">説明（任意）</Label>
-                      <Textarea
-                        value={kbDescription}
-                        onChange={(e) => setKbDescription(e.target.value)}
-                        placeholder="何を保存するか..."
-                        className="text-sm"
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-                    <Button variant="outline" onClick={() => setIsCreateKbOpen(false)} className="w-full sm:w-auto">
-                      キャンセル
+              <div className="flex items-center gap-2">
+                <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as "bookshelf" | "list")} size="sm">
+                  <ToggleGroupItem value="bookshelf" aria-label="本棚ビュー" className="h-8 w-8 p-0">
+                    <Library className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem value="list" aria-label="リストビュー" className="h-8 w-8 p-0">
+                    <List className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <Dialog open={isCreateKbOpen} onOpenChange={setIsCreateKbOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm" className="h-9">
+                      <Plus className="h-4 w-4 mr-1" />
+                      新規
                     </Button>
-                    <Button onClick={handleCreateKb} disabled={createKb.isPending} className="w-full sm:w-auto">
-                      作成
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                  </DialogTrigger>
+                  <DialogContent className="mx-4 sm:mx-auto max-w-[calc(100vw-2rem)] sm:max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle className="text-base sm:text-lg">新規ナレッジベース</DialogTitle>
+                      <DialogDescription className="text-sm">
+                        FAQや製品情報を整理するフォルダを作成します
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label className="text-sm">名前</Label>
+                        <Input
+                          value={kbName}
+                          onChange={(e) => setKbName(e.target.value)}
+                          placeholder="例: 製品FAQ"
+                          className="h-11 sm:h-10"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-sm">説明（任意）</Label>
+                        <Textarea
+                          value={kbDescription}
+                          onChange={(e) => setKbDescription(e.target.value)}
+                          placeholder="何を保存するか..."
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+                      <Button variant="outline" onClick={() => setIsCreateKbOpen(false)} className="w-full sm:w-auto">
+                        キャンセル
+                      </Button>
+                      <Button onClick={handleCreateKb} disabled={createKb.isPending} className="w-full sm:w-auto">
+                        作成
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground">
               AIに教える情報をここに登録します
