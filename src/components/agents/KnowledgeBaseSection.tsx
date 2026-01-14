@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import {
   useKnowledgeBases,
   useKnowledgeItems,
+  useAllKnowledgeItems,
   useCreateKnowledgeBase,
   useDeleteKnowledgeBase,
   useCreateKnowledgeItem,
@@ -11,7 +12,8 @@ import {
   KnowledgeItem,
 } from "@/hooks/useKnowledgeBase";
 import { useKnowledgeBaseFolders } from "@/hooks/useKnowledgeBaseFolders";
-import { KnowledgeBaseListView, KnowledgeBaseDetailView } from "./knowledge";
+import { KnowledgeBaseDetailView } from "./knowledge";
+import { BookshelfView } from "@/components/knowledge/BookshelfView";
 
 export function KnowledgeBaseSection() {
   const [selectedKbId, setSelectedKbId] = useState<string | null>(null);
@@ -19,6 +21,7 @@ export function KnowledgeBaseSection() {
   // Data hooks
   const { data: knowledgeBases = [], isLoading: isLoadingKbs, refetch: refetchKbs } = useKnowledgeBases();
   const { data: knowledgeItems = [], isLoading: isLoadingItems } = useKnowledgeItems(selectedKbId);
+  const { data: allKnowledgeItems = {} } = useAllKnowledgeItems();
   const { folders, createFolder, updateFolder, deleteFolder, moveToFolder } = useKnowledgeBaseFolders();
 
   // Mutation hooks
@@ -135,9 +138,9 @@ export function KnowledgeBaseSection() {
     );
   }
 
-  // Render list view
+  // Render bookshelf view (replacing list view)
   return (
-    <KnowledgeBaseListView
+    <BookshelfView
       knowledgeBases={knowledgeBases}
       folders={folders}
       isLoading={isLoadingKbs}
@@ -150,6 +153,7 @@ export function KnowledgeBaseSection() {
       onUpdateFolder={updateFolder}
       onDeleteFolder={deleteFolder}
       isCreating={createKb.isPending || uploadFile.isPending}
+      knowledgeItemsByKb={allKnowledgeItems}
     />
   );
 }
