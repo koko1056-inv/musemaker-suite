@@ -12,8 +12,8 @@ interface KnowledgeBaseDetailViewProps {
   items: KnowledgeItem[];
   onBack: () => void;
   onFileUpload: (file: File) => Promise<void>;
-  onCreateItem: (data: { title: string; content: string; category?: string }) => Promise<void>;
-  onUpdateItem: (item: KnowledgeItem, data: { title: string; content: string; category?: string }) => Promise<void>;
+  onCreateItem: (data: { title: string; content: string; category?: string; syncToElevenLabs?: boolean }) => Promise<void>;
+  onUpdateItem: (item: KnowledgeItem, data: { title: string; content: string; category?: string; syncToElevenLabs?: boolean }) => Promise<void>;
   onDeleteItem: (item: KnowledgeItem) => Promise<void>;
   isUploading: boolean;
   isCreating: boolean;
@@ -54,12 +54,12 @@ export function KnowledgeBaseDetailView({
     }
   }, [onDeleteItem]);
 
-  const handleCreateSubmit = useCallback(async (data: { title: string; content: string; category?: string }) => {
+  const handleCreateSubmit = useCallback(async (data: { title: string; content: string; category?: string; syncToElevenLabs?: boolean }) => {
     await onCreateItem(data);
     setIsCreateItemOpen(false);
   }, [onCreateItem]);
 
-  const handleUpdateSubmit = useCallback(async (data: { title: string; content: string; category?: string }) => {
+  const handleUpdateSubmit = useCallback(async (data: { title: string; content: string; category?: string; syncToElevenLabs?: boolean }) => {
     if (!editingItem) return;
     await onUpdateItem(editingItem, data);
     setEditingItem(null);

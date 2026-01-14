@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { CloudUpload, Loader2 } from "lucide-react";
 import type { KnowledgeItem } from "@/hooks/useKnowledgeBase";
 
 const CATEGORIES = [
@@ -32,7 +34,7 @@ interface KnowledgeItemDialogProps {
   onOpenChange: (open: boolean) => void;
   mode: "create" | "edit";
   item?: KnowledgeItem | null;
-  onSubmit: (data: { title: string; content: string; category?: string }) => Promise<void>;
+  onSubmit: (data: { title: string; content: string; category?: string; syncToElevenLabs?: boolean }) => Promise<void>;
   isSubmitting: boolean;
 }
 
@@ -47,6 +49,7 @@ export function KnowledgeItemDialog({
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [category, setCategory] = useState("");
+  const [syncToElevenLabs, setSyncToElevenLabs] = useState(true);
 
   // Reset form when item changes (for edit mode)
   useEffect(() => {
@@ -67,6 +70,7 @@ export function KnowledgeItemDialog({
       title,
       content,
       category: category || undefined,
+      syncToElevenLabs,
     });
     resetForm();
   };
@@ -126,10 +130,37 @@ export function KnowledgeItemDialog({
               </SelectContent>
             </Select>
           </div>
+          
+          {/* ElevenLabs自動同期オプション */}
+          <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
+            <div className="flex items-center gap-2">
+              <CloudUpload className="h-4 w-4 text-primary" />
+              <div>
+                <Label htmlFor="sync-elevenlabs" className="cursor-pointer">
+                  ElevenLabsに自動同期
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  保存時にElevenLabs KBへアップロード
+                </p>
+              </div>
+            </div>
+            <Switch
+              id="sync-elevenlabs"
+              checked={syncToElevenLabs}
+              onCheckedChange={setSyncToElevenLabs}
+            />
+          </div>
         </div>
         <DialogFooter className="flex-col gap-2">
           <Button onClick={handleSubmit} disabled={isSubmitting} className="w-full">
-            {mode === "create" ? "追加" : "保存"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {syncToElevenLabs ? "同期中..." : "保存中..."}
+              </>
+            ) : (
+              mode === "create" ? "追加" : "保存"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
