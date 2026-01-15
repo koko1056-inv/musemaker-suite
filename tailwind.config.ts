@@ -129,6 +129,24 @@ export default {
           "25%": { transform: "translateY(-1px)" },
           "75%": { transform: "translateY(1px)" },
         },
+        "call-ring": {
+          "0%": { transform: "scale(1)", opacity: "1" },
+          "100%": { transform: "scale(2.5)", opacity: "0" },
+        },
+        "phone-bounce": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "25%": { transform: "rotate(-15deg)" },
+          "75%": { transform: "rotate(15deg)" },
+        },
+        "sound-wave": {
+          "0%": { transform: "scaleY(0.3)", opacity: "0.5" },
+          "50%": { transform: "scaleY(1)", opacity: "1" },
+          "100%": { transform: "scaleY(0.3)", opacity: "0.5" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 5px 2px hsl(142 72% 42% / 0.4)" },
+          "50%": { boxShadow: "0 0 15px 5px hsl(142 72% 42% / 0.8)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -144,6 +162,10 @@ export default {
         "screen-flicker": "screen-flicker 2s ease-in-out infinite",
         "breathing": "breathing 4s ease-in-out infinite",
         "arm-typing": "arm-typing 0.3s ease-in-out infinite",
+        "call-ring": "call-ring 1.5s ease-out infinite",
+        "phone-bounce": "phone-bounce 0.5s ease-in-out infinite",
+        "sound-wave": "sound-wave 0.6s ease-in-out infinite",
+        "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
     },
   },
