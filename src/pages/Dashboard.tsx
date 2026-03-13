@@ -1,9 +1,10 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { GlassIcon } from "@/components/ui/glass-icon";
-import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings, TrendingUp, Users, Mic, Headphones, Shield, Zap, Brain, Heart, Star, Lightbulb, Globe, Cpu, Radio, Smile, Coffee } from "lucide-react";
+import { Bot, MessageSquare, Plus, ArrowRight, Phone, BookOpen, Settings, TrendingUp, Users, Mic, Headphones, Shield, Zap, Brain, Heart, Star, Lightbulb, Globe, Cpu, Radio, Smile, Coffee } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
@@ -130,22 +131,30 @@ export default function Dashboard() {
             <div className="hidden lg:block mb-12">
               {/* Primary KPIs - large display */}
               <div className="grid grid-cols-3 gap-6 mb-6">
-                {[
-                  { label: "エージェント", value: stats.totalAgents },
-                  { label: "アクティブ通話", value: stats.publishedAgents },
-                  { label: "総会話数", value: stats.todayCount },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center p-6 rounded-2xl bg-muted/30 border border-border">
-                    {isLoading ? (
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
-                    ) : (
-                      <>
+                {isLoading ? (
+                  <>
+                    {/* Desktop stats skeleton */}
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="text-center p-6">
+                        <Skeleton className="h-10 w-20 mx-auto mb-2" />
+                        <Skeleton className="h-4 w-24 mx-auto" />
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    {[
+                      { label: "エージェント", value: stats.totalAgents },
+                      { label: "アクティブ通話", value: stats.publishedAgents },
+                      { label: "総会話数", value: stats.todayCount },
+                    ].map((stat) => (
+                      <div key={stat.label} className="text-center p-6 rounded-2xl bg-muted/30 border border-border">
                         <div className="text-4xl font-serif font-bold tracking-tight">{stat.value}</div>
                         <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
 
               {/* Separator */}
@@ -161,14 +170,8 @@ export default function Dashboard() {
                     className="p-4 rounded-xl bg-muted/20 border border-border/60"
                   >
                     <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-2" />
-                    {isLoading ? (
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                    ) : (
-                      <>
-                        <p className="text-xl font-semibold tracking-tight">{stat.value}</p>
-                        <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
-                      </>
-                    )}
+                    <p className="text-xl font-semibold tracking-tight">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -198,8 +201,17 @@ export default function Dashboard() {
               </div>
 
               {isLoadingAgents ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-6 w-6 animate-spin" />
+                <div className="space-y-3">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                      <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                      <Skeleton className="h-6 w-16 rounded-full" />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <>

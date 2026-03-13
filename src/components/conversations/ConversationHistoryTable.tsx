@@ -181,21 +181,21 @@ const ConversationHistoryTableComponent = ({
         return (
           <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/30 gap-1.5 px-3 py-1">
             <CheckCircle className="h-3.5 w-3.5" />
-            Completed
+            完了
           </Badge>
         );
       case "in_progress":
         return (
           <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 hover:bg-blue-500/30 gap-1.5 px-3 py-1">
             <Clock className="h-3.5 w-3.5" />
-            In Progress
+            通話中
           </Badge>
         );
       case "failed":
         return (
           <Badge className="bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500/30 gap-1.5 px-3 py-1">
             <XCircle className="h-3.5 w-3.5" />
-            Failed
+            失敗
           </Badge>
         );
       default:
@@ -219,7 +219,8 @@ const ConversationHistoryTableComponent = ({
         </Button>
         
         <div className="flex-1 min-w-0">
-          <h1 className="text-2xl font-bold text-foreground">History</h1>
+          <h1 className="text-lg font-bold text-foreground truncate">{agent.agentName}</h1>
+          <p className="text-xs text-muted-foreground">通話履歴</p>
         </div>
 
         <div 

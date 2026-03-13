@@ -9,11 +9,11 @@ import {
   Search,
   Phone,
   PhoneOutgoing,
-  Loader2,
   Bot,
   MessageCircle,
   ChevronLeft,
 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
 import { BatchCallDialog } from "@/components/outbound/BatchCallDialog";
@@ -342,9 +342,16 @@ export default function Conversations() {
           <ScrollArea className="flex-1">
             {activeTab === "conversations" ? (
               isLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">読み込み中...</p>
+                <div className="space-y-2 p-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                      <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : filteredAgents.length === 0 ? (
                 <div className="text-center py-16 px-4 text-muted-foreground">
@@ -374,9 +381,16 @@ export default function Conversations() {
               )
             ) : (
               isOutboundLoading ? (
-                <div className="flex flex-col items-center justify-center py-16 gap-2">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  <p className="text-sm text-muted-foreground">読み込み中...</p>
+                <div className="space-y-2 p-3">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                      <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-32" />
+                        <Skeleton className="h-3 w-48" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : filteredOutboundAgents.length === 0 ? (
                 <div className="text-center py-16 px-4 text-muted-foreground">
