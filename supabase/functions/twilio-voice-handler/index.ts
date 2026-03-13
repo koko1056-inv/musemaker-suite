@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateTwilioRequest, formDataToRecord } from "../_shared/twilio-validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,9 +21,14 @@ serve(async (req) => {
     // Parse Twilio request to get CallSid for inbound calls
     let callSid: string | null = null;
     let fromNumber: string | null = null;
-    
+
     try {
       const formData = await req.formData();
+
+      // Validate Twilio signature
+      const validationError = await validateTwilioRequest(req, formDataToRecord(formData));
+      if (validationError) return validationError;
+
       callSid = formData.get('CallSid') as string | null;
       fromNumber = formData.get('From') as string | null;
     } catch {

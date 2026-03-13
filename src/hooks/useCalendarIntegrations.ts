@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 
 export interface CalendarIntegration {
   id: string;
@@ -187,6 +187,13 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
 
       if (error) throw error;
       if (data?.auth_url) {
+        // Store CSRF nonce in sessionStorage before redirecting to OAuth provider
+        if (data.csrf_nonce) {
+          sessionStorage.setItem(
+            `oauth_csrf_calendar_${integrationId}`,
+            data.csrf_nonce
+          );
+        }
         window.open(data.auth_url, "_blank", "width=500,height=600");
       }
     } catch (error) {
@@ -198,6 +205,42 @@ export const useCalendarIntegrations = (workspaceId: string | undefined) => {
       });
     }
   }, [toast]);
+
+  // Listen for OAuth callback messages and validate CSRF nonce
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'google-calendar-oauth-success') {
+        const { integration_id: callbackIntegrationId, csrf_nonce: callbackNonce } = event.data;
+
+        if (callbackIntegrationId && callbackNonce) {
+          const storedNonce = sessionStorage.getItem(
+            `oauth_csrf_calendar_${callbackIntegrationId}`
+          );
+
+          // Clean up the stored nonce regardless of outcome
+          sessionStorage.removeItem(`oauth_csrf_calendar_${callbackIntegrationId}`);
+
+          if (!storedNonce || storedNonce !== callbackNonce) {
+            console.error('[OAuth CSRF] State mismatch detected for calendar integration:', callbackIntegrationId);
+            toast({
+              title: "セキュリティエラー",
+              description: "OAuth認証のstate検証に失敗しました。もう一度お試しください。",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log('[OAuth CSRF] Calendar OAuth state validated successfully');
+        }
+
+        // CSRF validation passed (or no nonce present for backward compatibility) - refresh data
+        refetch();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [refetch, toast]);
 
   const listCalendars = useCallback(async (integrationId: string) => {
     try {

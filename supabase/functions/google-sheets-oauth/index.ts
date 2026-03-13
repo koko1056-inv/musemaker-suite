@@ -85,8 +85,17 @@ serve(async (req) => {
         );
       }
 
+      // Extract csrf_nonce from state to send back to the opener for client-side CSRF verification
+      let csrfNonce = '';
+      try {
+        const stateData = JSON.parse(atob(state));
+        csrfNonce = stateData.csrf_nonce || '';
+      } catch {
+        // If state parsing fails, continue without nonce
+      }
+
       return new Response(
-        `<html><body><script>window.opener?.postMessage({ type: 'google-oauth-success', integration_id: '${integration_id}' }, '*'); setTimeout(() => window.close(), 1000);</script><h2>✅ Google認証が完了しました！このウィンドウは自動的に閉じます。</h2></body></html>`,
+        `<html><body><script>window.opener?.postMessage({ type: 'google-oauth-success', integration_id: '${integration_id}', csrf_nonce: '${csrfNonce}' }, '*'); setTimeout(() => window.close(), 1000);</script><h2>Google認証が完了しました。このウィンドウは自動的に閉じます。</h2></body></html>`,
         { headers: { ...corsHeaders, "Content-Type": "text/html" } }
       );
     }
@@ -130,9 +139,13 @@ serve(async (req) => {
         });
       }
 
-      const state = btoa(JSON.stringify({ 
-        integration_id, 
-        workspace_id: integration.workspace_id 
+      // Generate a CSRF nonce for state validation
+      const csrfNonce = crypto.randomUUID();
+
+      const state = btoa(JSON.stringify({
+        integration_id,
+        workspace_id: integration.workspace_id,
+        csrf_nonce: csrfNonce,
       }));
 
       const authUrl = new URL("https://accounts.google.com/o/oauth2/v2/auth");
@@ -144,7 +157,7 @@ serve(async (req) => {
       authUrl.searchParams.set("prompt", "consent");
       authUrl.searchParams.set("state", state);
 
-      return new Response(JSON.stringify({ auth_url: authUrl.toString() }), {
+      return new Response(JSON.stringify({ auth_url: authUrl.toString(), csrf_nonce: csrfNonce }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

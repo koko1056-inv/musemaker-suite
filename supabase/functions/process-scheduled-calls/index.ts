@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateTwilioRequest } from "../_shared/twilio-validation.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,6 +13,25 @@ serve(async (req) => {
   }
 
   try {
+    // This function is triggered internally (cron/scheduler), not by Twilio callbacks.
+    // Validate using Twilio signature if present (forward compatibility),
+    // otherwise verify the request comes from an authorized internal source
+    // by checking for the service role key in the Authorization header.
+    const twilioSignature = req.headers.get('X-Twilio-Signature');
+    if (twilioSignature) {
+      // If a Twilio signature is present, validate it
+      const validationError = await validateTwilioRequest(req, {});
+      if (validationError) return validationError;
+    } else {
+      // For internal/cron calls, verify the Authorization header contains the service role key
+      const authHeader = req.headers.get('Authorization');
+      const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+      if (!authHeader || !supabaseServiceKey || !authHeader.includes(supabaseServiceKey)) {
+        console.error('[process-scheduled-calls] Unauthorized request: missing or invalid authorization');
+        return new Response('Forbidden: Unauthorized request', { status: 403 });
+      }
+    }
+
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);

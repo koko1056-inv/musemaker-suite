@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { validateTwilioRequest } from "../_shared/twilio-validation.ts";
 
 // --- Audio helpers (Twilio <-> ElevenLabs) ---
 // Twilio Media Streams uses 8kHz G.711 mu-law (a.k.a. mulaw/ulaw).
@@ -119,10 +120,15 @@ const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 Deno.serve(async (req) => {
   // Check if this is a WebSocket upgrade request
   const upgrade = req.headers.get("upgrade") || "";
-  
+
   if (upgrade.toLowerCase() !== "websocket") {
     return new Response("Expected WebSocket connection", { status: 426 });
   }
+
+  // Validate Twilio signature on the WebSocket upgrade request
+  // Note: WebSocket upgrade requests from Twilio are GET requests with no body params
+  const validationError = await validateTwilioRequest(req, {});
+  if (validationError) return validationError;
 
   console.log("WebSocket upgrade request received");
 

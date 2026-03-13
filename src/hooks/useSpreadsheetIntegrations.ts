@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -197,8 +197,15 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
       });
 
       if (error) throw error;
-      
+
       if (data?.auth_url) {
+        // Store CSRF nonce in sessionStorage before redirecting to OAuth provider
+        if (data.csrf_nonce) {
+          sessionStorage.setItem(
+            `oauth_csrf_sheets_${integrationId}`,
+            data.csrf_nonce
+          );
+        }
         window.open(data.auth_url, '_blank', 'width=500,height=600');
         return true;
       }
@@ -209,6 +216,38 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
       return false;
     }
   }, []);
+
+  // Listen for OAuth callback messages and validate CSRF nonce
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'google-oauth-success') {
+        const { integration_id: callbackIntegrationId, csrf_nonce: callbackNonce } = event.data;
+
+        if (callbackIntegrationId && callbackNonce) {
+          const storedNonce = sessionStorage.getItem(
+            `oauth_csrf_sheets_${callbackIntegrationId}`
+          );
+
+          // Clean up the stored nonce regardless of outcome
+          sessionStorage.removeItem(`oauth_csrf_sheets_${callbackIntegrationId}`);
+
+          if (!storedNonce || storedNonce !== callbackNonce) {
+            console.error('[OAuth CSRF] State mismatch detected for sheets integration:', callbackIntegrationId);
+            toast.error('セキュリティエラー: OAuth認証のstate検証に失敗しました。もう一度お試しください。');
+            return;
+          }
+
+          console.log('[OAuth CSRF] Sheets OAuth state validated successfully');
+        }
+
+        // CSRF validation passed (or no nonce present for backward compatibility) - refresh data
+        refetch();
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [refetch]);
 
   const listSpreadsheets = useCallback(async (integrationId: string) => {
     try {
