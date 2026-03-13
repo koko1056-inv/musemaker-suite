@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   MessageSquare,
   HelpCircle,
   CheckCircle2,
+  Check,
   Sparkles,
   PartyPopper,
   ArrowRight,
@@ -28,7 +29,6 @@ import {
   FileEdit,
   Variable,
   ChevronDown,
-  ChevronUp,
   Settings2,
   Wand2,
   Zap,
@@ -77,42 +77,65 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-// Step indicator component
+// Step indicator component – horizontal stepper with labels and connector lines
 const StepIndicator = ({
-  step,
   currentStep,
-  label,
-  isComplete,
-  onClick
+  totalSteps,
+  canGoToStep,
+  onGoToStep,
 }: {
-  step: number;
   currentStep: number;
-  label: string;
-  isComplete: boolean;
-  onClick: () => void;
-}) => (
-  <button
-    onClick={onClick}
-    className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-      currentStep === step
-        ? "bg-primary text-primary-foreground"
-        : isComplete
-        ? "bg-primary/10 text-primary"
-        : "bg-muted text-muted-foreground"
-    }`}
-  >
-    <div className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
-      currentStep === step
-        ? "bg-primary-foreground/20"
-        : isComplete
-        ? "bg-primary/20"
-        : "bg-muted-foreground/20"
-    }`}>
-      {isComplete && currentStep !== step ? "✓" : step}
+  totalSteps: number;
+  canGoToStep: (step: number) => boolean;
+  onGoToStep: (step: number) => void;
+}) => {
+  const stepLabels = ["基本情報", "音声設定", "確認"];
+  return (
+    <div className="flex items-start justify-center gap-0">
+      {stepLabels.slice(0, totalSteps).map((label, i) => {
+        const stepNum = i + 1;
+        const isCompleted = stepNum < currentStep;
+        const isCurrent = stepNum === currentStep;
+        const isClickable = canGoToStep(stepNum);
+        return (
+          <React.Fragment key={i}>
+            {i > 0 && (
+              <div
+                className={`h-px w-10 mx-2 mt-4 shrink-0 transition-colors duration-300 ${
+                  stepNum <= currentStep ? "bg-foreground" : "bg-muted-foreground/30"
+                }`}
+              />
+            )}
+            <button
+              onClick={() => isClickable && onGoToStep(stepNum)}
+              disabled={!isClickable}
+              className="flex flex-col items-center gap-1.5 disabled:cursor-default"
+            >
+              <div
+                className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors duration-200 ${
+                  isCompleted
+                    ? "bg-foreground text-background"
+                    : isCurrent
+                    ? "bg-foreground text-background"
+                    : "border-2 border-muted-foreground/30 text-muted-foreground"
+                }`}
+              >
+                {isCompleted ? <Check className="h-4 w-4" /> : stepNum}
+              </div>
+              <span
+                className={`text-xs whitespace-nowrap transition-colors duration-200 ${
+                  isCurrent ? "text-foreground font-medium" : "text-muted-foreground"
+                }`}
+              >
+                {label}
+              </span>
+            </button>
+          </React.Fragment>
+        );
+      })}
     </div>
-    <span className="text-sm font-medium hidden sm:block">{label}</span>
-  </button>
-);
+  );
+};
 
 // Collapsible section for existing agent editing
 const EditorSection = ({
@@ -133,32 +156,36 @@ const EditorSection = ({
   badge?: string;
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <div className="border rounded-xl overflow-hidden bg-card">
+      <div
+        className={`border rounded-xl overflow-hidden bg-card transition-all duration-200 ${
+          isOpen ? "border-l-2 border-l-primary/30" : ""
+        }`}
+      >
         <CollapsibleTrigger asChild>
           <button className="w-full flex items-center gap-3 p-4 hover:bg-muted/50 transition-colors">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconBg}`}>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl shrink-0 ${iconBg}`}>
               <Icon className="h-5 w-5" />
             </div>
-            <div className="flex-1 text-left">
+            <div className="flex-1 text-left min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold">{title}</h3>
                 {badge && (
                   <Badge variant="secondary" className="text-[10px]">{badge}</Badge>
                 )}
               </div>
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <p className="text-sm text-muted-foreground truncate">{description}</p>
             </div>
-            {isOpen ? (
-              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-            ) : (
-              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-            )}
+            <ChevronDown
+              className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
+                isOpen ? "rotate-180" : ""
+              }`}
+            />
           </button>
         </CollapsibleTrigger>
-        <CollapsibleContent>
+        <CollapsibleContent className="transition-all duration-200">
           <div className="px-4 pb-4 pt-0 border-t">
             {children}
           </div>
@@ -224,6 +251,7 @@ export default function AgentEditor() {
   const [isEditingPrompt, setIsEditingPrompt] = useState(false);
   const [showEditPromptDialog, setShowEditPromptDialog] = useState(false);
   const [editInstruction, setEditInstruction] = useState("");
+  const [savedRecently, setSavedRecently] = useState(false);
 
   const { isLoading: isPlayingAudio, fetchVoices, generateSpeech, stopAudio } = useElevenLabs();
   const { createAgent, updateAgent, getAgent } = useAgents();
@@ -352,6 +380,8 @@ export default function AgentEditor() {
         if (newStatus) setStatus(newStatus);
         setElevenLabsAgentId(updatedAgent.elevenlabs_agent_id || null);
         toast.success("保存しました");
+        setSavedRecently(true);
+        setTimeout(() => setSavedRecently(false), 2000);
       }
     } finally {
       setIsSaving(false);
@@ -565,34 +595,49 @@ export default function AgentEditor() {
   const renderExistingAgentEditor = () => (
     <div className="space-y-4">
       {/* Quick Status Bar */}
-      <div className="flex items-center gap-3 p-4 rounded-xl bg-card border">
-        <div 
-          className="h-12 w-12 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${iconColor}20` }}
-        >
-          <Bot className="h-6 w-6" style={{ color: iconColor }} />
+      <div className="rounded-xl bg-card border overflow-hidden">
+        {/* Breadcrumb strip */}
+        <div className="flex items-center gap-1.5 px-4 py-2 border-b bg-muted/40 text-xs text-muted-foreground">
+          <span>エージェント</span>
+          <ChevronDown className="h-3 w-3 -rotate-90 opacity-50" />
+          <span className="text-foreground font-medium truncate">{agentName || "エージェント"}</span>
         </div>
-        <div className="flex-1 min-w-0">
-          <h2 className="font-semibold truncate">{agentName || "エージェント"}</h2>
-          <div className="flex items-center gap-2 mt-0.5">
-            <Badge variant={status === "published" ? "default" : "secondary"} className="text-xs">
-              {status === "published" ? "公開中" : "下書き"}
-            </Badge>
-            {elevenlabsAgentId && (
-              <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30">
-                通話可能
-              </Badge>
-            )}
+        {/* Main bar */}
+        <div className="flex items-center gap-3 p-4">
+          <div
+            className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${iconColor}20` }}
+          >
+            <Bot className="h-6 w-6" style={{ color: iconColor }} />
           </div>
-        </div>
-        {elevenlabsAgentId && (
-          <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
-            <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2 shrink-0">
-                <Phone className="h-4 w-4" />
-                テスト通話
-              </Button>
-            </DialogTrigger>
+          <div className="flex-1 min-w-0">
+            <h2 className="font-semibold truncate">{agentName || "エージェント"}</h2>
+            <div className="flex items-center gap-2 mt-1">
+              <Badge
+                variant={status === "published" ? "default" : "secondary"}
+                className={`text-xs font-medium ${
+                  status === "published"
+                    ? "bg-green-500 hover:bg-green-500 text-white"
+                    : ""
+                }`}
+              >
+                {status === "published" ? "公開中" : "下書き"}
+              </Badge>
+              {elevenlabsAgentId && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-200 bg-green-50 dark:bg-green-950/30">
+                  通話可能
+                </Badge>
+              )}
+            </div>
+          </div>
+          {elevenlabsAgentId && (
+            <Dialog open={showCallDialog} onOpenChange={setShowCallDialog}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 shrink-0">
+                  <Phone className="h-4 w-4" />
+                  テスト通話
+                </Button>
+              </DialogTrigger>
             <DialogContent className="sm:max-w-md max-h-[90vh] overflow-auto">
               <DialogHeader>
                 <DialogTitle>テスト通話</DialogTitle>
@@ -607,8 +652,9 @@ export default function AgentEditor() {
                 onCallEnd={() => {}}
               />
             </DialogContent>
-          </Dialog>
-        )}
+            </Dialog>
+          )}
+        </div>
       </div>
 
       {/* Basic Info Section */}
@@ -1413,14 +1459,20 @@ export default function AgentEditor() {
                 </Button>
               )}
               
-              <Button 
+              <Button
                 onClick={() => handleSave()}
                 disabled={isSaving || !canProceedToStep3}
-                className="gap-2"
+                className={`gap-2 transition-colors duration-300 ${savedRecently ? "bg-green-500 hover:bg-green-600 text-white" : ""}`}
                 size="sm"
               >
-                {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                <span className="hidden sm:inline">{isNew ? "作成" : "保存"}</span>
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : savedRecently ? (
+                  <Check className="h-4 w-4" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline">{isNew ? "作成" : savedRecently ? "保存済み" : "保存"}</span>
               </Button>
             </div>
           </header>
@@ -1428,29 +1480,17 @@ export default function AgentEditor() {
           {/* Progress Steps (for new agents, not during selection screens) */}
           {isNew && !showTemplates && !showAIBuilder && !showMethodSelector && !showEasySetup && (
             <div className="bg-background border-b border-border px-4 py-3 sticky top-[65px] z-10">
-              <div className="flex items-center justify-center gap-3 max-w-md mx-auto">
-                <StepIndicator 
-                  step={1} 
-                  currentStep={currentStep} 
-                  label="基本情報" 
-                  isComplete={canProceedToStep2}
-                  onClick={() => setCurrentStep(1)}
-                />
-                <div className={`w-8 h-0.5 rounded ${currentStep > 1 ? 'bg-primary' : 'bg-border'}`} />
-                <StepIndicator 
-                  step={2} 
-                  currentStep={currentStep} 
-                  label="音声" 
-                  isComplete={Boolean(canProceedToStep3)}
-                  onClick={() => canProceedToStep2 && setCurrentStep(2)}
-                />
-                <div className={`w-8 h-0.5 rounded ${currentStep > 2 ? 'bg-primary' : 'bg-border'}`} />
-                <StepIndicator 
-                  step={3} 
-                  currentStep={currentStep} 
-                  label="確認" 
-                  isComplete={false}
-                  onClick={() => canProceedToStep3 && setCurrentStep(3)}
+              <div className="max-w-md mx-auto">
+                <StepIndicator
+                  currentStep={currentStep}
+                  totalSteps={3}
+                  canGoToStep={(step) => {
+                    if (step === 1) return true;
+                    if (step === 2) return canProceedToStep2;
+                    if (step === 3) return Boolean(canProceedToStep3);
+                    return false;
+                  }}
+                  onGoToStep={setCurrentStep}
                 />
               </div>
             </div>

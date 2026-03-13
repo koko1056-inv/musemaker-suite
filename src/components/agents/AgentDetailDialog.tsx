@@ -1,9 +1,10 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Settings, Copy, Trash2 } from "lucide-react";
+import { Phone, Settings, Copy, Trash2, ChevronDown, ChevronUp, Calendar } from "lucide-react";
 import { Agent, AgentFolder, PhoneNumber, getAgentColor } from "./OfficeFloorTypes";
 
 // エージェント詳細ダイアログ
@@ -30,16 +31,27 @@ export const AgentDetailDialog = ({
   onDelete: (agentId: string) => void;
   onMoveToFolder: (agentId: string, folderId: string | null) => void;
 }) => {
+  const [isPromptExpanded, setIsPromptExpanded] = useState(false);
+
   if (!agent) return null;
   const isPublished = agent.status === "published";
   const isReady = !!agent.elevenlabs_agent_id;
   const color = agent.icon_color || getAgentColor(agent.id);
+
+  const systemPromptPreview = agent.system_prompt
+    ? agent.system_prompt.slice(0, 100) + (agent.system_prompt.length > 100 ? '...' : '')
+    : null;
+
+  const formattedDate = agent.created_at
+    ? new Date(agent.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })
+    : null;
+
   return <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             {/* キャラクターアバター */}
-            <div className="relative" style={{
+            <div className="relative flex-shrink-0" style={{
             imageRendering: 'pixelated' as const
           }}>
               <svg viewBox="0 0 24 32" className="w-12 h-16">
@@ -59,11 +71,19 @@ export const AgentDetailDialog = ({
                 <rect x="17" y="5" width="2" height="4" fill="#333" />
               </svg>
             </div>
-            <div className="flex-1">
-              <DialogTitle className="text-lg">{agent.name}</DialogTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                {agent.description || '説明未設定'}
-              </p>
+            <div className="flex-1 min-w-0">
+              <DialogTitle className="text-lg leading-tight">{agent.name}</DialogTitle>
+              {agent.description && (
+                <p className="text-sm text-muted-foreground mt-1 leading-snug">
+                  {agent.description}
+                </p>
+              )}
+              {formattedDate && (
+                <div className="flex items-center gap-1 mt-1.5 text-xs text-muted-foreground/60">
+                  <Calendar className="w-3 h-3" />
+                  <span>{formattedDate} 作成</span>
+                </div>
+              )}
             </div>
           </div>
         </DialogHeader>
@@ -81,6 +101,31 @@ export const AgentDetailDialog = ({
               {assignedPhone.phone_number}
             </Badge>}
         </div>
+
+        {/* システムプロンプトプレビュー */}
+        {systemPromptPreview && (
+          <div className="mt-4">
+            <button
+              onClick={() => setIsPromptExpanded(prev => !prev)}
+              className="flex items-center justify-between w-full text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-1"
+            >
+              <span>システムプロンプト</span>
+              {isPromptExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            <div className={`overflow-hidden transition-all duration-200 ${isPromptExpanded ? 'max-h-40' : 'max-h-0'}`}>
+              <div className="mt-1 p-3 rounded-md bg-muted/50 border text-xs text-muted-foreground font-mono leading-relaxed overflow-y-auto max-h-32">
+                {isPromptExpanded
+                  ? (agent.system_prompt || systemPromptPreview)
+                  : systemPromptPreview}
+              </div>
+            </div>
+            {!isPromptExpanded && (
+              <p className="mt-1 text-xs text-muted-foreground/60 truncate font-mono">
+                {systemPromptPreview}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* 電話番号割り当て */}
         {phoneNumbers.length > 0 && <div className="mt-4">
@@ -125,25 +170,27 @@ export const AgentDetailDialog = ({
 
         {/* アクションボタン */}
         <div className="flex flex-col gap-2 mt-6">
-          <Button asChild className="w-full gap-2">
+          {/* 設定を編集 - プライマリ、フル幅 */}
+          <Button asChild size="lg" className="w-full gap-2">
             <Link to={`/agents/${agent.id}`}>
               <Settings className="w-4 h-4" />
               設定を編集
             </Link>
           </Button>
+          {/* 複製・削除 - セカンダリ、横並び */}
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 gap-2" onClick={() => {
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => {
             onDuplicate(agent);
             onClose();
           }}>
-              <Copy className="w-4 h-4" />
+              <Copy className="w-3.5 h-3.5" />
               複製
             </Button>
-            <Button variant="outline" className="flex-1 gap-2 text-destructive hover:text-destructive" onClick={() => {
+            <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/5" onClick={() => {
             onDelete(agent.id);
             onClose();
           }}>
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
               削除
             </Button>
           </div>

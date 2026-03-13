@@ -12,23 +12,20 @@ import {
   DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  MoreVertical,
+  MoreHorizontal,
   Copy,
   Trash2,
   Edit,
   Phone,
   FolderInput,
   Folder,
+  ChevronRight,
   Zap,
-  Volume2,
+  MessageSquare,
+  PhoneCall,
+  PhoneOff,
 } from "lucide-react";
+import { getAgentIcon } from "@/components/agents/AgentIconPicker";
 
 interface Agent {
   id: string;
@@ -68,8 +65,9 @@ interface PixelAgentCardProps {
   onMoveToFolder: (agentId: string, folderId: string | null) => void;
 }
 
+// Kept for potential use elsewhere — not rendered in the card.
 // Pixel art style status indicator
-const PixelStatusIndicator = ({ isActive, isPulsing, label }: { isActive: boolean; isPulsing: boolean; label?: string }) => (
+export const PixelStatusIndicator = ({ isActive, isPulsing, label }: { isActive: boolean; isPulsing: boolean; label?: string }) => (
   <div
     className="relative"
     aria-label={label ? `${label}: ${isActive ? 'オン' : 'オフ'}` : undefined}
@@ -93,9 +91,10 @@ const PixelStatusIndicator = ({ isActive, isPulsing, label }: { isActive: boolea
   </div>
 );
 
+// Kept for potential use elsewhere — not rendered in the card.
 // Pixel art robot avatar
-const PixelRobotAvatar = ({ color, isActive }: { color: string; isActive: boolean }) => (
-  <div 
+export const PixelRobotAvatar = ({ color, isActive }: { color: string; isActive: boolean }) => (
+  <div
     className={`relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center transition-all duration-300 ${isActive ? 'animate-float' : ''}`}
     style={{ imageRendering: 'pixelated' as const }}
   >
@@ -127,6 +126,62 @@ const PixelRobotAvatar = ({ color, isActive }: { color: string; isActive: boolea
   </div>
 );
 
+// Status badge reflecting the combined agent state
+const getStatusBadge = (isPublished: boolean, isReady: boolean, hasPhone: boolean) => {
+  if (isPublished && isReady && hasPhone) {
+    return (
+      <Badge
+        aria-label="ステータス: 通話可能"
+        className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1 px-2 py-0.5 text-xs"
+      >
+        <PhoneCall className="h-3 w-3" />
+        通話可能
+      </Badge>
+    );
+  }
+
+  if (isPublished && isReady) {
+    return (
+      <Badge
+        aria-label="ステータス: 稼働中"
+        className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1 px-2 py-0.5 text-xs"
+      >
+        <Zap className="h-3 w-3" />
+        稼働中
+      </Badge>
+    );
+  }
+
+  if (isPublished) {
+    return (
+      <Badge
+        aria-label="ステータス: 準備中"
+        className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1 px-2 py-0.5 text-xs"
+      >
+        <MessageSquare className="h-3 w-3" />
+        準備中
+      </Badge>
+    );
+  }
+
+  return (
+    <Badge
+      aria-label="ステータス: 下書き"
+      className="bg-slate-500/20 text-slate-400 border-slate-500/30 hover:bg-slate-500/30 gap-1 px-2 py-0.5 text-xs"
+    >
+      <PhoneOff className="h-3 w-3" />
+      下書き
+    </Badge>
+  );
+};
+
+// Derive top-bar color from agent state (same logic as before)
+const getTopBarColor = (isPublished: boolean, isReady: boolean) => {
+  if (isPublished && isReady) return 'bg-green-500';
+  if (isPublished) return 'bg-yellow-500';
+  return 'bg-muted';
+};
+
 export function PixelAgentCard({
   agent,
   index,
@@ -142,202 +197,150 @@ export function PixelAgentCard({
   const isReady = !!agent.elevenlabs_agent_id;
   const hasPhone = !!assignedPhone;
 
-  // Generate color from agent id
+  // Generate fallback color from agent id
   const getAgentColor = (id: string) => {
     const colors = [
-      '#6366f1', // indigo
-      '#8b5cf6', // violet
-      '#ec4899', // pink
-      '#f43f5e', // rose
-      '#f97316', // orange
-      '#eab308', // yellow
-      '#22c55e', // green
-      '#14b8a6', // teal
-      '#06b6d4', // cyan
-      '#3b82f6', // blue
+      '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316',
+      '#eab308', '#22c55e', '#14b8a6', '#06b6d4', '#3b82f6',
     ];
     const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return colors[hash % colors.length];
   };
 
   const agentColor = agent.icon_color || getAgentColor(agent.id);
+  const IconComponent = getAgentIcon(agent.icon_name || 'bot');
 
   return (
     <div
-      className="group relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-300 hover:border-primary/40 hover:shadow-lg animate-fade-in"
-      style={{ 
-        animationDelay: `${index * 40}ms`,
-      }}
+      className="group relative bg-card border border-border rounded-xl overflow-hidden transition-all duration-200 hover:border-primary/40 hover:shadow-lg hover:-translate-y-0.5 focus-within:ring-2 ring-primary/20 animate-fade-in"
+      style={{ animationDelay: `${index * 40}ms` }}
     >
-      {/* Status bar at top */}
-      <div 
-        className={`h-1 w-full transition-colors ${isPublished && isReady ? 'bg-green-500' : isPublished ? 'bg-yellow-500' : 'bg-muted'}`}
-      />
-      
-      <div className="p-4 sm:p-5">
-        {/* Header with avatar and status */}
-        <div className="flex items-start gap-3 mb-4">
-          <Link to={`/agents/${agent.id}`} className="shrink-0">
+      {/* Colored top bar — h-1 (thinner) */}
+      <div className={`h-1 w-full ${getTopBarColor(isPublished, isReady)}`} />
+
+      <div className="p-4">
+        {/* Row 1: avatar + name + dropdown */}
+        <div className="flex items-center gap-3 mb-2">
+          {/* Icon-based avatar — h-10 w-10 circle */}
+          <Link to={`/agents/${agent.id}`} className="shrink-0" tabIndex={-1}>
             {agent.custom_icon_url && agent.icon_name === 'custom' ? (
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden">
-                <img 
-                  src={agent.custom_icon_url} 
-                  alt={agent.name} 
+              <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-background shadow-sm">
+                <img
+                  src={agent.custom_icon_url}
+                  alt={agent.name}
                   className="h-full w-full object-cover"
                 />
               </div>
             ) : (
-              <PixelRobotAvatar color={agentColor} isActive={isPublished && isReady} />
+              <div
+                className="h-10 w-10 rounded-full flex items-center justify-center border-2 border-background shadow-sm"
+                style={{ backgroundColor: `${agentColor}20`, borderColor: agentColor }}
+              >
+                <IconComponent className="h-5 w-5" style={{ color: agentColor }} />
+              </div>
             )}
           </Link>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <Link to={`/agents/${agent.id}`}>
-                  <h3 className="font-semibold text-foreground hover:text-primary transition-colors truncate text-sm sm:text-base">
-                    {agent.name}
-                  </h3>
-                </Link>
-                <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {agent.description || '説明未設定'}
-                </p>
-              </div>
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="bg-popover">
-                  <DropdownMenuItem asChild>
-                    <Link to={`/agents/${agent.id}`} className="flex items-center">
-                      <Edit className="mr-2 h-4 w-4" />
-                      編集する
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => onDuplicate(agent)}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    コピーを作成
-                  </DropdownMenuItem>
-                  {folders.length > 0 && (
-                    <>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                          <FolderInput className="mr-2 h-4 w-4" />
-                          フォルダに移動
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent className="bg-popover">
-                          {agent.folder_id && (
-                            <DropdownMenuItem onClick={() => onMoveToFolder(agent.id, null)}>
-                              <Folder className="mr-2 h-4 w-4" />
-                              フォルダから削除
-                            </DropdownMenuItem>
-                          )}
-                          {folders.map(folder => (
-                            <DropdownMenuItem
-                              key={folder.id}
-                              onClick={() => onMoveToFolder(agent.id, folder.id)}
-                              disabled={agent.folder_id === folder.id}
-                            >
-                              <div
-                                className="mr-2 h-3 w-3 rounded-sm"
-                                style={{ backgroundColor: folder.color }}
-                              />
-                              {folder.name}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuSubContent>
-                      </DropdownMenuSub>
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => onDelete(agent.id)}
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    削除する
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-        </div>
 
-        {/* Status indicators - pixel style */}
-        <div className="flex items-center gap-4 mb-4 p-2.5 rounded-lg bg-muted/30">
-          <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={isPublished} isPulsing={false} label="公開状態" />
-            <span className="text-xs text-muted-foreground">
-              {isPublished ? '公開中' : '下書き'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={isReady} isPulsing={isReady && isPublished} label="通話状態" />
-            <span className="text-xs text-muted-foreground">
-              {isReady ? '通話可能' : '準備中'}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={hasPhone} isPulsing={false} label="電話番号割当" />
-            <span className="text-xs text-muted-foreground">
-              {hasPhone ? '番号割当' : '番号なし'}
-            </span>
-          </div>
-        </div>
-
-        {/* Phone assignment */}
-        {phoneNumbers.length > 0 && (
-          <div className="mb-4">
-            <Select
-              value={assignedPhone?.phone_number_sid || "none"}
-              onValueChange={(value) => onPhoneAssign(agent.id, value)}
-            >
-              <SelectTrigger className="h-9 text-xs bg-background">
-                <div className="flex items-center gap-2">
-                  <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                  <SelectValue placeholder="電話番号を割り当て">
-                    {assignedPhone ? (
-                      <span className="font-mono text-xs">{assignedPhone.phone_number}</span>
-                    ) : (
-                      <span className="text-muted-foreground">電話番号を割り当て</span>
-                    )}
-                  </SelectValue>
-                </div>
-              </SelectTrigger>
-              <SelectContent className="bg-popover">
-                <SelectItem value="none">
-                  <span className="text-muted-foreground">未割り当て</span>
-                </SelectItem>
-                {phoneNumbers.map((phone) => (
-                  <SelectItem 
-                    key={phone.phone_number_sid} 
-                    value={phone.phone_number_sid}
-                    disabled={phone.agent_id !== null && phone.agent_id !== agent.id}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs">{phone.phone_number}</span>
-                      {phone.label && (
-                        <span className="text-muted-foreground text-xs">({phone.label})</span>
-                      )}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
-
-        {/* Quick action button */}
-        <Button asChild variant="outline" size="sm" className="w-full gap-2 h-9 text-xs group/btn">
-          <Link to={`/agents/${agent.id}`}>
-            <Zap className="h-3.5 w-3.5" />
-            設定を開く
+          {/* Agent name — fills remaining width */}
+          <Link to={`/agents/${agent.id}`} className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm text-foreground hover:text-primary transition-colors truncate">
+              {agent.name}
+            </h3>
           </Link>
-        </Button>
+
+          {/* Dropdown — always visible */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 shrink-0 opacity-70 hover:opacity-100 transition-opacity"
+                aria-label="メニューを開く"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem asChild>
+                <Link to={`/agents/${agent.id}`} className="flex items-center">
+                  <Edit className="mr-2 h-4 w-4" />
+                  編集する
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate(agent)}>
+                <Copy className="mr-2 h-4 w-4" />
+                コピーを作成
+              </DropdownMenuItem>
+              {folders.length > 0 && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <FolderInput className="mr-2 h-4 w-4" />
+                      フォルダに移動
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="bg-popover">
+                      {agent.folder_id && (
+                        <DropdownMenuItem onClick={() => onMoveToFolder(agent.id, null)}>
+                          <Folder className="mr-2 h-4 w-4" />
+                          フォルダから削除
+                        </DropdownMenuItem>
+                      )}
+                      {folders.map(folder => (
+                        <DropdownMenuItem
+                          key={folder.id}
+                          onClick={() => onMoveToFolder(agent.id, folder.id)}
+                          disabled={agent.folder_id === folder.id}
+                        >
+                          <div
+                            className="mr-2 h-3 w-3 rounded-sm"
+                            style={{ backgroundColor: folder.color }}
+                          />
+                          {folder.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                </>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => onDelete(agent.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                削除する
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Row 2: description — 2-line clamp */}
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+          {agent.description || '説明未設定'}
+        </p>
+
+        {/* Row 3: status badge + phone number (inline) */}
+        <div className="flex items-center gap-2 mb-3">
+          {getStatusBadge(isPublished, isReady, hasPhone)}
+          {hasPhone && (
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Phone className="h-3 w-3 shrink-0" />
+              <span className="font-mono truncate">{assignedPhone.phone_number}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Row 4: settings link — subtle, right-aligned */}
+        <div className="flex justify-end">
+          <Link
+            to={`/agents/${agent.id}`}
+            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            設定を開く
+            <ChevronRight className="h-4 w-4" />
+          </Link>
+        </div>
       </div>
     </div>
   );

@@ -71,7 +71,7 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
 
   if (isPublished && isReady && hasPhone) {
     return (
-      <Badge aria-label="ステータス: 通話可能" className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 通話可能" className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1.5 px-3 py-1 text-[10px] md:text-xs">
         <PhoneCall className="h-3.5 w-3.5" />
         通話可能
       </Badge>
@@ -80,7 +80,7 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
 
   if (isPublished && isReady) {
     return (
-      <Badge aria-label="ステータス: 稼働中" className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 稼働中" className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1.5 px-3 py-1 text-[10px] md:text-xs">
         <Zap className="h-3.5 w-3.5" />
         稼働中
       </Badge>
@@ -89,7 +89,7 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
 
   if (isPublished) {
     return (
-      <Badge aria-label="ステータス: 準備中" className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 準備中" className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1.5 px-3 py-1 text-[10px] md:text-xs">
         <MessageSquare className="h-3.5 w-3.5" />
         準備中
       </Badge>
@@ -97,7 +97,7 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
   }
 
   return (
-    <Badge aria-label="ステータス: 下書き" className="bg-slate-500/20 text-slate-400 border-slate-500/30 hover:bg-slate-500/30 gap-1.5 px-3 py-1 text-xs">
+    <Badge aria-label="ステータス: 下書き" className="bg-slate-500/20 text-slate-400 border-slate-500/30 hover:bg-slate-500/30 gap-1.5 px-3 py-1 text-[10px] md:text-xs">
       <PhoneOff className="h-3.5 w-3.5" />
       下書き
     </Badge>
@@ -158,6 +158,15 @@ export function AgentListView({
 
   return (
     <div className="bg-card rounded-2xl border border-border overflow-hidden">
+      {/* Header row */}
+      <div className="hidden md:flex items-center gap-3 sm:gap-4 px-4 py-2.5 sticky top-0 bg-background/95 backdrop-blur z-10 border-b border-border/50">
+        <div className="w-3 shrink-0" />
+        <div className="w-12 sm:w-14 shrink-0" />
+        <div className="flex-1 min-w-0 text-xs font-medium text-muted-foreground">名前</div>
+        <div className="w-28 shrink-0 text-xs font-medium text-muted-foreground">ステータス</div>
+        <div className="w-32 shrink-0 text-xs font-medium text-muted-foreground">電話番号</div>
+        <div className="w-16 shrink-0 text-xs font-medium text-muted-foreground text-right">操作</div>
+      </div>
       <div className="divide-y divide-border/50">
         {agents.map((agent, index) => {
           const isPublished = agent.status === "published";
@@ -170,7 +179,7 @@ export function AgentListView({
           return (
             <div
               key={agent.id}
-              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-muted/30 transition-colors group animate-fade-in"
+              className="flex items-center gap-3 sm:gap-4 p-3 sm:p-4 hover:bg-muted/30 active:bg-muted/50 transition-colors duration-150 group animate-fade-in"
               style={{ animationDelay: `${index * 30}ms` }}
             >
               {/* Status Indicator */}
@@ -199,7 +208,7 @@ export function AgentListView({
               {/* Agent Info */}
               <div className="flex-1 min-w-0">
                 <Link to={`/agents/${agent.id}`} className="block">
-                  <h3 
+                  <h3
                     className="font-semibold text-sm sm:text-base truncate hover:underline"
                     style={{ color: agentColor }}
                   >
@@ -209,14 +218,21 @@ export function AgentListView({
                 <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
                   {agent.description || '説明未設定'}
                 </p>
+                {/* Phone number shown inline on mobile */}
+                {hasPhone && (
+                  <div className="md:hidden text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Phone className="h-3 w-3" />
+                    <span className="font-mono">{assignedPhone.phone_number}</span>
+                  </div>
+                )}
               </div>
 
-              {/* Status Badge */}
-              <div className="hidden sm:block shrink-0">
+              {/* Status Badge - always visible, smaller on mobile */}
+              <div className="shrink-0">
                 {getStatusBadge(agent, hasPhone)}
               </div>
 
-              {/* Phone Number (if assigned) */}
+              {/* Phone Number (desktop only) */}
               {hasPhone && (
                 <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
                   <Phone className="h-3.5 w-3.5" />
@@ -228,10 +244,10 @@ export function AgentListView({
               <div className="flex items-center gap-1 shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-8 w-8 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 opacity-70 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </Button>
@@ -290,9 +306,11 @@ export function AgentListView({
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <Link to={`/agents/${agent.id}`}>
+                <Link to={`/agents/${agent.id}`} className="hidden md:block">
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </Link>
+                {/* Swipe/tap hint on mobile */}
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 md:hidden shrink-0" />
               </div>
             </div>
           );

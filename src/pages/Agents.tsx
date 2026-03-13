@@ -21,7 +21,6 @@ import {
   Plus,
   Search,
   Loader2,
-  Sparkles,
   Clock,
   Mic,
   MessageSquare,
@@ -34,6 +33,7 @@ import {
   LayoutGrid,
   LayoutList,
   Building2,
+  X,
 } from "lucide-react";
 import { useAgents } from "@/hooks/useAgents";
 import { useAgentFolders } from "@/hooks/useAgentFolders";
@@ -44,7 +44,6 @@ import { KnowledgeBaseSection } from "@/components/agents/KnowledgeBaseSection";
 import { PixelAgentCard } from "@/components/agents/PixelAgentCard";
 import { AgentListView } from "@/components/agents/AgentListView";
 import { FolderSection } from "@/components/agents/FolderSection";
-import { AgentOverviewStats } from "@/components/agents/AgentOverviewStats";
 import { OfficeFloorView } from "@/components/agents/OfficeFloorView";
 import { GlassIcon } from "@/components/ui/glass-icon";
 import { toast } from "sonner";
@@ -98,6 +97,18 @@ export default function Agents() {
   const activeAgents = agents.filter(a => a.status === 'published' && a.elevenlabs_agent_id).length;
   const agentsWithPhone = agents.filter(a => phoneNumbers.some(p => p.agent_id === a.id)).length;
 
+  // Inline stats bar counts (match AgentListView status logic)
+  const statCallable = agents.filter(a =>
+    a.status === 'published' && !!a.elevenlabs_agent_id && phoneNumbers.some(p => p.agent_id === a.id)
+  ).length;
+  const statActive = agents.filter(a =>
+    a.status === 'published' && !!a.elevenlabs_agent_id && !phoneNumbers.some(p => p.agent_id === a.id)
+  ).length;
+  const statReady = agents.filter(a =>
+    a.status === 'published' && !a.elevenlabs_agent_id
+  ).length;
+  const statDraft = agents.filter(a => a.status !== 'published').length;
+
   const handleDelete = async () => {
     if (!deleteAgentId) return;
     try {
@@ -136,82 +147,47 @@ export default function Agents() {
     <AppLayout>
       <TooltipProvider>
         <div className="p-4 md:p-6 lg:p-8 max-w-6xl mobile-safe-bottom">
-          {/* Header with welcome message */}
-          <div className="mb-5 sm:mb-6 md:mb-8">
-            <div className="flex flex-col gap-3 sm:gap-4">
-              <div className="flex items-center gap-3 mb-1 sm:mb-2">
-                <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-muted/30 shrink-0 overflow-hidden">
-                  <img src={headsetIcon} alt="Headset" className="h-7 w-7 sm:h-8 sm:w-8 object-contain" />
-                </div>
-                <div>
-                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">エージェント</h1>
-                  <p className="text-xs sm:text-sm text-muted-foreground">
-                    AIアシスタントを作成・管理
-                  </p>
-                </div>
+          {/* Page header */}
+          <div className="mb-5 sm:mb-6">
+            {/* Title row */}
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/30 shrink-0 overflow-hidden">
+                <img src={headsetIcon} alt="Headset" className="h-7 w-7 object-contain" />
               </div>
-              <Button asChild size="lg" className="gap-2 shadow-lg w-full sm:w-auto h-12 sm:h-11 text-base">
-                <Link to="/agents/new">
-                  <Sparkles className="h-5 w-5" />
-                  新しく作成する
-                </Link>
-              </Button>
-            </div>
-          </div>
-
-          {/* Mobile Tabs */}
-          <div className="lg:hidden mb-5">
-            <div className="flex bg-muted rounded-lg p-1">
-              <button
-                onClick={() => setMobileTab("agents")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
-                  mobileTab === "agents"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <span className="text-lg">🤖</span>
+              <h1 className="text-xl sm:text-2xl font-bold text-foreground">
                 エージェント
-              </button>
-              <button
-                onClick={() => setMobileTab("knowledge")}
-                className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
-                  mobileTab === "knowledge"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <BookOpen className="h-4 w-4" />
-                ナレッジ
-              </button>
+                {agents.length > 0 && (
+                  <span className="ml-2 text-base font-normal text-muted-foreground">
+                    ({agents.length})
+                  </span>
+                )}
+              </h1>
             </div>
-          </div>
 
-          {/* Mobile Knowledge Tab Content */}
-          {mobileTab === "knowledge" && (
-            <div className="lg:hidden">
-              <KnowledgeBaseSection />
-            </div>
-          )}
-
-          {/* Agent Content - Show on desktop always, mobile only when agents tab is active */}
-          <div className={`${mobileTab === "knowledge" ? "hidden lg:block" : ""}`}>
-            
-
-            {/* Search and Filters */}
-            <div className="mb-5 sm:mb-6 flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {/* Controls row: search · filter · view · new */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              {/* Search */}
+              <div className="relative flex-1 sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="エージェントを検索..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 text-sm bg-background"
+                  className="pl-10 pr-8 h-9 text-sm bg-background"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="検索をクリア"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
-              
+
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Status Filter - モバイルではコンパクトに */}
+                {/* Status filter */}
                 <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0">
                   <Button
                     variant={statusFilter === "all" ? "default" : "ghost"}
@@ -241,8 +217,8 @@ export default function Agents() {
                     <span className="hidden sm:inline">下書き</span>
                   </Button>
                 </div>
-                
-                {/* View Mode Toggle */}
+
+                {/* View mode toggle */}
                 <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0" role="group" aria-label="表示切り替え">
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
@@ -278,15 +254,126 @@ export default function Agents() {
                     <Building2 className="h-4 w-4" />
                   </Button>
                 </div>
-                
+
                 <FolderManager
                   folders={folders}
                   onCreateFolder={createFolder}
                   onUpdateFolder={updateFolder}
                   onDeleteFolder={deleteFolder}
                 />
+
+                {/* Create button */}
+                <Button
+                  asChild
+                  size="sm"
+                  className="gap-1.5 h-9 px-3 bg-foreground text-background hover:bg-foreground/90 shrink-0 hidden sm:flex"
+                >
+                  <Link to="/agents/new">
+                    <Plus className="h-4 w-4" />
+                    新規作成
+                  </Link>
+                </Button>
               </div>
             </div>
+
+            {/* Stats bar */}
+            {agents.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-4 text-xs text-muted-foreground">
+                {statCallable > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="text-foreground font-medium">{statCallable}</span>
+                    通話可能
+                  </span>
+                )}
+                {statActive > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-blue-500 shrink-0" />
+                    <span className="text-foreground font-medium">{statActive}</span>
+                    稼働中
+                  </span>
+                )}
+                {statReady > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+                    <span className="text-foreground font-medium">{statReady}</span>
+                    準備中
+                  </span>
+                )}
+                {statDraft > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-slate-400 shrink-0" />
+                    <span className="text-foreground font-medium">{statDraft}</span>
+                    下書き
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Tabs — underline style */}
+          <div className="lg:hidden mb-5 border-b border-border">
+            <div className="flex">
+              <button
+                onClick={() => setMobileTab("agents")}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  mobileTab === "agents"
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+              >
+                <span className="text-base leading-none">🤖</span>
+                エージェント
+                {agents.length > 0 && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
+                    mobileTab === "agents"
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground"
+                  }`}>
+                    {agents.length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setMobileTab("knowledge")}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
+                  mobileTab === "knowledge"
+                    ? "border-foreground text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                }`}
+              >
+                <BookOpen className="h-4 w-4" />
+                ナレッジ
+              </button>
+            </div>
+          </div>
+
+          {/* Mobile floating create button — visible on agents tab */}
+          {mobileTab === "agents" && (
+            <div className="lg:hidden fixed bottom-6 right-4 z-40">
+              <Button
+                asChild
+                size="lg"
+                className="gap-2 shadow-xl rounded-full h-14 px-5 bg-foreground text-background hover:bg-foreground/90"
+              >
+                <Link to="/agents/new">
+                  <Plus className="h-5 w-5" />
+                  新規作成
+                </Link>
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile Knowledge Tab Content */}
+          {mobileTab === "knowledge" && (
+            <div className="lg:hidden">
+              <KnowledgeBaseSection />
+            </div>
+          )}
+
+          {/* Agent Content - Show on desktop always, mobile only when agents tab is active */}
+          <div className={`${mobileTab === "knowledge" ? "hidden lg:block" : ""}`}>
+            
 
             {/* Results count */}
             {(searchQuery || statusFilter !== "all") && (
@@ -314,34 +401,35 @@ export default function Agents() {
                 <p className="text-muted-foreground mb-2 max-w-md text-base">
                   3つのステップで簡単に作成できます
                 </p>
-                
-                {/* Simple Steps */}
-                <div className="flex flex-col sm:flex-row items-center gap-4 my-8">
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                      1
+
+                {/* Steps with visual numbered circles */}
+                <div className="flex flex-col sm:flex-row items-center gap-3 my-8">
+                  {[
+                    { num: 1, label: "名前を決める" },
+                    { num: 2, label: "声を選ぶ" },
+                    { num: 3, label: "テスト通話" },
+                  ].map((step, i, arr) => (
+                    <div key={step.num} className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/50 border border-border/60">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-sm font-bold shadow-sm">
+                          {step.num}
+                        </div>
+                        <span className="text-sm font-medium">{step.label}</span>
+                      </div>
+                      {i < arr.length - 1 && (
+                        <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block shrink-0" />
+                      )}
                     </div>
-                    <span className="text-sm">名前を決める</span>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                      2
-                    </div>
-                    <span className="text-sm">声を選ぶ</span>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground hidden sm:block" />
-                  <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-muted/50">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground text-sm font-bold">
-                      3
-                    </div>
-                    <span className="text-sm">テスト通話</span>
-                  </div>
+                  ))}
                 </div>
 
-                <Button asChild size="lg" className="gap-2 shadow-lg">
+                <Button
+                  asChild
+                  size="lg"
+                  className="gap-2 shadow-lg bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                >
                   <Link to="/agents/new">
-                    <Sparkles className="h-5 w-5" />
+                    <Plus className="h-5 w-5" />
                     エージェントを作成する
                   </Link>
                 </Button>
@@ -349,21 +437,21 @@ export default function Agents() {
                 {/* Feature highlights */}
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl">
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <GlassIcon icon={Mic} size="xl" variant="primary" className="mx-auto mb-4" />
+                    <GlassIcon icon={Mic} size="2xl" variant="primary" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">自然な音声</h3>
                     <p className="text-sm text-muted-foreground">
                       人間のような自然な声で会話します
                     </p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <GlassIcon icon={MessageSquare} size="xl" variant="info" className="mx-auto mb-4" />
+                    <GlassIcon icon={MessageSquare} size="2xl" variant="info" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">スマートな応答</h3>
                     <p className="text-sm text-muted-foreground">
                       AIがお客様の質問に適切に回答
                     </p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-muted/30 border border-border">
-                    <GlassIcon icon={Clock} size="xl" variant="success" className="mx-auto mb-4" />
+                    <GlassIcon icon={Clock} size="2xl" variant="success" className="mx-auto mb-4" />
                     <h3 className="font-semibold text-foreground mb-2">24時間対応</h3>
                     <p className="text-sm text-muted-foreground">
                       深夜や休日も自動で応対します

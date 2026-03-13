@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Users, Plus, Phone, Building2 } from "lucide-react";
 import { Agent, AgentFolder, PhoneNumber } from "./OfficeFloorTypes";
 import { OfficeArea } from "./OfficeArea";
@@ -27,38 +27,9 @@ export function OfficeFloorView({
 }: OfficeFloorViewProps) {
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [onCallAgentIds, setOnCallAgentIds] = useState<Set<string>>(new Set());
 
-  // リアルタイム通話シミュレーション（デモ用）
-  // 実際のプロダクションでは、Supabaseのリアルタイム機能でoutbound_callsやconversationsテーブルを監視します
-  useEffect(() => {
-    const activeAgents = agents.filter(a => a.status === 'published' && a.elevenlabs_agent_id);
-    if (activeAgents.length === 0) return;
-
-    // ランダムに通話状態をシミュレート
-    const simulateCall = () => {
-      const shouldHaveCall = Math.random() > 0.4; // 60%の確率で通話中
-      if (shouldHaveCall && activeAgents.length > 0) {
-        // ランダムに1-2人のエージェントを通話中に
-        const numOnCall = Math.min(Math.floor(Math.random() * 2) + 1, activeAgents.length);
-        const shuffled = [...activeAgents].sort(() => Math.random() - 0.5);
-        const newOnCallIds = new Set(shuffled.slice(0, numOnCall).map(a => a.id));
-        setOnCallAgentIds(newOnCallIds);
-      } else {
-        setOnCallAgentIds(new Set());
-      }
-    };
-
-    // 初回実行
-    simulateCall();
-
-    // 5-15秒ごとにランダムに通話状態を変更
-    const interval = setInterval(() => {
-      simulateCall();
-    }, 5000 + Math.random() * 10000);
-
-    return () => clearInterval(interval);
-  }, [agents]);
+  // リアルタイムデータは今後Supabaseと連携予定。現在は空のSetを使用。
+  const onCallAgentIds = new Set<string>();
 
   // フォルダごとにエージェントをグループ化
   const agentsByFolder = folders.reduce((acc, folder) => {
@@ -92,30 +63,45 @@ export function OfficeFloorView({
           </div>
         </div>
         {/* 統計バッジ - モバイルでは横並びコンパクト表示 */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 text-xs sm:text-sm mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0">
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
+        <div className="flex items-center justify-between sm:justify-end gap-0 sm:gap-0 text-xs sm:text-sm mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-3 py-1.5 sm:px-4 sm:py-1 rounded-l-full sm:rounded-full border border-border/50 sm:border-0">
             <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             <span className="font-bold">{agents.length}</span>
             <span className="text-muted-foreground">名</span>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-green-500/10 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
+          <div className="w-px h-6 bg-border/50 sm:hidden" />
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-3 py-1.5 sm:px-4 sm:py-1 border-y border-border/50 sm:border-0">
             <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="font-bold text-green-600">{activeCount}</span>
             <span className="text-muted-foreground">稼働</span>
           </div>
-          {onCallCount > 0 && (
-            <div className="flex items-center gap-1.5 sm:gap-2 bg-green-500/20 px-2 py-1 rounded-full animate-pulse">
+          <div className="w-px h-6 bg-border/50 sm:hidden" />
+          {onCallCount > 0 ? (
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-green-500/20 px-3 py-1.5 sm:px-4 sm:py-1 border-y border-green-400/30 sm:border-0 animate-pulse">
               <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 animate-phone-bounce" />
               <span className="font-bold text-green-500">{onCallCount}</span>
               <span className="text-green-600">通話中</span>
             </div>
+          ) : (
+            <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-3 py-1.5 sm:px-4 sm:py-1 border-y border-border/50 sm:border-0">
+              <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground/40" />
+              <span className="font-bold text-muted-foreground/50">0</span>
+              <span className="text-muted-foreground/50">通話中</span>
+            </div>
           )}
-          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-2 py-1 sm:p-0 rounded-full">
+          <div className="w-px h-6 bg-border/50 sm:hidden" />
+          <div className="flex items-center gap-1.5 sm:gap-2 bg-background/50 sm:bg-transparent px-3 py-1.5 sm:px-4 sm:py-1 rounded-r-full sm:rounded-full border border-border/50 sm:border-0">
             <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
             <span className="font-bold">{assignedPhoneCount}</span>
             <span className="text-muted-foreground">番号</span>
           </div>
         </div>
+        {/* リアルタイムデータ未接続の注記 */}
+        {onCallCount === 0 && (
+          <p className="text-[10px] text-muted-foreground/50 text-right mt-2 sm:mt-1">
+            リアルタイムデータは今後追加予定
+          </p>
+        )}
       </div>
 
       {/* オフィスフロア */}

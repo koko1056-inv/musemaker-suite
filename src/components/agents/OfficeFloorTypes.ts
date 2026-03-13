@@ -8,6 +8,8 @@ export interface Agent {
   icon_name?: string | null;
   icon_color?: string | null;
   custom_icon_url?: string | null;
+  system_prompt?: string | null;
+  created_at?: string | null;
 }
 
 export interface PhoneNumber {

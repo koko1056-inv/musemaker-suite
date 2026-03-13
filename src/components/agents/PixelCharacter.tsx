@@ -18,7 +18,16 @@ export const PixelCharacter = ({
 
   // アニメーション遅延用のシード
   const animDelay = agent.id.charCodeAt(0) % 5 * 0.2;
-  return <button onClick={onClick} className="relative group cursor-pointer transition-all hover:scale-110 focus:outline-none" title={agent.name}>
+
+  // アイドル状態でも breathing アニメーションを適用（active より遅いレート）
+  // active: animate-breathing (4s), idle: animate-[breathing_4s_ease-in-out_infinite] (同レートだが常時適用)
+  const bodyAnimClass = isOnCall
+    ? 'animate-breathing'
+    : isActive
+    ? 'animate-breathing'
+    : 'animate-[breathing_4s_ease-in-out_infinite]';
+
+  return <button onClick={onClick} className="relative group cursor-pointer focus:outline-none hover:scale-105 transition-transform duration-200" title={agent.name}>
       {/* 通話中リングアニメーション */}
       {isOnCall && <CallRingAnimation />}
 
@@ -26,7 +35,7 @@ export const PixelCharacter = ({
       <SpeechBubble isActive={isActive} isOnCall={isOnCall} />
 
       {/* キャラクター本体 */}
-      <div className={`relative ${isActive ? 'animate-breathing' : ''} ${isOnCall ? 'z-10' : ''}`} style={{
+      <div className={`relative ${bodyAnimClass} ${isOnCall ? 'z-10' : ''}`} style={{
         imageRendering: 'pixelated' as const,
         animationDelay: `${animDelay}s`
       }}>

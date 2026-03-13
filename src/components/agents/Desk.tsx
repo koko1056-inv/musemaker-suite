@@ -23,15 +23,25 @@ export const Desk = ({
   return <div className="relative flex flex-col items-center">
       {/* エージェントキャラクター */}
       <div className="h-14 flex items-end justify-center">
-        {hasAgent && agent ? <PixelCharacter agent={agent} isActive={isActive} isOnCall={isOnCall} onClick={onClick!} /> : <button onClick={onAddAgent} className="w-8 h-10 sm:w-10 sm:h-12 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity rounded border-2 border-dashed border-muted-foreground/50 hover:border-primary">
+        {hasAgent && agent ? <PixelCharacter agent={agent} isActive={isActive} isOnCall={isOnCall} onClick={onClick!} /> : <button onClick={onAddAgent} className="w-8 h-10 sm:w-10 sm:h-12 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity hover:scale-105 transition-transform rounded border-2 border-dashed border-muted-foreground/50 hover:border-primary">
             <Plus className="w-4 h-4 text-muted-foreground" />
           </button>}
       </div>
 
       {/* デスク */}
-      <div className="mt-2" style={{
+      <div className="mt-2 relative" style={{
       imageRendering: 'pixelated' as const
     }}>
+        {/* デスク下の影（奥行き表現） */}
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1"
+          style={{
+            width: '80%',
+            height: '6px',
+            background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.18) 0%, transparent 70%)',
+            borderRadius: '50%',
+          }}
+        />
         <svg viewBox="0 0 40 20" className="w-12 h-6 sm:w-14 sm:h-7">
           {/* デスク天板 */}
           <rect x="2" y="0" width="36" height="8" fill="#8B7355" />
