@@ -3,10 +3,11 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useWorkspace } from "@/hooks/useWorkspace";
 import musaLogo from "@/assets/musa-logo.png";
-import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone, HelpCircle, User } from "lucide-react";
+import { LayoutDashboard, Bot, Settings, MessageSquare, BarChart3, Users, ChevronDown, Shield, Gauge, LogOut, BookOpen, PhoneOutgoing, Phone, HelpCircle, User, Sun, Moon, Monitor } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useProfile } from "@/hooks/useProfile";
+import { useTheme } from "@/components/ThemeProvider";
 const navigation = [{
   name: "ホーム",
   href: "/",
@@ -72,6 +73,8 @@ export function AppSidebar({
     workspace,
   } = useWorkspace();
   const { profile } = useProfile();
+  const { theme, toggleTheme } = useTheme();
+  const ThemeIcon = theme === "dark" ? Moon : theme === "light" ? Sun : Monitor;
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
@@ -101,7 +104,17 @@ export function AppSidebar({
       </nav>
 
       {/* User Menu */}
-      <div className="border-t border-sidebar-border p-4">
+      <div className="border-t border-sidebar-border p-4 space-y-2">
+        <button
+          onClick={toggleTheme}
+          title={theme === "dark" ? "ダークモード" : theme === "light" ? "ライトモード" : "システム"}
+          className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+        >
+          <ThemeIcon className="h-[18px] w-[18px]" />
+          <span className="font-serif font-medium">
+            {theme === "dark" ? "ダークモード" : theme === "light" ? "ライトモード" : "システム"}
+          </span>
+        </button>
         <DropdownMenu>
           <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-xl p-2 transition-colors hover:bg-sidebar-accent">
             <Avatar className="h-8 w-8">

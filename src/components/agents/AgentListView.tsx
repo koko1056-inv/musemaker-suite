@@ -71,33 +71,33 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
 
   if (isPublished && isReady && hasPhone) {
     return (
-      <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 通話可能" className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/30 gap-1.5 px-3 py-1 text-xs">
         <PhoneCall className="h-3.5 w-3.5" />
         通話可能
       </Badge>
     );
   }
-  
+
   if (isPublished && isReady) {
     return (
-      <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 稼働中" className="bg-blue-500/20 text-blue-500 border-blue-500/30 hover:bg-blue-500/30 gap-1.5 px-3 py-1 text-xs">
         <Zap className="h-3.5 w-3.5" />
         稼働中
       </Badge>
     );
   }
-  
+
   if (isPublished) {
     return (
-      <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1.5 px-3 py-1 text-xs">
+      <Badge aria-label="ステータス: 準備中" className="bg-amber-500/20 text-amber-500 border-amber-500/30 hover:bg-amber-500/30 gap-1.5 px-3 py-1 text-xs">
         <MessageSquare className="h-3.5 w-3.5" />
         準備中
       </Badge>
     );
   }
-  
+
   return (
-    <Badge className="bg-slate-500/20 text-slate-400 border-slate-500/30 hover:bg-slate-500/30 gap-1.5 px-3 py-1 text-xs">
+    <Badge aria-label="ステータス: 下書き" className="bg-slate-500/20 text-slate-400 border-slate-500/30 hover:bg-slate-500/30 gap-1.5 px-3 py-1 text-xs">
       <PhoneOff className="h-3.5 w-3.5" />
       下書き
     </Badge>
@@ -105,20 +105,28 @@ const getStatusBadge = (agent: Agent, hasPhone: boolean) => {
 };
 
 // Status indicator dot
-const StatusDot = ({ isActive, isRinging }: { isActive: boolean; isRinging?: boolean }) => (
-  <div className="relative shrink-0">
-    <div className={`h-2.5 w-2.5 rounded-full ${
-      isActive ? 'bg-emerald-500' : 
-      isRinging ? 'bg-blue-500' : 
-      'bg-slate-400/50'
-    }`} />
-    {(isActive || isRinging) && (
-      <div className={`absolute inset-0 h-2.5 w-2.5 rounded-full animate-ping opacity-75 ${
-        isActive ? 'bg-emerald-500' : 'bg-blue-500'
+const StatusDot = ({ isActive, isRinging }: { isActive: boolean; isRinging?: boolean }) => {
+  const statusLabel = isActive ? '通話可能' : isRinging ? '稼働中' : 'オフライン';
+  return (
+    <div
+      className="relative shrink-0"
+      role="status"
+      aria-label={`ステータス: ${statusLabel}`}
+    >
+      <div className={`h-3 w-3 rounded-full ${
+        isActive ? 'bg-emerald-500' :
+        isRinging ? 'bg-blue-500' :
+        'bg-slate-400/50'
       }`} />
-    )}
-  </div>
-);
+      {(isActive || isRinging) && (
+        <div className={`absolute inset-0 h-3 w-3 rounded-full animate-ping opacity-75 ${
+          isActive ? 'bg-emerald-500' : 'bg-blue-500'
+        }`} />
+      )}
+      <span className="sr-only">{statusLabel}</span>
+    </div>
+  );
+};
 
 export function AgentListView({
   agents,

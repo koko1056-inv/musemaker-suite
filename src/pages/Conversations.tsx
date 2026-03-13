@@ -12,6 +12,7 @@ import {
   Loader2,
   Bot,
   MessageCircle,
+  ChevronLeft,
 } from "lucide-react";
 import { useOutboundCalls } from "@/hooks/useOutboundCalls";
 import { OutboundCallDialog } from "@/components/outbound/OutboundCallDialog";
@@ -243,8 +244,8 @@ export default function Conversations() {
     <AppLayout>
       <div className="h-[calc(100vh-3.5rem)] lg:h-screen flex">
         {/* Left Panel */}
-        <div 
-          className={`w-full md:w-80 lg:w-96 flex flex-col border-r border-border bg-background ${
+        <div
+          className={`w-full md:w-72 lg:w-96 flex flex-col border-r border-border bg-background transition-all duration-200 ${
             (activeTab === "conversations" && selectedAgentId) || (activeTab === "outbound" && selectedOutboundAgentId) ? 'hidden md:flex' : 'flex'
           }`}
         >
@@ -308,19 +309,27 @@ export default function Conversations() {
                   <Phone className="h-4 w-4" />
                   受信履歴
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 bg-destructive rounded-full flex items-center justify-center text-[10px] font-bold text-destructive-foreground">
+                    <span
+                      role="status"
+                      aria-label={`${unreadCount}件の未読`}
+                      className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive rounded-full flex items-center justify-center text-[11px] font-bold text-destructive-foreground animate-pulse"
+                    >
                       {unreadCount}
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="outbound" 
+                <TabsTrigger
+                  value="outbound"
                   className="rounded-lg gap-2 text-sm font-medium relative transition-all data-[state=active]:bg-foreground data-[state=active]:text-background data-[state=active]:shadow-md data-[state=inactive]:text-muted-foreground"
                 >
                   <PhoneOutgoing className="h-4 w-4" />
                   発信履歴
                   {outboundUnreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 bg-destructive rounded-full flex items-center justify-center text-[10px] font-bold text-destructive-foreground">
+                    <span
+                      role="status"
+                      aria-label={`${outboundUnreadCount}件の未読`}
+                      className="absolute -top-1 -right-1 h-5 min-w-5 px-1 bg-destructive rounded-full flex items-center justify-center text-[11px] font-bold text-destructive-foreground animate-pulse"
+                    >
                       {outboundUnreadCount}
                     </span>
                   )}
@@ -398,13 +407,30 @@ export default function Conversations() {
         </div>
 
         {/* Right Panel - Chat View */}
-        <div 
-          className={`flex-1 bg-muted/20 ${
+        <div
+          className={`flex-1 bg-muted/20 flex-col transition-all duration-200 ${
             (activeTab === "conversations" && selectedAgentId) || (activeTab === "outbound" && selectedOutboundAgentId) ? 'flex' : 'hidden md:flex'
           }`}
         >
+          {/* Mobile back button */}
+          {((activeTab === "conversations" && selectedAgentId) || (activeTab === "outbound" && selectedOutboundAgentId)) && (
+            <div className="md:hidden flex items-center px-3 py-2 border-b border-border bg-background/80 backdrop-blur">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1 text-sm text-muted-foreground hover:text-foreground -ml-1"
+                onClick={() => {
+                  setSelectedAgentId(null);
+                  setSelectedOutboundAgentId(null);
+                }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                戻る
+              </Button>
+            </div>
+          )}
           {activeTab === "conversations" && selectedAgent ? (
-            <ConversationHistoryTable 
+            <ConversationHistoryTable
               agent={selectedAgent}
               onBack={() => setSelectedAgentId(null)}
               dateFilter={dateFilter}

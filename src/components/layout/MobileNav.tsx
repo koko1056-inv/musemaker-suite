@@ -51,10 +51,19 @@ export function MobileNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showFabHint, setShowFabHint] = useState(() => !localStorage.getItem("musa-fab-seen"));
 
   const handleOptionClick = (optionId: string) => {
     setIsMenuOpen(false);
     navigate(`/agents/new?method=${optionId}`);
+  };
+
+  const handleFabClick = () => {
+    setIsMenuOpen(!isMenuOpen);
+    if (showFabHint) {
+      localStorage.setItem("musa-fab-seen", "1");
+      setShowFabHint(false);
+    }
   };
 
   return (
@@ -74,10 +83,11 @@ export function MobileNav() {
           <button
             key={option.id}
             onClick={() => handleOptionClick(option.id)}
+            aria-label={`新規エージェント作成: ${option.label}`}
             className={cn(
-              "absolute flex flex-col items-center gap-2 transition-all duration-500 ease-out",
-              isMenuOpen 
-                ? "opacity-100 scale-100" 
+              "absolute flex flex-col items-center gap-2 transition-all duration-500 ease-out touch-target",
+              isMenuOpen
+                ? "opacity-100 scale-100"
                 : "opacity-0 scale-0"
             )}
             style={{ 
@@ -130,35 +140,45 @@ export function MobileNav() {
               return (
                 <button
                   key="main-action"
-                  onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center justify-center -mt-6"
+                  onClick={handleFabClick}
+                  aria-label="新規エージェント作成"
+                  aria-expanded={isMenuOpen}
+                  className="relative flex items-center justify-center -mt-6 touch-target"
                 >
                   {/* Outer glow ring */}
-                  <div 
+                  <div
                     className={cn(
                       "absolute h-16 w-16 rounded-full transition-all duration-500",
-                      isMenuOpen 
-                        ? "bg-gradient-to-br from-violet-500/30 to-purple-500/30 animate-pulse scale-110" 
+                      isMenuOpen
+                        ? "bg-gradient-to-br from-violet-500/30 to-purple-500/30 animate-pulse scale-110"
                         : "scale-100"
                     )}
                   />
-                  
+
                   {/* Main button */}
-                  <div 
+                  <div
                     className={cn(
                       "relative flex h-14 w-14 items-center justify-center rounded-full shadow-xl transition-all duration-300 active:scale-95",
-                      isMenuOpen 
-                        ? "bg-gradient-to-br from-violet-600 to-purple-500 rotate-45" 
-                        : "bg-gradient-to-br from-primary to-primary/80 hover:shadow-primary/30 hover:shadow-2xl"
+                      isMenuOpen
+                        ? "bg-gradient-to-br from-violet-600 to-purple-500 rotate-45"
+                        : "bg-gradient-to-br from-primary to-primary/80 hover:shadow-primary/30 hover:shadow-2xl",
+                      showFabHint && !isMenuOpen && "animate-bounce"
                     )}
                   >
-                    <Plus 
+                    <Plus
                       className={cn(
                         "h-6 w-6 text-white transition-transform duration-300",
                         isMenuOpen && "rotate-0"
-                      )} 
+                      )}
                     />
                   </div>
+
+                  {/* First-time hint label */}
+                  {showFabHint && !isMenuOpen && (
+                    <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap animate-pulse">
+                      タップして新規作成
+                    </span>
+                  )}
                 </button>
               );
             }
@@ -167,9 +187,10 @@ export function MobileNav() {
               <Link
                 key={item.name}
                 to={item.href}
+                aria-label={item.name}
                 onClick={() => setIsMenuOpen(false)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px]",
+                  "flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition-colors min-w-[56px] touch-target",
                   isActive
                     ? "text-primary"
                     : "text-muted-foreground hover:text-foreground active:bg-muted"

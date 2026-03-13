@@ -2,11 +2,20 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Bot, Sparkles, Wand2, FileText } from "lucide-react";
 
+const EmptyIllustration = () => (
+  <svg viewBox="0 0 120 120" className="w-24 h-24 mx-auto mb-4 text-muted-foreground/20">
+    <circle cx="60" cy="60" r="50" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="8 4" />
+    <circle cx="60" cy="60" r="30" fill="none" stroke="currentColor" strokeWidth="1" />
+    <path d="M45 55 L55 65 L75 45" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
+  </svg>
+);
+
 export function MobileEmptyState() {
   return (
     <div className="lg:hidden">
       {/* Hero Section */}
       <div className="text-center mb-8">
+        <EmptyIllustration />
         <div className="inline-flex items-center justify-center h-20 w-20 rounded-3xl bg-gradient-to-br from-primary/10 to-primary/5 border border-border mb-6">
           <Bot className="h-10 w-10 text-foreground" />
         </div>

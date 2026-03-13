@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle, Calendar, Cloud } from "lucide-react";
+import { Building, Key, Bell, CreditCard, ExternalLink, Eye, EyeOff, Check, AlertTriangle, Webhook, Wand2, Loader2, Shield, Settings2, Zap, TrendingUp, Users, Bot, ChevronDown, Plus, MoreVertical, UserX, HelpCircle, Calendar, Cloud, Sun, Moon, Monitor } from "lucide-react";
+import { useTheme } from "@/components/ThemeProvider";
 import { Badge } from "@/components/ui/badge";
 import { WebhookManager } from "@/components/webhooks/WebhookManager";
 import { SlackIntegrationManager } from "@/components/notifications/SlackIntegrationManager";
@@ -47,6 +48,7 @@ const DEMO_WORKSPACE_ID = "00000000-0000-0000-0000-000000000001";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
   const {
     workspace,
     isLoading,
@@ -506,6 +508,55 @@ export default function Settings() {
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+            {/* テーマ設定 */}
+            <div className="glass rounded-xl card-shadow overflow-hidden">
+              <div className="p-4 sm:p-6 border-b border-border bg-muted/20">
+                <div className="flex items-center gap-3">
+                  <GlassIcon icon={Sun} size="sm" variant="muted" />
+                  <div>
+                    <h3 className="font-semibold text-foreground text-sm sm:text-base">テーマ</h3>
+                    <p className="text-xs text-muted-foreground">表示テーマを選択</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 sm:p-6">
+                <div className="inline-flex rounded-lg p-1 bg-muted gap-1">
+                  <button
+                    onClick={() => setTheme("light")}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      theme === "light"
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Sun className="h-4 w-4" />
+                    ライト
+                  </button>
+                  <button
+                    onClick={() => setTheme("dark")}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      theme === "dark"
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Moon className="h-4 w-4" />
+                    ダーク
+                  </button>
+                  <button
+                    onClick={() => setTheme("system")}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      theme === "system"
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Monitor className="h-4 w-4" />
+                    システム
+                  </button>
+                </div>
               </div>
             </div>
           </TabsContent>

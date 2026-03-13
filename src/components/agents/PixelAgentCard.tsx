@@ -69,22 +69,27 @@ interface PixelAgentCardProps {
 }
 
 // Pixel art style status indicator
-const PixelStatusIndicator = ({ isActive, isPulsing }: { isActive: boolean; isPulsing: boolean }) => (
-  <div className="relative">
-    <div 
-      className={`w-3 h-3 ${isActive ? 'bg-green-500' : 'bg-muted-foreground/30'}`}
-      style={{ 
+const PixelStatusIndicator = ({ isActive, isPulsing, label }: { isActive: boolean; isPulsing: boolean; label?: string }) => (
+  <div
+    className="relative"
+    aria-label={label ? `${label}: ${isActive ? 'オン' : 'オフ'}` : undefined}
+    role="img"
+  >
+    <div
+      className={`w-3.5 h-3.5 ${isActive ? 'bg-green-500' : 'bg-muted-foreground/30'}`}
+      style={{
         clipPath: 'polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)',
       }}
     />
     {isPulsing && isActive && (
-      <div 
-        className="absolute inset-0 w-3 h-3 bg-green-500 animate-ping opacity-75"
-        style={{ 
+      <div
+        className="absolute inset-0 w-3.5 h-3.5 bg-green-500 animate-ping opacity-75"
+        style={{
           clipPath: 'polygon(25% 0%, 75% 0%, 100% 25%, 100% 75%, 75% 100%, 25% 100%, 0% 75%, 0% 25%)',
         }}
       />
     )}
+    {label && <span className="sr-only">{label}: {isActive ? 'オン' : 'オフ'}</span>}
   </div>
 );
 
@@ -265,19 +270,19 @@ export function PixelAgentCard({
         {/* Status indicators - pixel style */}
         <div className="flex items-center gap-4 mb-4 p-2.5 rounded-lg bg-muted/30">
           <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={isPublished} isPulsing={false} />
+            <PixelStatusIndicator isActive={isPublished} isPulsing={false} label="公開状態" />
             <span className="text-xs text-muted-foreground">
               {isPublished ? '公開中' : '下書き'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={isReady} isPulsing={isReady && isPublished} />
+            <PixelStatusIndicator isActive={isReady} isPulsing={isReady && isPublished} label="通話状態" />
             <span className="text-xs text-muted-foreground">
               {isReady ? '通話可能' : '準備中'}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <PixelStatusIndicator isActive={hasPhone} isPulsing={false} />
+            <PixelStatusIndicator isActive={hasPhone} isPulsing={false} label="電話番号割当" />
             <span className="text-xs text-muted-foreground">
               {hasPhone ? '番号割当' : '番号なし'}
             </span>

@@ -126,29 +126,52 @@ export default function Dashboard() {
             {/* Mobile Stats Carousel */}
             <MobileStatsCarousel stats={stats} isLoading={isLoading} />
 
-            {/* Desktop Stats Grid */}
-            <div className="hidden lg:grid grid-cols-4 gap-4 mb-12">
-              {[
-                { label: "エージェント", value: stats.totalAgents, icon: Bot, variant: "primary" as const },
-                { label: "公開中", value: stats.publishedAgents, icon: Phone, variant: "success" as const },
-                { label: "今日の通話", value: stats.todayCount, icon: MessageSquare, variant: "info" as const },
-                { label: "成功率", value: `${stats.successRate}%`, icon: TrendingUp, variant: "purple" as const },
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  className="p-5 rounded-2xl bg-muted/30 border border-border"
-                >
-                  <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-3" />
-                  {isLoading ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <>
-                      <p className="text-2xl font-semibold tracking-tight">{stat.value}</p>
-                      <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
-                    </>
-                  )}
-                </div>
-              ))}
+            {/* Desktop Stats */}
+            <div className="hidden lg:block mb-12">
+              {/* Primary KPIs - large display */}
+              <div className="grid grid-cols-3 gap-6 mb-6">
+                {[
+                  { label: "エージェント", value: stats.totalAgents },
+                  { label: "アクティブ通話", value: stats.publishedAgents },
+                  { label: "総会話数", value: stats.todayCount },
+                ].map((stat) => (
+                  <div key={stat.label} className="text-center p-6 rounded-2xl bg-muted/30 border border-border">
+                    {isLoading ? (
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto" />
+                    ) : (
+                      <>
+                        <div className="text-4xl font-serif font-bold tracking-tight">{stat.value}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Separator */}
+              <div className="border-t border-border/40 mb-6" />
+
+              {/* Secondary stats - smaller cards */}
+              <div className="grid grid-cols-1 gap-4">
+                {[
+                  { label: "成功率", value: `${stats.successRate}%`, icon: TrendingUp, variant: "purple" as const },
+                ].map((stat, i) => (
+                  <div
+                    key={i}
+                    className="p-4 rounded-xl bg-muted/20 border border-border/60"
+                  >
+                    <GlassIcon icon={stat.icon} size="sm" variant={stat.variant} className="mb-2" />
+                    {isLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <>
+                        <p className="text-xl font-semibold tracking-tight">{stat.value}</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">{stat.label}</p>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Desktop Create Button */}

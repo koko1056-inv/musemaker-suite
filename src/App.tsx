@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { Loader2 } from "lucide-react";
 
 // Eagerly load auth page (needed immediately)
@@ -49,6 +50,7 @@ function PageLoader() {
 
 const App = () => (
   <ErrorBoundary>
+    <ThemeProvider>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <TooltipProvider>
@@ -81,6 +83,7 @@ const App = () => (
         </TooltipProvider>
       </AuthProvider>
     </QueryClientProvider>
+    </ThemeProvider>
   </ErrorBoundary>
 );
 

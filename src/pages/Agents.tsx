@@ -243,13 +243,15 @@ export default function Agents() {
                 </div>
                 
                 {/* View Mode Toggle */}
-                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0">
+                <div className="flex items-center gap-1 p-1 bg-muted rounded-lg shrink-0" role="group" aria-label="表示切り替え">
                   <Button
                     variant={viewMode === "list" ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setViewMode("list")}
                     className="h-7 w-7 p-0"
                     title="リスト表示"
+                    aria-label="リスト表示"
+                    aria-pressed={viewMode === "list"}
                   >
                     <LayoutList className="h-4 w-4" />
                   </Button>
@@ -259,6 +261,8 @@ export default function Agents() {
                     onClick={() => setViewMode("grid")}
                     className="h-7 w-7 p-0"
                     title="グリッド表示"
+                    aria-label="グリッド表示"
+                    aria-pressed={viewMode === "grid"}
                   >
                     <LayoutGrid className="h-4 w-4" />
                   </Button>
@@ -268,6 +272,8 @@ export default function Agents() {
                     onClick={() => setViewMode("office")}
                     className="h-7 w-7 p-0"
                     title="オフィス表示"
+                    aria-label="オフィス表示"
+                    aria-pressed={viewMode === "office"}
                   >
                     <Building2 className="h-4 w-4" />
                   </Button>
