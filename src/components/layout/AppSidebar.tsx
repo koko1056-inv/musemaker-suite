@@ -70,7 +70,6 @@ export function AppSidebar({
   } = useAuth();
   const {
     workspace,
-    isLoading: isWorkspaceLoading
   } = useWorkspace();
   const { profile } = useProfile();
   const handleSignOut = async () => {
@@ -89,11 +88,11 @@ export function AppSidebar({
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto" aria-label="メインナビゲーション">
         <div className="space-y-1">
           {navigation.map(item => {
-          const isActive = currentLocation.pathname === item.href || item.href !== "/" && currentLocation.pathname.startsWith(item.href);
-          return <Link key={item.name} to={item.href} onClick={handleNavClick} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-serif font-medium transition-all duration-200", isActive ? "bg-foreground text-background" : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent")}>
+          const isActive = currentLocation.pathname === item.href || (item.href !== "/" && currentLocation.pathname.startsWith(item.href));
+          return <Link key={item.name} to={item.href} onClick={handleNavClick} aria-current={isActive ? "page" : undefined} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-serif font-medium transition-all duration-200", isActive ? "bg-foreground text-background" : "text-muted-foreground hover:text-sidebar-foreground hover:bg-sidebar-accent")}>
                 <item.icon className="h-[18px] w-[18px]" />
                 <span>{item.name}</span>
               </Link>;

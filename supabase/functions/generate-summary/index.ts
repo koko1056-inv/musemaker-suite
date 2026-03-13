@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 interface ExtractionField {
   id: string;
@@ -17,9 +13,8 @@ interface ExtractionField {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { conversationId, agentId } = await req.json();
@@ -72,7 +67,7 @@ serve(async (req) => {
     if (transcript.length === 0) {
       console.log('No transcript available for summarization');
       return new Response(JSON.stringify({ success: true, summary: null }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -193,14 +188,14 @@ ${formattedTranscript}
         console.error('Rate limited, skipping summary generation');
         return new Response(JSON.stringify({ success: false, error: 'Rate limited' }), {
           status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
       if (response.status === 402) {
         console.error('Payment required, skipping summary generation');
         return new Response(JSON.stringify({ success: false, error: 'Payment required' }), {
           status: 402,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
         });
       }
       const errorText = await response.text();
@@ -295,7 +290,7 @@ ${formattedTranscript}
       key_points: summaryData.key_points,
       extracted_data: summaryData.extracted_data
     }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
     });
 
   } catch (error: unknown) {
@@ -305,7 +300,7 @@ ${formattedTranscript}
       JSON.stringify({ error: message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       }
     );
   }

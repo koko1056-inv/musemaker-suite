@@ -1,13 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
 
 interface EmailNotificationRequest {
   workspace_id: string;
@@ -48,9 +44,8 @@ function replaceTemplateVariables(
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -84,7 +79,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!notifications || notifications.length === 0) {
       return new Response(
         JSON.stringify({ message: "No active email notifications found" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        { status: 200, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
       );
     }
 
@@ -313,7 +308,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ results }),
       {
         status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   } catch (error: any) {
@@ -322,7 +317,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { ensureDemoWorkspaceMembership } from '@/lib/workspace';
 
 interface TranscriptMessage {
   role: 'agent' | 'user';
@@ -48,8 +47,6 @@ export function useConversations() {
   const { data: conversations = [], isLoading } = useQuery({
     queryKey: ['conversations'],
     queryFn: async () => {
-      await ensureDemoWorkspaceMembership();
-
       const { data, error } = await supabase
         .from('conversations')
         .select(`

@@ -1,40 +1,87 @@
 project_id = "zbitxxuhywapoadpgzsv"
 
+# === User-facing functions (require JWT authentication) ===
 [functions.elevenlabs-tts]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-voices]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-conversation-token]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-transcribe]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-voice-clone]
-verify_jwt = false
-
-[functions.save-conversation]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-agent-sync]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-agent-config]
-verify_jwt = false
+verify_jwt = true
 
-[functions.send-webhook]
-verify_jwt = false
+[functions.generate-agent-prompt]
+verify_jwt = true
 
 [functions.generate-summary]
-verify_jwt = false
+verify_jwt = true
 
 [functions.elevenlabs-knowledge-sync]
-verify_jwt = false
+verify_jwt = true
+
+[functions.send-webhook]
+verify_jwt = true
+
+[functions.send-slack-notification]
+verify_jwt = true
+
+[functions.send-email-notification]
+verify_jwt = true
+
+[functions.send-invitation-email]
+verify_jwt = true
+
+[functions.share-call-content]
+verify_jwt = true
+
+[functions.share-conversation-content]
+verify_jwt = true
+
+[functions.save-conversation]
+verify_jwt = true
+
+[functions.create-calendar-event]
+verify_jwt = true
+
+[functions.export-to-spreadsheet]
+verify_jwt = true
+
+[functions.google-calendar-oauth]
+verify_jwt = true
+
+[functions.google-sheets-oauth]
+verify_jwt = true
 
 [functions.twilio-outbound-call]
+verify_jwt = true
+
+[functions.twilio-phone-numbers]
+verify_jwt = true
+
+# === External callback functions (no JWT - validated by service signatures) ===
+[functions.twilio-call-status]
 verify_jwt = false
 
-[functions.twilio-call-status]
+[functions.twilio-voice-handler]
+verify_jwt = false
+
+[functions.twilio-media-stream]
+verify_jwt = false
+
+[functions.twilio-recording-status]
+verify_jwt = false
+
+[functions.process-scheduled-calls]
 verify_jwt = false

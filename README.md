@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# MUSA - AI Voice Call Center Platform
 
-## Project info
+ノーコードで音声AIエージェントを構築・管理するプラットフォーム。ElevenLabs連携によるリアルタイム音声対話、Twilio連携によるインバウンド/アウトバウンドコール、ビジュアルフロービルダーを搭載。
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Features
 
-## How can I edit this code?
+- **AIエージェント管理** - ElevenLabsと連携した音声AIエージェントの作成・設定
+- **インバウンド/アウトバウンドコール** - Twilio連携による電話対応の自動化
+- **リアルタイム分析** - 通話メトリクス、エージェントパフォーマンスのダッシュボード
+- **ナレッジベース** - エージェントの知識を管理・同期
+- **通知連携** - Slack、メール、Google Calendar、スプレッドシートへの自動連携
+- **チーム管理** - ワークスペースベースの権限管理
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + TypeScript + Vite |
+| UI | shadcn/ui (Radix UI) + Tailwind CSS |
+| Backend | Supabase (PostgreSQL + Edge Functions + Auth) |
+| Voice AI | ElevenLabs Conversational AI |
+| Telephony | Twilio Voice API |
+| State | TanStack React Query |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## Getting Started
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+# Clone
+git clone https://github.com/koko1056-inv/musemaker-suite.git
+cd musemaker-suite
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+# Install dependencies
+npm install
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Set up environment variables
+cp .env.example .env
+# Edit .env with your Supabase and API keys
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start dev server
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Environment Variables
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Variable | Description |
+|----------|------------|
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase anon/publishable key |
 
-**Use GitHub Codespaces**
+## Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+src/
+  components/     # React components
+    agents/       # Agent management UI
+    conversations/# Conversation views
+    dashboard/    # Dashboard widgets
+    flow/         # Visual flow builder
+    layout/       # App layout (sidebar, nav)
+    notifications/# Integration managers
+    voice/        # Voice call panel
+  contexts/       # React contexts (Auth)
+  hooks/          # Custom hooks (data fetching)
+  integrations/   # Supabase client & types
+  lib/            # Utilities
+  pages/          # Route pages
+  types/          # Shared TypeScript types
+supabase/
+  functions/      # Edge Functions (28 functions)
+  migrations/     # Database migrations
+```
 
-## What technologies are used for this project?
+## Scripts
 
-This project is built with:
+| Command | Description |
+|---------|------------|
+| `npm run dev` | Start development server |
+| `npm run build` | Production build |
+| `npm run lint` | Run ESLint |
+| `npm run preview` | Preview production build |
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## License
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Private

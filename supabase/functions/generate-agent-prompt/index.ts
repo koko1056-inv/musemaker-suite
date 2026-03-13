@@ -1,14 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const { agentName, description, language = "ja", action = "generate", currentPrompt, editInstruction } = await req.json();
@@ -54,7 +49,7 @@ Rules:
       if (!description || description.trim().length === 0) {
         return new Response(
           JSON.stringify({ error: "説明文を入力してください" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
 
@@ -109,13 +104,13 @@ Output only the prompt, no explanations.`;
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "リクエスト制限に達しました。しばらく待ってから再試行してください。" }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 429, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       if (response.status === 402) {
         return new Response(
           JSON.stringify({ error: "クレジットが不足しています。ワークスペース設定で追加してください。" }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 402, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
         );
       }
       const errorText = await response.text();
@@ -132,13 +127,13 @@ Output only the prompt, no explanations.`;
 
     return new Response(
       JSON.stringify({ prompt: generatedPrompt.trim() }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Error generating prompt:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "不明なエラーが発生しました" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

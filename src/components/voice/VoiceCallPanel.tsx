@@ -3,14 +3,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Phone, 
-  PhoneOff, 
-  Mic, 
-  MicOff, 
+import {
+  Phone,
+  PhoneOff,
+  Mic,
   Loader2,
   MessageSquare,
-  Volume2 
+  Volume2
 } from 'lucide-react';
 import { useVoiceConversation } from '@/hooks/useVoiceConversation';
 
@@ -56,8 +55,10 @@ export function VoiceCallPanel({
   agentName,
   onCallEnd 
 }: VoiceCallPanelProps) {
-  const [inputLevel, setInputLevel] = useState(0);
-  const [outputLevel, setOutputLevel] = useState(0);
+  const inputLevelRef = useRef(0);
+  const outputLevelRef = useRef(0);
+  const lastUpdateRef = useRef(0);
+  const [displayLevels, setDisplayLevels] = useState({ input: 0, output: 0 });
   const animationFrameRef = useRef<number>();
 
   const {
@@ -77,22 +78,26 @@ export function VoiceCallPanel({
     },
   });
 
-  // Monitor audio levels when connected
+  // Monitor audio levels when connected (throttled to ~10fps for performance)
   useEffect(() => {
     if (!isConnected || !conversation) {
-      setInputLevel(0);
-      setOutputLevel(0);
+      inputLevelRef.current = 0;
+      outputLevelRef.current = 0;
+      setDisplayLevels({ input: 0, output: 0 });
       return;
     }
 
     const updateLevels = () => {
       try {
-        const input = conversation.getInputVolume?.() || 0;
-        const output = conversation.getOutputVolume?.() || 0;
-        setInputLevel(input);
-        setOutputLevel(output);
+        inputLevelRef.current = conversation.getInputVolume?.() || 0;
+        outputLevelRef.current = conversation.getOutputVolume?.() || 0;
       } catch {
         // Ignore errors when getting volume
+      }
+      const now = Date.now();
+      if (now - lastUpdateRef.current > 100) {
+        lastUpdateRef.current = now;
+        setDisplayLevels({ input: inputLevelRef.current, output: outputLevelRef.current });
       }
       animationFrameRef.current = requestAnimationFrame(updateLevels);
     };
@@ -143,11 +148,11 @@ export function VoiceCallPanel({
         {isConnected && (
           <div className="flex justify-center gap-8 py-2 px-4 rounded-lg bg-muted/30">
             <div className="flex flex-col items-center gap-1">
-              <AudioLevelIndicator level={inputLevel} isActive={!isSpeaking} />
+              <AudioLevelIndicator level={displayLevels.input} isActive={!isSpeaking} />
               <span className="text-xs text-muted-foreground">あなた</span>
             </div>
             <div className="flex flex-col items-center gap-1">
-              <AudioLevelIndicator level={outputLevel} isActive={isSpeaking} />
+              <AudioLevelIndicator level={displayLevels.output} isActive={isSpeaking} />
               <span className="text-xs text-muted-foreground">AI</span>
             </div>
           </div>

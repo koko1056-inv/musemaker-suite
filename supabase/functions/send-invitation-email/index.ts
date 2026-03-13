@@ -1,11 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 interface InvitationEmailRequest {
   invitationId: string;
@@ -22,10 +17,8 @@ const roleLabels: Record<string, string> = {
 };
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     // Verify authorization
@@ -142,8 +135,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ success: true, ...emailResult }), {
       status: 200,
       headers: {
+        ...getCorsHeaders(req),
         "Content-Type": "application/json",
-        ...corsHeaders,
       },
     });
   } catch (error: any) {
@@ -152,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       }
     );
   }

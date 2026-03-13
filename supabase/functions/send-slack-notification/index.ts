@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 // Slack Workflow用のペイロード構造
 // これらの変数がSlackワークフローやカスタムメッセージで使用できます:
@@ -58,9 +54,8 @@ function replaceTemplateVariables(template: string, variables: Record<string, st
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -114,7 +109,7 @@ serve(async (req) => {
     if (!integrations || integrations.length === 0) {
       console.log("No active Slack integrations found for this workspace");
       return new Response(JSON.stringify({ message: "No Slack integrations to send" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -135,7 +130,7 @@ serve(async (req) => {
     if (applicableIntegrations.length === 0) {
       console.log(`No Slack integrations configured for event type: ${eventType}`);
       return new Response(JSON.stringify({ message: "No integrations for this event type" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
       });
     }
 
@@ -257,14 +252,14 @@ serve(async (req) => {
     );
 
     return new Response(JSON.stringify({ results }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in send-slack-notification function:", error);
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...getCorsHeaders(req), "Content-Type": "application/json" },
     });
   }
 });

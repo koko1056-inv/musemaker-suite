@@ -1,11 +1,10 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { GlassIcon } from "@/components/ui/glass-icon";
-import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings, TrendingUp } from "lucide-react";
-import * as LucideIcons from "lucide-react";
+import { Bot, MessageSquare, Plus, Loader2, ArrowRight, Phone, BookOpen, Settings, TrendingUp, Users, Mic, Headphones, Shield, Zap, Brain, Heart, Star, Lightbulb, Globe, Cpu, Radio, Smile, Coffee } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { WelcomeDialog } from "@/components/onboarding/WelcomeDialog";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { MobileStatsCarousel } from "@/components/dashboard/MobileStatsCarousel";
@@ -31,16 +30,21 @@ const greetings = [
   "塵も積もれば山となる",
 ];
 
+const ICON_MAP: Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>> = {
+  Bot, Phone, BookOpen, Settings, TrendingUp, Users, Mic, MessageSquare, Headphones, Shield, Zap, Brain, Heart, Star, Lightbulb, Globe, Cpu, Radio, Smile, Coffee
+};
+
+function DynamicIcon({ name, className, style }: { name?: string | null; className?: string; style?: React.CSSProperties }) {
+  const IconComponent = name ? ICON_MAP[name] : null;
+  return IconComponent ? <IconComponent className={className} style={style} /> : <Bot className={className} style={style} />;
+}
+
 export default function Dashboard() {
   const { stats, recentAgents, hasAgents, isLoading, isLoadingAgents } = useDashboardStats();
   
-  const [greeting, setGreeting] = useState(() => 
+  const [greeting] = useState(() =>
     greetings[Math.floor(Math.random() * greetings.length)]
   );
-
-  useEffect(() => {
-    setGreeting(greetings[Math.floor(Math.random() * greetings.length)]);
-  }, []);
 
   return (
     <AppLayout>
@@ -200,15 +204,13 @@ export default function Dashboard() {
                             />
                           </div>
                         ) : (() => {
-                          const iconName = agent.icon_name || 'Bot';
-                          const IconComponent = (LucideIcons as unknown as Record<string, typeof Bot>)[iconName] || Bot;
                           const agentColor = agent.icon_color || (agent.status === "published" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))");
                           return (
-                            <div 
+                            <div
                               className="h-11 w-11 rounded-full flex items-center justify-center border-2 border-background shadow-sm shrink-0 transition-transform group-hover:scale-105"
                               style={{ backgroundColor: `${agent.icon_color || 'hsl(var(--muted))'}20`, borderColor: agentColor }}
                             >
-                              <IconComponent className="h-5 w-5" style={{ color: agentColor }} />
+                              <DynamicIcon name={agent.icon_name} className="h-5 w-5" style={{ color: agentColor }} />
                             </div>
                           );
                         })()}

@@ -1,10 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsPreflightRequest } from '../_shared/cors.ts';
 
 interface AgentConfig {
   name: string;
@@ -80,9 +76,8 @@ ${formattedItems}
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
+  const corsResponse = handleCorsPreflightRequest(req);
+  if (corsResponse) return corsResponse;
 
   try {
     const ELEVENLABS_API_KEY = Deno.env.get('ELEVENLABS_API_KEY');
@@ -124,7 +119,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true 
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -199,7 +194,7 @@ serve(async (req) => {
         success: true, 
         agent_id: data.agent_id 
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
 
     } else if (action === 'update') {
@@ -256,7 +251,7 @@ serve(async (req) => {
         success: true, 
         agent_id: elevenlabsAgentId 
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
 
     } else if (action === 'sync_knowledge') {
@@ -294,7 +289,7 @@ serve(async (req) => {
         success: true,
         knowledge_items_count: knowledgeContent ? knowledgeContent.split('###').length - 1 : 0
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       });
 
     } else {
@@ -308,7 +303,7 @@ serve(async (req) => {
       JSON.stringify({ error: message }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' },
       }
     );
   }
