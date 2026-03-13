@@ -51,7 +51,7 @@ export const SpeechBubble = ({
 }) => {
   if (!isActive) return null;
   return (
-    <div className="absolute -top-10 left-1/2 -translate-x-1/2 animate-float z-20">
+    <div className="absolute -top-7 left-1/2 -translate-x-1/2 animate-float z-20">
       {isOnCall ? (
         <div className="flex items-center gap-1 px-2 py-1 bg-green-500 rounded-full shadow-lg animate-glow-pulse">
           <CallingPhoneIcon />

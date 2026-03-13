@@ -22,7 +22,7 @@ export const Desk = ({
 }) => {
   return <div className="relative flex flex-col items-center">
       {/* エージェントキャラクター */}
-      <div className="h-14 flex items-end justify-center">
+      <div className="h-20 flex items-end justify-center">
         {hasAgent && agent ? <PixelCharacter agent={agent} isActive={isActive} isOnCall={isOnCall} onClick={onClick!} /> : <button onClick={onAddAgent} className="w-8 h-10 sm:w-10 sm:h-12 flex items-center justify-center opacity-40 hover:opacity-100 transition-opacity hover:scale-105 transition-transform rounded border-2 border-dashed border-muted-foreground/50 hover:border-primary">
             <Plus className="w-4 h-4 text-muted-foreground" />
           </button>}
