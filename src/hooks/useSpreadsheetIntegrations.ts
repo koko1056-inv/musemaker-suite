@@ -190,6 +190,10 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
     },
   });
 
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['spreadsheet-integrations', workspaceId] });
+  }, [queryClient, workspaceId]);
+
   const startOAuthFlow = useCallback(async (integrationId: string) => {
     try {
       const { data, error } = await supabase.functions.invoke('google-sheets-oauth', {
@@ -278,10 +282,6 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
       return [];
     }
   }, []);
-
-  const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['spreadsheet-integrations', workspaceId] });
-  }, [queryClient, workspaceId]);
 
   return {
     integrations,

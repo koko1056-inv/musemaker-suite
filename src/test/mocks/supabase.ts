@@ -13,9 +13,7 @@ import { vi } from "vitest";
 export function createMockQueryBuilder(
   resolvedValue: { data: unknown; error: unknown } = { data: null, error: null }
 ) {
-  const builder: Record<string, ReturnType<typeof vi.fn>> & {
-    _resolved: { data: unknown; error: unknown };
-  } = {
+  const builder = {
     _resolved: resolvedValue,
     select: vi.fn(),
     insert: vi.fn(),

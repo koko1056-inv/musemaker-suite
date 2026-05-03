@@ -6,7 +6,7 @@ import React from "react";
 // Set up mock functions at module scope (before vi.mock hoisting)
 const mockOrder = vi.fn();
 const mockSelect = vi.fn(() => ({ order: mockOrder }));
-const mockFrom = vi.fn(() => ({ select: mockSelect }));
+const mockFrom: (...args: unknown[]) => { select: typeof mockSelect } = vi.fn(() => ({ select: mockSelect }));
 const mockUpdate = vi.fn(() => ({ eq: vi.fn().mockResolvedValue({ error: null }) }));
 
 vi.mock("@/integrations/supabase/client", () => ({
