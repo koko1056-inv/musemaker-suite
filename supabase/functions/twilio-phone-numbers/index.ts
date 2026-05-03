@@ -6,12 +6,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
+    if (!TWILIO_API_KEY) throw new Error("TWILIO_API_KEY is not configured (Twilio connector not linked)");
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
@@ -19,37 +26,22 @@ serve(async (req) => {
 
     const { action, workspaceId, phoneNumberSid, agentId, label } = await req.json();
 
-    // Get workspace Twilio credentials
-    const { data: workspace, error: workspaceError } = await supabaseClient
-      .from("workspaces")
-      .select("twilio_account_sid, twilio_auth_token")
-      .eq("id", workspaceId)
-      .single();
-
-    if (workspaceError || !workspace) {
-      throw new Error("Workspace not found");
-    }
-
-    if (!workspace.twilio_account_sid || !workspace.twilio_auth_token) {
-      throw new Error("Twilio credentials not configured");
-    }
-
-    const twilioAuth = btoa(`${workspace.twilio_account_sid}:${workspace.twilio_auth_token}`);
-
     if (action === "list") {
-      // Fetch phone numbers from Twilio
+      // Fetch phone numbers via Twilio connector gateway
+      // The gateway prepends /2010-04-01/Accounts/{AccountSid} automatically
       const twilioResponse = await fetch(
-        `https://api.twilio.com/2010-04-01/Accounts/${workspace.twilio_account_sid}/IncomingPhoneNumbers.json`,
+        `${GATEWAY_URL}/IncomingPhoneNumbers.json`,
         {
           headers: {
-            Authorization: `Basic ${twilioAuth}`,
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "X-Connection-Api-Key": TWILIO_API_KEY,
           },
         }
       );
 
       if (!twilioResponse.ok) {
         const errorText = await twilioResponse.text();
-        throw new Error(`Twilio API error: ${errorText}`);
+        throw new Error(`Twilio API error [${twilioResponse.status}]: ${errorText}`);
       }
 
       const twilioData = await twilioResponse.json();
@@ -68,7 +60,6 @@ serve(async (req) => {
         );
 
         if (!existing) {
-          // Insert new phone number
           await supabaseClient.from("phone_numbers").insert({
             workspace_id: workspaceId,
             phone_number: twilioNumber.phone_number,
@@ -83,7 +74,6 @@ serve(async (req) => {
         }
       }
 
-      // Fetch updated list
       const { data: phoneNumbers, error: fetchError } = await supabaseClient
         .from("phone_numbers")
         .select("*, agents(id, name)")
@@ -98,45 +88,36 @@ serve(async (req) => {
     }
 
     if (action === "assign") {
-      // Assign phone number to agent
       const { error: updateError } = await supabaseClient
         .from("phone_numbers")
         .update({ agent_id: agentId })
         .eq("phone_number_sid", phoneNumberSid)
         .eq("workspace_id", workspaceId);
-
       if (updateError) throw updateError;
-
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "unassign") {
-      // Unassign phone number from agent
       const { error: updateError } = await supabaseClient
         .from("phone_numbers")
         .update({ agent_id: null })
         .eq("phone_number_sid", phoneNumberSid)
         .eq("workspace_id", workspaceId);
-
       if (updateError) throw updateError;
-
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     if (action === "updateLabel") {
-      // Update phone number label
       const { error: updateError } = await supabaseClient
         .from("phone_numbers")
         .update({ label })
         .eq("phone_number_sid", phoneNumberSid)
         .eq("workspace_id", workspaceId);
-
       if (updateError) throw updateError;
-
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
