@@ -48,6 +48,9 @@ interface MutationLike<TVariables> {
   mutate: (variables: TVariables) => void;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyMutation = MutationLike<any>;
+
 interface EmailNotificationListProps {
   notifications: EmailNotification[];
   expandedId: string | null;
@@ -60,7 +63,7 @@ interface EmailNotificationListProps {
   filteredExtractionFields: ExtractionField[];
   updateNotificationPending: boolean;
   toggleNotification: MutationLike<{ id: string; is_active: boolean }>;
-  updateNotification: MutationLike<Record<string, unknown>>;
+  updateNotification: AnyMutation;
   deleteNotification: MutationLike<string>;
   onStartEditEmail: (notification: { id: string; recipient_email: string }) => void;
   onSaveEmail: (id: string) => void;

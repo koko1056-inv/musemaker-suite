@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 const mockUpsert = vi.fn();
-const mockFrom = vi.fn(() => ({ upsert: mockUpsert }));
-const mockGetUser = vi.fn();
+const mockFrom: (...args: unknown[]) => { upsert: typeof mockUpsert } = vi.fn(() => ({ upsert: mockUpsert }));
+const mockGetUser: (...args: unknown[]) => unknown = vi.fn();
 
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {

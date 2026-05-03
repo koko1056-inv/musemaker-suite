@@ -279,10 +279,6 @@ export function useSpreadsheetIntegrations(workspaceId: string | undefined) {
     }
   }, []);
 
-  const refetch = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['spreadsheet-integrations', workspaceId] });
-  }, [queryClient, workspaceId]);
-
   return {
     integrations,
     isLoading,
