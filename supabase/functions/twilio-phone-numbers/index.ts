@@ -27,21 +27,30 @@ serve(async (req) => {
     const { action, workspaceId, phoneNumberSid, agentId, label } = await req.json();
 
     if (action === "list") {
-      // Fetch phone numbers via Twilio connector gateway
-      // The gateway prepends /2010-04-01/Accounts/{AccountSid} automatically
-      const twilioResponse = await fetch(
-        `${GATEWAY_URL}/IncomingPhoneNumbers.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "X-Connection-Api-Key": TWILIO_API_KEY,
-          },
+      // Fetch phone numbers via Twilio connector gateway with retry on transient errors
+      let twilioResponse: Response | null = null;
+      let lastErrorText = "";
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          twilioResponse = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json`, {
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "X-Connection-Api-Key": TWILIO_API_KEY,
+            },
+            signal: AbortSignal.timeout(15000),
+          });
+          if (twilioResponse.ok) break;
+          lastErrorText = await twilioResponse.text();
+          // Retry only on transient gateway errors
+          if (![502, 503, 504].includes(twilioResponse.status)) break;
+        } catch (e) {
+          lastErrorText = e instanceof Error ? e.message : String(e);
         }
-      );
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      }
 
-      if (!twilioResponse.ok) {
-        const errorText = await twilioResponse.text();
-        throw new Error(`Twilio API error [${twilioResponse.status}]: ${errorText}`);
+      if (!twilioResponse || !twilioResponse.ok) {
+        throw new Error(`Twilio API error [${twilioResponse?.status ?? "network"}]: ${lastErrorText}`);
       }
 
       const twilioData = await twilioResponse.json();
